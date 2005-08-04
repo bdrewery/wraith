@@ -51,11 +51,16 @@ static char *getnick(char *handle, struct chanset_t *chan)
 {
   char s[UHOSTLEN] = "";
   struct userrec *u = NULL;
+  struct chanset_t *my_chan = NULL;
 
-  for (register memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
-    simple_snprintf(s, sizeof s, "%s!%s", m->nick, m->userhost);
-    if ((u = get_user_by_host(s)) && !egg_strcasecmp(u->handle, handle))
-      return m->nick;
+  for (my_chan = chan ? chan : chanset; my_chan; my_chan = my_chan->next) {
+    for (register memberlist *m = my_chan->channel.member; m && m->nick[0]; m = m->next) {
+      simple_snprintf(s, sizeof s, "%s!%s", m->nick, m->userhost);
+      if ((u = get_user_by_host(s)) && !egg_strcasecmp(u->handle, handle))
+        return m->nick;
+    }
+    if (chan)
+      break;
   }
   return NULL;
 }
@@ -1195,9 +1200,11 @@ static void do_invite(int idx, char *par, bool op)
   bool all = 0;
   char *nick = NULL;
 
-  if (!par[0])
-    par = dcc[idx].nick;
-  nick = newsplit(&par);
+  if (par[0])
+    nick = newsplit(&par);
+  else
+    nick = getnick(dcc[idx].nick, NULL);
+
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
@@ -1235,6 +1242,7 @@ static void do_invite(int idx, char *par, bool op)
         return;
       }
     }
+
     m = ismember(chan, nick);
     if (m && !chan_issplit(m)) {
       if (all) goto next;
