@@ -326,6 +326,7 @@ case "$egg_cv_var_system_type" in
     AC_DEFINE(BROKEN_SNPRINTF, 1, [Define to use Eggdrop's snprintf functions without regard to HAVE_SNPRINTF])dnl
   ;;
   SunOS)
+    $SUNOS="yes"
   ;;
   *BSD)
     # FreeBSD/OpenBSD/NetBSD

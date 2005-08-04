@@ -3600,6 +3600,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
   ;;
   SunOS)
+    $SUNOS="yes"
   ;;
   *BSD)
     # FreeBSD/OpenBSD/NetBSD
