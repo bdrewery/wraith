@@ -51,8 +51,8 @@ bool clear_tmpdir = 0;
 
 int my_system(const char *run)
 {
-  int ret = -1;
 #ifdef WIN32
+  int ret = -1;
 
   PROCESS_INFORMATION pinfo;
   STARTUPINFO sinfo;
