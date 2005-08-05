@@ -80,42 +80,6 @@ unsigned long my_atoul(char *s)
   return ret;
 }
 
-int hostprotocol(const char *host)
-{
-  if (!host || (host && !host[0]))
-    return 0;
-
-  /* return the AF_TYPE if it's already an ip */
-  int af_type = is_dotted_ip(host);
-
-  if (af_type)
-    return af_type;
-
-#ifdef USE_IPV6
-  struct hostent *he = NULL;
-
-  sdprintf("WARNING: gethostbyname2() is about to block in hostprotocol()");
-
-  if (!setjmp(alarmret)) {
-    alarm(resolve_timeout);
-
-#   ifdef HAVE_GETHOSTBYNAME2
-    he = gethostbyname2(host, AF_INET6);
-#   else
-    int error_num;
-    he = getipnodebyname(host, AF_INET6, AI_DEFAULT, &error_num);
-#   endif /* HAVE_GETHOSTBYNAME2 */
-    alarm(0);
-  } else
-    he = NULL;
-  if (!he)
-    return AF_INET;
-  return AF_INET6;
-#else
-  return 0;
-#endif /* USE_IPV6 */
-}
-
 /* get the protocol used on a socket */
 int sockprotocol(int sock)
 {
@@ -775,7 +739,7 @@ int open_telnet(const char *server, port_t port, bool proxy)
   int sock = -1;
   
 #ifdef USE_IPV6
-  sock = getsock(0, hostprotocol(server));
+  sock = getsock(0, is_dotted_ip(server));
 #else
   sock = getsock(0);
 #endif /* USE_IPV6 */
