@@ -51,7 +51,7 @@ bool clear_tmpdir = 0;
 
 int my_system(const char *run)
 {
-//#ifdef WIN32
+#ifdef WIN32-no
   int ret = -1;
 
   PROCESS_INFORMATION pinfo;
@@ -74,9 +74,9 @@ int my_system(const char *run)
     return -1;
   else
     return 0;
-//#else
+#else
   return system(run);
-//#endif /* WIN32 */
+#endif /* WIN32 */
 }
 
 void clear_tmp()
