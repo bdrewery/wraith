@@ -554,6 +554,7 @@ static void startup_checks(int hack) {
 
   if (can_stat(cfile))
     readconf(cfile, 0);	/* will read into &conf struct */
+  conf_checkpids();
 #endif /* CYGWIN_HACKS */
 
 #ifndef CYGWIN_HACKS
