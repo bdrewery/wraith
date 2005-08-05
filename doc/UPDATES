@@ -17,6 +17,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed binary spawning/updating to escape needed chars for shell. (#158)
 * Fixed a flaw in binary checksums.
 * Added build os/architechture to output for ./binary -v
+* Added ARCH entry for bots in .whois
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
