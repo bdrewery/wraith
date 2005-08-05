@@ -16,6 +16,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Cmd_invite now attempts to resolve the username to a nickname (from a shared channel), if no nick is specified. (#159)
 * Fixed binary spawning/updating to escape needed chars for shell. (#158)
 * Fixed a flaw in binary checksums.
+* Added build os/architechture to output for ./binary -v
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
