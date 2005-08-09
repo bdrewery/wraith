@@ -882,7 +882,7 @@ See also: encrypt, randstring, md5, sha1
    Channel masters may only delete users which they added.
 see also: adduser%{+m}, +user, -user%{-}
 :leaf:deop
-###  $bdeop$b <nickname> [channel|*]
+###  $bdeop$b [nickname] [channel|*]
    will remove chanop from the person you specify, so long as the
    bot is opped on that channel, and the person you specify isn't
    on the bot's list of authorized chanops. Specify * for all
@@ -890,7 +890,7 @@ see also: adduser%{+m}, +user, -user%{-}
  
 See also: op, console
 :leaf:devoice
-### $bdevoice$b <nickname> [channel|*]
+### $bdevoice$b [nickname] [channel|*]
     will remove the +v voice from the person you specify, so long as
     the bot is opped on that channel. Specify * for all channels.
 ::die
@@ -1381,7 +1381,7 @@ See also: whom, notes
  
 See also: note, whom, noteigns
 :leaf:op
-###  $bop$b <nickname> [channel|*]
+###  $bop$b [nickname] [channel|*]
    will grant chanop to the person you specify, so long as the bot
    is opped on that channel, and the person you specify isn't being
    actively deopped by the bot. Specify * for all channels.
@@ -1764,7 +1764,7 @@ See also: match, whois
  
 See also: botversion, netversion, about%{+m|m}, status%{-}
 :leaf:voice
-###  $bvoice$b <nickname> [channel|*]
+###  $bvoice$b [nickname] [channel|*]
     will give a +v voice to a person you specify, so long as the
     bot is opped on that channel. Specify * for all channels.
  

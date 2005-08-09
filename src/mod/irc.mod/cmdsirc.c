@@ -317,6 +317,9 @@ static void cmd_voice(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
+  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+    all = 1;
+    nick = getnick(dcc[idx].nick, NULL);
   } else {
     chan = get_channel(idx, par);
     if (!chan || !has_op(idx, chan))
@@ -387,6 +390,9 @@ static void cmd_devoice(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
+  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+    all = 1;
+    nick = getnick(dcc[idx].nick, NULL);
   } else {
     chan = get_channel(idx, par);
     if (!chan || !has_op(idx, chan))
@@ -455,6 +461,9 @@ static void cmd_op(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
+  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+    all = 1;
+    nick = getnick(dcc[idx].nick, NULL);
   } else {
     chan = get_channel(idx, par);
     if (!chan || !has_op(idx, chan))
@@ -804,6 +813,9 @@ static void cmd_deop(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
+  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+    all = 1;
+    nick = getnick(dcc[idx].nick, NULL);
   } else {
     chan = get_channel(idx, par);
     if (!chan || !has_op(idx, chan))
