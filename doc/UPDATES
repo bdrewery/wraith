@@ -19,6 +19,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Added build os/architechture to output for ./binary -v
 * Added ARCH entry for bots in .whois
 * Removed references to the old 'greet' features of eggdrop from help.
+* Fixed tempdir checking to attempt to 'mkdir ~/.ssh/' for '~/.ssh/...' tempdir.
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
