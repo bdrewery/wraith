@@ -663,6 +663,8 @@ char *werr_tostr(int errnum)
     return STR("There are no bots in the binary! Please use ./binary -C to edit");
   case ERR_NOBOT:
     return STR("I have no bot record but received -B???");
+  case ERR_NOTINIT:
+    return STR("Binary data is not initialized; try ./binary -C");
   default:
     return "Unforseen error";
   }

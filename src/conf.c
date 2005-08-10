@@ -580,6 +580,9 @@ free_conf_bots(conf_bot *list)
 int
 parseconf(bool error)
 {
+  if (error && conf.uid == -1 && !conf.uname)
+    werr(ERR_NOTINIT);
+
   if (conf.username) {
     str_redup(&conf.username, my_username());
   } else {
