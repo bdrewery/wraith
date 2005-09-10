@@ -781,22 +781,18 @@ exempt-time %lu invite-time %lu voice-non-ident %d \
   return 1;
 }
 
-void channels_writeuserfile()
+void channels_writeuserfile(FILE *f)
 {
-  char s[1024] = "";
-  FILE *f = NULL;
   int  ret = 0;
 
   putlog(LOG_DEBUG, "@", "Writing channel/ban/exempt/invite entries.");
-  simple_sprintf(s, "%s~new", userfile);
-  f = fopen(s, "a");
+
   if (f) {
     ret  = write_chans(f, -1);
     ret += write_vars_and_cmdpass(f, -1);
     ret += write_bans(f, -1);
     ret += write_exempts(f, -1);
     ret += write_invites(f, -1);
-    fclose(f);
   }
   if (ret < 5)
     putlog(LOG_MISC, "*", "ERROR writing user file.");

@@ -50,7 +50,7 @@ bool u_match_mask(struct maskrec *, char *);
 bool ismasked(masklist *, const char *);
 bool ismodeline(masklist *, const char *);
 void channels_report(int, int);
-void channels_writeuserfile();
+void channels_writeuserfile(FILE *);
 
 extern char		glob_chanset[512];
 

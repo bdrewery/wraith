@@ -472,9 +472,7 @@ int write_userfile(int idx)
 
   strcpy(s1, ctime(&tt));
   lfprintf(f, "#4v: %s -- %s -- written %s", ver, conf.bot->nick, s1);
-  fclose(f);
-  channels_writeuserfile();
-  f = fopen(new_userfile, "a");
+  channels_writeuserfile(f);
   putlog(LOG_DEBUG, "@", "Writing user entries.");
   for (struct userrec *u = userlist; u && ok; u = u->next)
     ok = write_user(u, f, -1);
