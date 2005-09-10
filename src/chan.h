@@ -219,7 +219,7 @@ struct chanset_t {
 #define CHAN_BOTBITCH       BIT7        /* only let bots be opped? */
 #undef  CHAN_8              /*BIT8	 */
 #define CHAN_SECRET         BIT9	/* don't advertise channel on botnet  */
-#undef  CHAN_10		    /* BIT10        not used */
+#define CHAN_RELAY          BIT10       /* should this chan be relayed? */
 #define CHAN_CYCLE          BIT11	/* cycle the channel if possible      */
 #define CHAN_INACTIVE       BIT12	/* no irc support for this channel */
 #define CHAN_VOICE          BIT13	/* a bot +y|y will voice *, except +q */
@@ -285,6 +285,7 @@ struct chanset_t *findchan_by_dname(const char *name);
 #define channel_fastop(chan) (chan->status & CHAN_FASTOP)
 #define channel_privchan(chan) (chan->status & CHAN_PRIVATE)
 #define channel_autoop(chan) (chan->status & CHAN_AUTOOP)
+#define channel_relay(chan) (chan->status & CHAN_RELAY)
 /* Chanflag template
  *#define channel_temp(chan) (chan->status & CHAN_PRIVATE)
  */

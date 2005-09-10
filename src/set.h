@@ -55,7 +55,7 @@ typedef struct rate_b {
 
 extern char		auth_key[], auth_prefix[2], motd[], *def_chanset, alias[],
 			msgident[], msginvite[], msgop[], msgpass[], process_list[],
-                        homechan[];
+                        homechan[], relay_to[];
 extern bool		dccauth, auth_obscure, offensive_bans, manop_warn, auth_chan;
 extern int		cloak_script, fight_threshold, fork_interval, in_bots, set_noshare, dcc_autoaway,
 			kill_threshold, lag_threshold, op_bots, badprocess, hijack, login, promisc, trace;

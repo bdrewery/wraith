@@ -458,6 +458,7 @@ See also: link
                        will see no reference to it over the botnet in any place.
         $bprotectops$b     Re-op a user with the +o flag if they get deopped?
                        DON'T USE THIS.
+        $brelay$b          Relays this chan to the specified target in set var 'relay-to'
         $btake$b           Once a bot is opped, it will mass op all other bots
                        in the channel. After that, they will all attempt to 
                        mass deop in hopes 'taking' the channel. :)
@@ -1515,6 +1516,9 @@ See also: reload, backup
 [B]  $bmean-kicks$b      Enables 'mean' and 'offensive' kick msgs.
 [B]  $bmanop-warn$b      Warn users via /NOTICE when they msg-op in a channel with manop
                            punishments.
+[S]  $brelay-to$b        Any channels set +relay will be relayed to this target.
+                         It may be a #channel or nick. Please be aware that this
+                         this only be set on ONE bot with 'botset'
  
   *  Msg cmd vars may be left blank to disable usage of cmd.
 [S]  $bmsg-op$b          Defines the cmd for opping via msging the bot.

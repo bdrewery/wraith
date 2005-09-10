@@ -50,6 +50,7 @@ int trace = DET_DIE;
 bool offensive_bans = 1;
 bool manop_warn = 1;
 char homechan[51] = "";
+char relay_to[101] = "";
 
 static variable_t vars[] = {
  VAR("alias", 		alias,			sizeof(alias),			VAR_STRING|VAR_LIST|VAR_NOLOC|VAR_PERM),
@@ -87,6 +88,7 @@ static variable_t vars[] = {
  VAR("process-list",	process_list,		sizeof(process_list),		VAR_STRING|VAR_LIST),
  VAR("promisc",		&promisc,		0,				VAR_INT|VAR_DETECTED),
  VAR("realname",	botrealname,		sizeof(botrealname),		VAR_STRING|VAR_NOLHUB),
+ VAR("relay-to",	relay_to,		sizeof(relay_to),		VAR_STRING|VAR_NOLHUB),
  VAR("servers",		&serverlist,		0,				VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB),
  VAR("servers6",	&serverlist,		0,				VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB),
  VAR("server-port",	&default_port,		0,				VAR_INT|VAR_NOLHUB),

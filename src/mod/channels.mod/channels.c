@@ -853,6 +853,8 @@ void channels_report(int idx, int details)
           i += my_strcpy(s + i, "voice ");
         if (channel_autoop(chan))
           i += my_strcpy(s + i, "autoop ");
+        if (channel_relay(chan))
+          i += my_strcpy(s + i, "relay ");
 /* Chanflag template
  *	if (channel_temp(chan))
  *	  i += my_strcpy(s + i, "temp ");

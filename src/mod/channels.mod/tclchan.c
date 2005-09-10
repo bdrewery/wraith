@@ -561,6 +561,10 @@ int channel_modify(char *result, struct chanset_t *chan, int items, char **item)
       chan->status |= CHAN_BOTBITCH;
     else if (!strcmp(item[i], "-botbitch"))
       chan->status &= ~CHAN_BOTBITCH;
+    else if (!strcmp(item[i], "+relay"))
+      chan->status |= CHAN_RELAY;
+    else if (!strcmp(item[i], "-relay"))
+      chan->status &= ~CHAN_RELAY;
 /* Chanflag template
  *  else if (!strcmp(item[i], "+temp"))
  *    chan->status |= CHAN_TEMP;
