@@ -34,6 +34,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed channel notices not being parsed.
 * Took out all punish/revenge code, it's been disabled since 1.2.7 anyway.
 * Added primitive relay system. See help for set var 'relay-to' and help for chaninfo regarding +/-relay.
+* Fixed bots giving up on joining juped channels (may be due to split) (#168)
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
