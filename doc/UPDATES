@@ -36,6 +36,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Added primitive relay system. See help for set var 'relay-to' and help for chaninfo regarding +/-relay.
 * Fixed bots giving up on joining juped channels (may be due to split) (#168)
 * Fixed cmdpass list getting desynced during userfile transfer. (#143)
+* Changed botnet link behaivor to collide duped bots instead of claiming there is a 'loop' (#163)
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
