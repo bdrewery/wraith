@@ -651,6 +651,14 @@ static void bot_nlinked(int idx, char *par)
     simple_snprintf(s, sizeof(s), "Disconnected %s (invalid bot)", dcc[idx].nick);
     dprintf(idx, "error invalid eggnet protocol for 'nlinked'\n");
   } else if ((in_chain(newbot)) || (!egg_strcasecmp(newbot, conf.bot->nick))) {
+    if (bot_hublevel(dcc[idx].user) != 999) {
+      if (bot_aggressive_to(dcc[idx].user)) {	/* wait, we have one too, ignore theirs! ... it should be disconnected soon. */
+        return;
+      } else {					/* We need to collide ours */
+        simple_snprintf(s, sizeof(s), "Duplicate bot collision: %s", newbot);
+        dprintf(idx, "error Collision (%s)\n", newbot);
+      }
+    }
     /* Loop! */
     putlog(LOG_BOTS, "*", "Loop detected %s (mutual: %s)", dcc[idx].nick, newbot);
     simple_snprintf(s, sizeof(s), "Detected loop: two bots exist named %s: disconnecting %s", newbot, dcc[idx].nick);
