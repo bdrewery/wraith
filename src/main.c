@@ -868,7 +868,10 @@ printf("out: %s\n", out);
 
   debug0("main: entering loop");
 
-  int socket_cleanup = 0, status = 0, xx, i = 0, idx = 0;
+  int socket_cleanup = 0, xx, i = 0, idx = 0;
+#if !defined(CYGWIN_HACKS) && !defined(__sun__)
+  int status = 0;
+#endif /* !CYGWIN_HACKS */
   char buf[SGRAB + 10] = "";
 
   while (1) {
