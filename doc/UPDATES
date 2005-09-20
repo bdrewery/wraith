@@ -38,6 +38,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed cmdpass list getting desynced during userfile transfer. (#143)
 * Changed botnet link behaivor to collide duped bots instead of claiming there is a 'loop' (#163)
 * Removed old compatability code for converting CONFIG->SET during userfile loading.
+* Fixed "un-allocated socket" errors when a relay fails.
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
