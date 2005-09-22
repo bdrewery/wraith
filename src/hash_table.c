@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "hash_table.h"
+#include "member.h"
 
 static unsigned int my_string_hash(const void *key);
 static unsigned int my_int_hash(const void *key);
@@ -137,6 +138,56 @@ int hash_table_insert(hash_table_t *ht, const void *key, void *data)
 	return(0);
 }
 
+int hash_table_rename(hash_table_t *ht, const void *key, const void *newkey)
+{
+        int idx, newidx;
+        unsigned int hash, newhash;
+        hash_table_entry_t *entry = NULL, *last = NULL;
+        hash_table_row_t *row = NULL, *newrow = NULL;
+
+        if (!ht) return(-1);
+
+        hash = ht->hash(key);
+        idx = hash % ht->max_rows;
+        row = ht->rows+idx;
+
+        last = NULL;
+        for (entry = row->head; entry; entry = entry->next) {
+                if (hash == entry->hash && !ht->cmp(key, entry->key)) {
+                        /* Remove it from the row's list. */
+                        if (last) last->next = entry->next;
+                        else row->head = entry->next;
+
+			row->len--;
+
+			/* create a new hash - get it's new row */
+		        newhash = ht->hash(newkey);
+		        newidx = newhash % ht->max_rows;
+		        newrow = ht->rows+newidx;
+
+			/* Fix the entry */
+			entry->hash = newhash;
+
+		        /* Insert it into the list. */
+		        entry->next = newrow->head;
+		        newrow->head = entry;
+
+		        /* Update stats. */
+		        newrow->len++;
+		        /* See if we need to update the table. */
+		        if (!(ht->flags & HASH_TABLE_NORESIZE)) {
+		                hash_table_check_resize(ht);
+		        }
+
+                        return(1);
+                }
+                last = entry;
+        }
+
+
+        return(-1);
+}
+
 int hash_table_find(hash_table_t *ht, const void *key, void *dataptr)
 {
 	int idx;
@@ -183,6 +234,7 @@ int hash_table_remove(hash_table_t *ht, const void *key, void *dataptr)
 
 			free(entry);
 			ht->cells_in_use--;
+			row->len--;
 			return(0);
 		}
 		last = entry;
@@ -220,7 +272,7 @@ static unsigned int my_string_hash(const void *key)
         size_t keylen;
 	const unsigned char *k = NULL;
 
-#define HASHC hash = *k++ + 65599 * hash
+#define HASHC hash = *(k++) + 65599 * hash
 	hash = 0;
 	k = (const unsigned char *) key;
 	keylen = strlen((const char *) key);

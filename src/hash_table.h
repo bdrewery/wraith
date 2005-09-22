@@ -1,10 +1,15 @@
 #ifndef _HASH_TABLE_H_
 #define _HASH_TABLE_H_
 
+#include "bits.h"
+#include "ptrlist.h"
+
 #define HASH_TABLE_STRINGS	BIT0
 #define HASH_TABLE_INTS		BIT1
 #define HASH_TABLE_MIXED	BIT2
 #define HASH_TABLE_NORESIZE	BIT3
+
+#define DEFAULT_SIZE 		50
 
 /* Turns a key into an unsigned int. */
 typedef unsigned int (*hash_table_hash_alg)(const void *key);
@@ -44,5 +49,103 @@ int hash_table_replace(hash_table_t *ht, const void *key, void *data);
 int hash_table_find(hash_table_t *ht, const void *key, void *dataptr);
 int hash_table_remove(hash_table_t *ht, const void *key, void *dataptr);
 int hash_table_walk(hash_table_t *ht, hash_table_node_func callback, void *param);
+int hash_table_rename(hash_table_t *ht, const void *key, const void *newkey);
 
+template <class T> class Htree {
+  private:
+    hash_table_t *table;
+    int my_entries;
+  public:
+    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)), my_entries(0) {  }
+//    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_MIXED)) {  }
+//    Htree(int) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_INTS)) {  }
+//    Htree(char *) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)) {  }
+//    Htree(const char *) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)) {  }
+    ~Htree() {
+      my_entries = 0;
+      walk(&cleanup_data);
+      hash_table_delete(table);
+    }
+
+    ptrlist<T> list;
+
+    //ptrlist<T>::link *start() { return list.start; };
+    typename ptrlist<T>::link *start() { return list.start(); };
+
+    int entries() { return my_entries; }
+    int rename(const void *key, const void *newkey) {
+      return hash_table_rename(table, key, newkey);
+    }
+
+    static int cleanup_data(T *x, void *data) {
+      delete x;
+      return 0;
+    }
+    
+    int add(const void *key, T *data) {
+      list.add(data);
+      my_entries++;
+      return hash_table_insert(table, key, (void *)data);
+    }
+
+    int add(T *data) {
+      return add(data->GetKey(), data);
+    }
+
+    int remove(T *data) {
+      int ret = hash_table_remove(table, data->GetKey(), NULL);
+
+      if (!ret) {
+        list.remove(data);
+        my_entries--;
+        return ret;
+      }
+      return ret;
+    }
+
+    T *find(const void *key) {
+      T *x = NULL;
+      hash_table_find(table, key, &x);
+
+      return x;
+    }
+
+    T *find(const char *key) {
+      T *x = NULL;
+      hash_table_find(table, key, &x);
+
+      return x;
+    }
+
+    T *find(T *d) {
+      return find(d->GetKey());
+    }
+
+    T &find(T &d) {
+      return find(d.GetKey());
+    }
+
+    static void _walk(const void *key, void *datap, struct temp_walk *tdata) {
+      T *x = *(T **)datap;
+      int (*fn)(T *, void *);
+
+      fn = (int(*)(T *, void *)) tdata->fn;
+      fn(x, tdata->data);
+    }
+
+    void walk(int(*fn)(T *, void *), void *data = NULL) {
+      struct temp_walk tdata = { (void *) fn, (void *) data };
+
+      hash_table_walk(table, (int (*)(const void*, void*, void*)) _walk, &tdata);
+    }
+
+    static void walk_idx(const void *key, void *data, int idx) {
+      T *x = *(T **) data;
+      x->dump_idx(idx);
+    }
+
+    void dump_idx(int idx) {
+      hash_table_walk(table, (int (*)(const void*, void*, void*)) walk_idx, (void *) idx);
+    }
+};
 #endif /* !_HASH_TABLE_H_ */
