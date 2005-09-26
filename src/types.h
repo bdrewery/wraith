@@ -49,4 +49,9 @@ typedef struct {
   } u;
 } my_addr_t;
 
+struct temp_walk {
+  void *fn;
+  void *data;
+};
+
 #endif /* !_TYPES_H */
