@@ -56,7 +56,7 @@ template <class T> class Htree {
     hash_table_t *table;
     int my_entries;
   public:
-    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)), my_entries(0) {  }
+    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)), my_entries(0), sort(0) {  }
 //    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_MIXED)) {  }
 //    Htree(int) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_INTS)) {  }
 //    Htree(char *) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)) {  }
@@ -68,6 +68,7 @@ template <class T> class Htree {
     }
 
     ptrlist<T> list;
+    bool sort;
 
     //ptrlist<T>::link *start() { return list.start; };
     typename ptrlist<T>::link *start() { return list.start(); };
@@ -82,18 +83,21 @@ template <class T> class Htree {
       return 0;
     }
     
-    int add(const void *key, T *data) {
-      list.add(data);
+    int add(const void *key, T *data, bool _sort = 0) {
+      if (sort || _sort)
+        list.sortAdd(data);
+      else
+        list.add(data);
       my_entries++;
       return hash_table_insert(table, key, (void *)data);
     }
 
-    int add(T *data) {
-      return add(data->GetKey(), data);
+    int add(T *data, bool _sort = 0) {
+      return add(data->GetKey(), data, _sort);
     }
 
-    int remove(T *data) {
-      int ret = hash_table_remove(table, data->GetKey(), NULL);
+    int remove(const void *key, T *data) {
+      int ret = hash_table_remove(table, key, NULL);
 
       if (!ret) {
         list.remove(data);
@@ -101,6 +105,10 @@ template <class T> class Htree {
         return ret;
       }
       return ret;
+    }
+
+    int remove(T *data) {
+      return remove(data->GetKey(), data);
     }
 
     T *find(const void *key) {
