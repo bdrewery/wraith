@@ -16,6 +16,7 @@ class Auth {
   Auth(const char *, const char *, struct userrec * = NULL);
   ~Auth();
 
+  char *GetKey() { return host; };
   int Status(int newstat = -1) { if (newstat >= 0) { status = newstat; } return status; }
   void MakeHash(bool bd = 0);
   bool Authed() { return (status == AUTHED); }
@@ -44,8 +45,8 @@ class Auth {
 
   private:
   int status;
-  static hash_table_t *ht_host;
-  static hash_table_t *ht_handle;
+  static Htree<Auth> ht_host;
+  static Htree<Auth> ht_handle;
 };
 
 char *makebdhash(char *);
