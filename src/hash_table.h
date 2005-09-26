@@ -83,17 +83,24 @@ template <class T> class Htree {
       return 0;
     }
     
-    int add(const void *key, T *data, bool _sort = 0) {
-      if (sort || _sort)
-        list.sortAdd(data);
-      else
-        list.add(data);
+    int add(const void *key, T *data) {
+      list.add(data);
       my_entries++;
       return hash_table_insert(table, key, (void *)data);
     }
 
-    int add(T *data, bool _sort = 0) {
-      return add(data->GetKey(), data, _sort);
+    int add(T *data) {
+      return add(data->GetKey(), data);
+    }
+
+    int sortAdd(const void *key, T *data) {
+      list.sortAdd(data);
+      my_entries++;
+      return hash_table_insert(table, key, (void *)data);
+    }
+
+    int sortAdd(T *data) {
+      return sortAdd(data->GetKey(), data);
     }
 
     int remove(const void *key, T *data) {

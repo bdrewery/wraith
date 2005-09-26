@@ -5,7 +5,6 @@
 
 #include "common.h"
 #include "hash_table.h"
-#include "member.h"
 
 static unsigned int my_string_hash(const void *key);
 static unsigned int my_int_hash(const void *key);
