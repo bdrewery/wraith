@@ -42,6 +42,8 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed var 'server-port' not being used correctly. (Now lists/saves/loads before servers)
 * Fixed a typo in msg_pass.
 * Clearing a variable via 'set var -' now resets that variable to default settings. (#111)
+* Failed relay no longer says failed link.
+* Fixed a socket protocol error.
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
