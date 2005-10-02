@@ -626,7 +626,7 @@ void initialize_sockaddr(int af_type, const char *host, port_t port, union socka
  *   -1  strerror()/errno type error
  *   -2  can't resolve hostname
  */
-int open_telnet_raw(int sock, const char *server, port_t sport, bool proxy_on)
+int _open_telnet_raw(int sock, const char *server, port_t sport, bool proxy_on, const char *file, int line)
 {
   static port_t port = 0;
   union sockaddr_union so;
@@ -672,7 +672,7 @@ int open_telnet_raw(int sock, const char *server, port_t sport, bool proxy_on)
     /* initialize so for connect using the host/port */
     initialize_sockaddr(is_resolved, host, port, &so);
   } else {	/* if not resolved, resolve it with blocking calls.. (shouldn't happen ever) */
-    sdprintf("WARNING: open_telnet_raw(%s,%d) was passed an unresolved hostname.", host, port);
+    sdprintf("WARNING: open_telnet_raw(%s,%d) was passed an unresolved hostname. [%s:%d]", host, port, file, line);
     return -1;
   }
 
@@ -704,6 +704,7 @@ int open_telnet_raw(int sock, const char *server, port_t sport, bool proxy_on)
   }
 
   /* Synchronous? :/ */
+  sdprintf("BLOCKING open_telnet_raw() [%s:%d]", file, line);
   debug3("net: (BLOCKING) connect(%d, %s, %d)", sock, server, sport);
 
   if (proxy)
