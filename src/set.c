@@ -139,8 +139,8 @@ static variable_t vars[] = {
  VAR("realname",	botrealname,		VAR_STRING|VAR_NOLHUB,				0, 0, "A deranged product of evil coders"),
  VAR("relay-to",	relay_to,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
  VAR("server-port",	&default_port,		VAR_INT|VAR_NOLHUB,				0, 0, "6667"),
- VAR("servers",		&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB,	0, 0, DEFAULT_SERVERS),
- VAR("servers6",	&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB,	0, 0, DEFAULT_SERVERS6),
+ VAR("servers",		&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB|VAR_NOLDEF,	0, 0, DEFAULT_SERVERS),
+ VAR("servers6",	&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB|VAR_NOLDEF,	0, 0, DEFAULT_SERVERS6),
  VAR("trace",		&trace,			VAR_INT|VAR_DETECTED,				0, 0, "die"),
 // {NULL, NULL, 0, 0, NULL, NULL, 0, NULL, 0, 0}
  VAR(NULL,		0,			0,						0, 0, 0)
@@ -497,7 +497,7 @@ void init_vars()
 
   /* initialize vars: defaults -> gdata */
   for (i = 0; vars[i].name; i++) {
-    if (!vars[i].gdata && !vars[i].ldata) 
+    if (!vars[i].gdata && !vars[i].ldata && !(!conf.bot->hub && (vars[i].flags & VAR_NOLDEF)))
       var_set(&vars[i], NULL, NULL);		//empty out and set to defaults
   }
   var_set_by_name(NULL, "chanset", def_chanset);

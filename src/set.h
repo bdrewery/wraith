@@ -28,6 +28,8 @@
 /* Don't set the var data from the mem as default (NICK) */
 #define VAR_NODEF	BIT14
 #define VAR_CHANSET	BIT15
+/* Don't set the default on startup if a leaf (servers) */
+#define VAR_NOLDEF	BIT16
 
 #define VAR_LDATA 	1
 #define VAR_GDATA	2
