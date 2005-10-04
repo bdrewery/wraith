@@ -98,6 +98,8 @@ char	ver[41] = "";		/* Version info (short form) */
 bool	use_stderr = 1;		/* Send stuff to stderr instead of logfiles? */
 char	quit_msg[1024];		/* quit message */
 time_t	now;			/* duh, now :) */
+char	get_buf[SGRAB + 10] = "";
+
 
 int do_confedit = 0;		/* show conf menu if -C */
 static char do_killbot[21] = "";
@@ -899,8 +901,12 @@ printf("out: %s\n", out);
       socket_cleanup--;
 
     xx = sockgets(buf, &i);
-
+ 
+    get_buf[0] = 0;
     if (xx >= 0) {		/* Non-error */
+      if (buf[0])
+        strlcpy(get_buf, buf, i);
+
       for (idx = 0; idx < dcc_total; idx++) {
 	if (dcc[idx].type && dcc[idx].sock == xx) {
 	  if (dcc[idx].type && dcc[idx].type->activity) {

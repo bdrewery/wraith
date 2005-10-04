@@ -207,6 +207,12 @@ static void write_debug()
 }
 #endif /* DEBUG_CONTEXT */
 
+static void write_debug()
+{
+  if (get_buf[0])
+    putlog(LOG_MISC, "*", "Last buf (paste to bryan): %s", get_buf);
+}
+
 #ifndef DEBUG_CONTEXT
 static void got_bus(int) __attribute__ ((noreturn));
 #endif /* DEBUG_CONTEXT */
@@ -214,9 +220,7 @@ static void got_bus(int) __attribute__ ((noreturn));
 static void got_bus(int z)
 {
   signal(SIGBUS, SIG_DFL);
-#ifdef DEBUG_CONTEXT
   write_debug();
-#endif
   fatal("BUS ERROR -- CRASHING!", 1);
 #ifdef DEBUG
   raise(SIGBUS);
@@ -294,9 +298,7 @@ static void got_segv(int z)
   alarm(0);		/* dont let anything jump out of this signal! */
   signal(SIGSEGV, SIG_DFL);
   /* stackdump(0); */
-#ifdef DEBUG_CONTEXT
   write_debug();
-#endif
   fatal("SEGMENT VIOLATION -- CRASHING!", 1);
 #ifdef DEBUG
   raise(SIGSEGV);
@@ -309,9 +311,7 @@ static void got_fpe(int) __attribute__ ((noreturn));
 
 static void got_fpe(int z)
 {
-#ifdef DEBUG_CONTEXT
   write_debug();
-#endif
   fatal("FLOATING POINT ERROR -- CRASHING!", 0);
   exit(1);		/* for GCC noreturn */
 }
@@ -333,9 +333,7 @@ static void got_abort(int) __attribute__ ((noreturn));
 static void got_abort(int z)
 {
   signal(SIGABRT, SIG_DFL);
-#ifdef DEBUG_CONTEXT
   write_debug();
-#endif
   fatal("GOT SIGABRT -- CRASHING!", 1);
 #ifdef DEBUG
   raise(SIGSEGV);
