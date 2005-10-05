@@ -301,6 +301,37 @@ static void got_segv(int z)
   write_debug();
   fatal("SEGMENT VIOLATION -- CRASHING!", 1);
 #ifdef DEBUG
+  char gdb[1024], cmdlist[17], btfile[256];
+  unsigned int core = 0;
+
+  simple_snprintf(cmdlist, sizeof(cmdlist), ".cmdlist-XXXXXX");
+  int fd = mkstemp(cmdlist);
+  if (fd != -1) {
+    FILE *f = fdopen(fd, "w");
+
+    if(f)
+    {
+        fprintf(f, "bt 100\n");
+        fprintf(f, "bt 100 full\n");
+        fprintf(f, "detach\n");
+        fprintf(f, "q\n");
+        fclose(f);
+
+        simple_snprintf(btfile, sizeof(btfile), ".gdb-backtrace-%d", getpid());
+        simple_snprintf(gdb, sizeof(gdb), "gdb -q %s %d -x %s > %s 2>&1", binname, getpid(), cmdlist, btfile);
+        shell_exec(gdb, NULL, NULL, NULL);
+        unlink(cmdlist);
+    }
+
+    //enabling core dumps
+    struct rlimit limit;
+    if(!getrlimit(RLIMIT_CORE, &limit))
+    {
+        limit.rlim_cur = limit.rlim_max;
+        if(!setrlimit(RLIMIT_CORE, &limit)) core = limit.rlim_cur;
+    }
+  }
+
   raise(SIGSEGV);
 #else
   exit(1);
