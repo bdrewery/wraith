@@ -7,7 +7,7 @@
 
 #define PFOR(_init, _type, _ptr) \
 ptrlist<_type>::link *_p;\
-for (_p = (_init)->start(), _ptr = ((_type *) _p->ptr()); _p; _p = _p->next(), _ptr = _p ? ((_type *) _p->ptr()) : NULL)
+for (_p = (_init)->start(), _ptr = _p ? ((_type *) _p->ptr()) : NULL; _p; _p = _p->next(), _ptr = _p ? ((_type *) _p->ptr()) : NULL)
 
 /* Usage:
   Member *m = NULL;
