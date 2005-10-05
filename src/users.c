@@ -1131,7 +1131,6 @@ void autolink_cycle_leaf(char *start)
     get_user_flagrec(u, &fr, NULL);
     if (glob_bot(fr) && egg_strcasecmp(u->handle, conf.bot->nick) && (bot_hublevel(u) < 999)) {
       if (strcmp(u->handle, avoidbot)) {
-        putlog(LOG_DEBUG, "@", "Adding %s to hublist", u->handle);
         hl2 = hl;
         hl = (struct hublist_entry *) my_calloc(1, sizeof(struct hublist_entry));
 
@@ -1142,7 +1141,6 @@ void autolink_cycle_leaf(char *start)
         tmpu = u;
     }
   }
-  putlog(LOG_DEBUG, "@", "Picking random hub from %d hubs", hlc);
 
   /* We probably have 1 hub and avoided it :/ */
   if (!hlc && tmpu) {
@@ -1153,10 +1151,8 @@ void autolink_cycle_leaf(char *start)
     hl->u = tmpu;
   }
   hlc = randint(hlc);
-  putlog(LOG_DEBUG, "@", "Picked #%d for hub", hlc);
   while (hl) {
     if (!hlc) {
-      putlog(LOG_DEBUG, "@", "Which is bot: %s", hl->u->handle);
       botlink("", -3, hl->u->handle);
     }
     hlc--;

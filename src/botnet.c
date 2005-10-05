@@ -951,6 +951,7 @@ int botlink(char *linker, int idx, char *nick)
 {
   struct userrec *u = get_user_by_handle(userlist, nick);
 
+  putlog(LOG_DEBUG, "*", "Linking to %s", nick);
   if (!u || !u->bot) {
     if (idx >= 0)
       dprintf(idx, "%s %s\n", nick, BOT_BOTUNKNOWN);
