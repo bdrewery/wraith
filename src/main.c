@@ -98,7 +98,9 @@ char	ver[41] = "";		/* Version info (short form) */
 bool	use_stderr = 1;		/* Send stuff to stderr instead of logfiles? */
 char	quit_msg[1024];		/* quit message */
 time_t	now;			/* duh, now :) */
-char	get_buf[SGRAB + 10] = "";
+
+char	get_buf[GET_BUFS][SGRAB + 10];
+int	current_get_buf = 0;
 
 
 int do_confedit = 0;		/* show conf menu if -C */
@@ -902,10 +904,15 @@ printf("out: %s\n", out);
 
     xx = sockgets(buf, &i);
  
-    get_buf[0] = 0;
+    get_buf[current_get_buf][0] = 0;
     if (xx >= 0) {		/* Non-error */
+
+      /* This shouldnt need to be REcopied, but out functions mangle with newsplit :\ */
       if (buf[0])
-        strlcpy(get_buf, buf, i);
+        strlcpy(get_buf[current_get_buf], buf, i+1);
+
+      if (++current_get_buf == GET_BUFS)
+        current_get_buf = 0;
 
       for (idx = 0; idx < dcc_total; idx++) {
 	if (dcc[idx].type && dcc[idx].sock == xx) {

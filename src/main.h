@@ -2,6 +2,7 @@
 #define _MAIN_H
 
 #include <sys/types.h>
+#include "net.h"
 
 enum {
   UPDATE_AUTO = 1,
@@ -13,10 +14,12 @@ enum {
   CONF_STATIC
 };
 
+#define GET_BUFS 10
+
 extern int		role, default_flags, default_uflags, do_confedit,
-			updating, do_restart;
+			updating, do_restart, current_get_buf;
 extern bool		use_stderr, backgrd, used_B, term_z, loading, have_take, beta, restart_was_update;
-extern char		tempdir[], *binname, owner[], version[], ver[], quit_msg[], *socksfile, get_buf[];
+extern char		tempdir[], *binname, owner[], version[], ver[], quit_msg[], *socksfile, get_buf[][SGRAB + 10];
 extern time_t		online_since, now, restart_time;
 extern uid_t		myuid;
 extern pid_t            mypid;
