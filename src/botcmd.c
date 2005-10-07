@@ -899,8 +899,8 @@ static void bot_zapfbroad(int idx, char *par)
     fake_alert(idx, "direction", from);
     return;
   }
-  check_bind_bot(from, opcode, par);
   botnet_send_zapf_broad(idx, from, opcode, par);
+  check_bind_bot(from, opcode, par);
 }
 
 static void bot_error(int idx, char *par)
