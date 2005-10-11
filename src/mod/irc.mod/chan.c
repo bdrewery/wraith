@@ -1577,7 +1577,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   /* Propagate hops to other channel memlists... might save us a WHO #chan */
 
   for (ch = chanset; ch; ch = ch->next) {
-    if (channel_active(ch) && ch != chan) {
+    if (!channel_inactive(ch) && ch != chan) {
       ml = ismember(ch, m->nick);
       if (ml) {
         ml->hops = m->hops;

@@ -95,7 +95,7 @@ void Member::UpdateIdle(struct chanset_t *chan, const char *nick)
 
 Member *Member::Find(struct chanset_t *chan, const char *nick) 
 {
-  if (!channel_active(chan) || !chan->channel.hmember)
+  if (channel_inactive(chan) || !chan->channel.hmember)
     return NULL;
 
 //  sdprintf("FIND chan - %s", chan->dname);
