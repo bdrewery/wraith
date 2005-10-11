@@ -62,15 +62,9 @@ void rmspace(char *s)
 
 /* Returns memberfields if the nick is in the member list.
  */
-memberlist *ismember(struct chanset_t *chan, const char *nick)
+Member *ismember(struct chanset_t *chan, const char *nick)
 {
-  register memberlist	*x = NULL;
-
-  if (chan && nick && nick[0])
-    for (x = chan->channel.member; x && x->nick[0]; x = x->next)
-      if (!rfc_casecmp(x->nick, nick))
-        return x;
-  return NULL;
+  return Member::Find(chan, nick);
 }
 
 /* Find a chanset by channel name as the server knows it (ie !ABCDEchannel)
@@ -107,16 +101,18 @@ struct chanset_t *findchan_by_dname(const char *name)
 struct userrec *check_chanlist(const char *host)
 {
   char				*nick = NULL, *uhost = NULL, buf[UHOSTLEN] = "";
-  register memberlist		*m = NULL;
+  register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
 
   strlcpy(buf, host, sizeof buf);
   uhost = buf;
   nick = splitnick(&uhost);
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) 
+  for (chan = chanset; chan; chan = chan->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       if (!rfc_casecmp(nick, m->nick) && !egg_strcasecmp(uhost, m->userhost))
 	return m->user;
+    }
+  }
   return NULL;
 }
 
@@ -125,12 +121,14 @@ struct userrec *check_chanlist(const char *host)
 struct userrec *check_chanlist_hand(const char *hand)
 {
   register struct chanset_t	*chan = NULL;
-  register memberlist		*m = NULL;
+  register Member		*m = NULL;
 
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next)
+  for (chan = chanset; chan; chan = chan->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       if (m->user && !egg_strcasecmp(m->user->handle, hand))
 	return m->user;
+    }
+  }
   return NULL;
 }
 
@@ -141,14 +139,15 @@ struct userrec *check_chanlist_hand(const char *hand)
  */
 void clear_chanlist(void)
 {
-  register memberlist		*m = NULL;
+  register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
 
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  for (chan = chanset; chan; chan = chan->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       m->user = NULL;
       m->tried_getuser = 0;
     }
+  }
 
 }
 
@@ -159,16 +158,18 @@ void clear_chanlist(void)
  */
 void clear_chanlist_member(const char *nick)
 {
-  register memberlist		*m = NULL;
+  register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
 
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next)
+  for (chan = chanset; chan; chan = chan->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       if (!rfc_casecmp(m->nick, nick)) {
 	m->user = NULL;
         m->tried_getuser = 0;
 	break;
       }
+    }
+  }
 }
 
 /* If this user@host is in a channel, set it (it was null)
@@ -176,16 +177,18 @@ void clear_chanlist_member(const char *nick)
 void set_chanlist(const char *host, struct userrec *rec)
 {
   char				*nick = NULL, *uhost = NULL, buf[UHOSTLEN] = "";
-  register memberlist		*m = NULL;
+  register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
 
   strlcpy(buf, host, sizeof buf);
   uhost = buf;
   nick = splitnick(&uhost);
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next)
+  for (chan = chanset; chan; chan = chan->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       if (!rfc_casecmp(nick, m->nick) && !egg_strcasecmp(uhost, m->userhost))
 	m->user = rec;
+    }
+  }
 }
 
 /* 0 marks all channels

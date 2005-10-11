@@ -27,11 +27,11 @@ static void resolv_member_callback(int id, void *client_data, const char *host, 
   if (!r || !r->chan || !r->nick)
     return;
 
-  memberlist *m = NULL;
+  Member *m = NULL;
   char *ps = NULL, *pe = NULL, s[UHOSTLEN + 1];
 
   if (ips && ips[0]) {
-    for (m = r->chan->channel.member; m && m->nick[0]; m = m->next) {
+    PFOR(r->chan->channel.hmember, Member, m) {
       if (!rfc_casecmp(m->nick, r->nick)) {
         if (!m->userip[0] && m->userhost[0]) {
           ps = m->userhost;
@@ -70,45 +70,13 @@ void resolve_to_member(struct chanset_t *chan, char *nick, char *host)
  */
 #define CHANNEL_ID_LEN 5
 
-static void print_memberlist(memberlist *toprint)
-{
-  memberlist *m = NULL;
-
-  for (m = toprint; m && m->nick[0]; m = m->next) {
-    sdprintf("%s!%s user: %s tried: %d hops: %d", m->nick, m->userhost, m->user ? m->user->handle : "", m->tried_getuser, m->hops);
-  }
-}
-
 /* Returns a pointer to a new channel member structure.
  */
-static memberlist *newmember(struct chanset_t *chan, char *nick)
+static Member *newmember(struct chanset_t *chan, char *nick)
 {
-  memberlist *x = chan->channel.member, 
-             *lx = NULL, 
-             *n = (memberlist *) my_calloc(1, sizeof(memberlist));
+  Member *m = new Member(chan, nick);
 
-  /* This sorts the list */
-  while (x && x->nick[0] && (rfc_casecmp(x->nick, nick) < 0)) {
-    lx = x;
-    x = x->next;
-  }
-
-  n->next = NULL;
-  strlcpy(n->nick, nick, sizeof(n->nick));
-  n->split = 0L;
-  n->last = 0L;
-  n->delay = 0L;
-  n->hops = -1;
-  if (!lx) {
-    n->next = chan->channel.member;
-    chan->channel.member = n;
-  } else {
-    n->next = lx->next;
-    lx->next = n;
-  }
-
-  chan->channel.members++;
-  return n;
+  return m;
 }
 
 /* Always pass the channel dname (display name) to this function <cybah>
@@ -118,10 +86,7 @@ static void update_idle(char *chname, char *nick)
   struct chanset_t *chan = findchan_by_dname(chname);
 
   if (chan) {
-    memberlist *m = ismember(chan, nick);
-
-    if (m)
-      m->last = now;
+    Member::UpdateIdle(chan, nick);
   }
 }
 
@@ -193,10 +158,10 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
   if (channel_pending(chan) || !shouldjoin(chan) || !channel_active(chan))
     return;
 
-  memberlist *m = NULL;
+  Member *m = NULL;
   int ops = 0, targets = 0, bpos = 0, tpos = 0, ft = 0, ct = 0, actions = 0, sent = 0;
 
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  PFOR(chan->channel.hmember, Member, m) {
     if (!m->user && !m->tried_getuser) {
       char s[256] = "";
 
@@ -239,7 +204,7 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
     ft -= targets;
   actions = 0;
   sent = 0;
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  PFOR (chan->channel.hmember, Member, m) {
     if (!opsonly || chan_hasop(m)) {
       struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
@@ -282,7 +247,7 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
   ft = 0;
   actions = 0;
   tpos = 0;
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  PFOR (chan->channel.hmember, Member, m) {
     if (!opsonly || chan_hasop(m)) {
       struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
@@ -409,7 +374,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
   /* Do not punish non-existant channel members and IRC services like
    * ChanServ
    */
-  memberlist *m = ismember(chan, floodnick);
+  Member *m = ismember(chan, floodnick);
 
   if (!m && (which != FLOOD_JOIN))
     return 0;
@@ -540,7 +505,8 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
       u_addmask('b', chan, h, conf.bot->nick, ftype, now + (60 * chan->ban_time), 0);
       if (!channel_enforcebans(chan) && me_op(chan)) {
 	  char s[UHOSTLEN];
-	  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {	  
+
+          PFOR (chan->channel.hmember, Member, m) {
 	    simple_sprintf(s, "%s!%s", m->nick, m->userhost);
 	    if (wild_match(h, s) &&
 		(m->joined >= chan->floodtime[which]) &&
@@ -582,7 +548,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
 
 /* Given a chan/m do all necesary exempt checks and ban. */
 static void refresh_ban_kick(struct chanset_t *, char *, char *);
-static void doban(struct chanset_t *chan, memberlist *m)
+static void doban(struct chanset_t *chan, Member *m)
 {
   if (!chan || !m) return;
 
@@ -628,8 +594,9 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
   int flushed = 0;
   char s[UHOSTLEN] = "";
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
+  Member *m = NULL;
 
-  for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  PFOR(chan->channel.hmember, Member, m) {
     simple_sprintf(s, "%s!%s", m->nick, m->userhost);
     get_user_flagrec(m->user ? m->user : get_user_by_host(s), &fr, chan->dname);
     if (me_op(chan) &&
@@ -655,7 +622,7 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
  */
 static void refresh_ban_kick(struct chanset_t *chan, char *user, char *nick)
 {
-  memberlist *m = ismember(chan, nick);
+  Member *m = ismember(chan, nick);
 
   if (!m || chan_sentkick(m))
     return;
@@ -874,8 +841,9 @@ void check_this_ban(struct chanset_t *chan, char *banmask, bool sticky)
     return;
 
   char user[UHOSTLEN] = "";
-
-  for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  Member *m = NULL;
+  
+  PFOR(chan->channel.hmember, Member, m) {
     simple_sprintf(user, "%s!%s", m->nick, m->userhost);
     if (wild_match(banmask, user) &&
         !(use_exempts &&
@@ -990,7 +958,7 @@ void recheck_channel_modes(struct chanset_t *chan)
 
 static void check_this_member(struct chanset_t *chan, char *nick, struct flag_record *fr)
 {
-  memberlist *m = ismember(chan, nick);
+  Member *m = ismember(chan, nick);
 
   if (!m || match_my_nick(nick) || !me_op(chan))
     return;
@@ -1051,12 +1019,12 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
 void check_this_user(char *hand, int del, char *host)
 {
   char s[UHOSTLEN] = "";
-  memberlist *m = NULL;
+  Member *m = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
-  for (struct chanset_t *chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       simple_sprintf(s, "%s!%s", m->nick, m->userhost);
       u = m->user ? m->user : get_user_by_host(s);
       if ((u && !egg_strcasecmp(u->handle, hand) && del < 2) ||
@@ -1066,6 +1034,7 @@ void check_this_user(char *hand, int del, char *host)
 	check_this_member(chan, m->nick, &fr);
       }
     }
+  }
 }
 
 static void enforce_bitch(struct chanset_t *chan) {
@@ -1160,11 +1129,12 @@ do_take(struct chanset_t *chan)
   char *to_deop = (char *) my_calloc(1, 2048), *to_deop_ptr = to_deop;
   register bool hasop, isbot;
   register unsigned int lines_max = 5, lines = 0, deopn, i;
+  register Member *m = NULL;
 
   if (floodless)
     lines_max = 15;
 
-  for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  PFOR(chan->channel.hmember, Member, m) {
     hasop = (m->flags & CHANOP);
     isbot = 0;
 
@@ -1252,7 +1222,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
   if (!userlist || loading)                /* Bot doesnt know anybody */
     return;        		           /* ... it's better not to deop everybody */
 
-  memberlist *m = NULL;
+  Member *m = NULL;
   char s[UHOSTLEN] = "";
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   int stop_reset = 0, botops = 0, nonbotops = 0, botnonops = 0;
@@ -1261,7 +1231,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
 
   putlog(LOG_DEBUG, "*", "recheck_channel %s", chan->dname);
 
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  PFOR(chan->channel.hmember, Member, m) {
     bool hasop = chan_hasop(m);
 
     if (m) {
@@ -1304,7 +1274,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
     }
   }
 
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next) { 
+  PFOR (chan->channel.hmember, Member, m) {
     simple_sprintf(s, "%s!%s", m->nick, m->userhost);
 
     if (!m->user && !m->tried_getuser) {
@@ -1581,49 +1551,11 @@ static int got324(char *from, char *msg)
   return 0;
 }
 
-
-static void memberlist_reposition(struct chanset_t *chan, memberlist *target) {
-  /* Move target from it's current position to it's correct sorted position */
-  memberlist *old = NULL, *m = NULL;
-  if (chan->channel.member == target) {
-    chan->channel.member = target->next;
-  } else {
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
-      if (m->next == target) {
-        m->next = target->next;
-        break;
-      }
-    }
-  }
-  target->next = NULL;
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
-    if (rfc_casecmp(m->nick, target->nick)>0) {
-      if (old) {
-        target->next = m;
-        old->next = target;
-      } else {
-        target->next = chan->channel.member;
-        chan->channel.member = target;
-      }
-      return;
-    }
-    old = m;
-  }
-  if (old) {
-    target->next = old->next;
-    old->next = target;
-  } else {
-    target->next = NULL;
-    chan->channel.member = target;
-  }
-}
-
-
 static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick, char *flags, int hops)
 {
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   char userhost[UHOSTLEN] = "";
-  memberlist *m = ismember(chan, nick);	/* in my channel list copy? */
+  Member *m = ismember(chan, nick);	/* in my channel list copy? */
   bool waschanop = 0, me = 0;
 //  struct chanset_t *ch = NULL;
 //  memberlist *ml = NULL;
@@ -1646,11 +1578,9 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 /* FIXME: great concept, HORRIBLE CPU USAGE 
   for (ch = chanset; ch; ch = ch->next) {
     if (ch != chan) {
-      for (ml = ch->channel.member; ml && ml->nick[0]; ml = ml->next) {
-        if (!strcmp(ml->nick, m->nick)) {
-          ml->hops = m->hops;
-          break;
-        }
+      ml = ismember(chan, m->nick);
+      if (ml) {
+        ml->hops = m->hops;
       }
     }
   }
@@ -2239,7 +2169,7 @@ static int gottopic(char *from, char *msg)
   nick = splitnick(&from);
   chan = findchan(chname);
   if (chan) {
-    memberlist *m = ismember(chan, nick);
+    Member *m = ismember(chan, nick);
 
     irc_log(chan, "%s!%s changed topic to: %s", nick, from, msg);
     if (m != NULL)
@@ -2291,7 +2221,7 @@ static int gotjoin(char *from, char *chname)
   char *nick = NULL, *p = NULL, buf[UHOSTLEN] = "", *uhost = buf;
   char *ch_dname = NULL;
   struct chanset_t *chan = NULL;
-  memberlist *m = NULL;
+  Member *m = NULL;
   masklist *b = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
@@ -2632,7 +2562,7 @@ static int gotkick(char *from, char *origmsg)
   }
   if (channel_active(chan)) {
     char *whodid = NULL, s1[UHOSTLEN] = "", buf[UHOSTLEN] = "", *uhost = buf;
-    memberlist *m = NULL;
+    Member *m = NULL;
     struct userrec *u = NULL;
     struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
@@ -2690,7 +2620,7 @@ static int gotkick(char *from, char *origmsg)
 static int gotnick(char *from, char *msg)
 {
   char *nick = NULL, *chname = NULL, s1[UHOSTLEN] = "", buf[UHOSTLEN] = "", *uhost = buf;
-  memberlist *m = NULL, *mm = NULL;
+  Member *m = NULL, *mm = NULL;
   struct chanset_t *oldchan = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
@@ -2709,7 +2639,7 @@ static int gotnick(char *from, char *msg)
       m->last = now;
       /* Not just a capitalization change */
       if (rfc_casecmp(nick, msg)) {
-        /* Someone on channel with old nick?! */
+        /* Someone on channel with new nick?! */
 	if ((mm = ismember(chan, msg)))
 	  killmember(chan, mm->nick);
       }
@@ -2718,8 +2648,8 @@ static int gotnick(char *from, char *msg)
        */
       /* Compose a nick!user@host for the new nick */
       simple_sprintf(s1, "%s!%s", msg, uhost);
-      strcpy(m->nick, msg);
-      memberlist_reposition(chan, m);
+//      strcpy(m->nick, msg);
+      m->NewNick(msg);
       detect_chan_flood(msg, uhost, from, chan, FLOOD_NICK, NULL);
 
       if (!findchan_by_dname(chname)) {
@@ -2760,8 +2690,9 @@ void check_should_cycle(struct chanset_t *chan)
 
   //If there are other ops split off and i'm the only op on this side of split, cycle
   int localops = 0, localbotops = 0, splitops = 0, splitbotops = 0, localnonops = 0;
-
-  for (memberlist *ml = chan->channel.member; ml && ml->nick[0]; ml = ml->next) {
+  Member *ml = NULL;
+  
+  PFOR(chan->channel.hmember, Member, ml) {
     if (chan_hasop(ml)) {
       if (chan_issplit(ml)) {
         splitops++;
@@ -2801,7 +2732,7 @@ static int gotquit(char *from, char *msg)
   char *nick = NULL, *chname = NULL, *p = NULL;
   int split = 0;
   char from2[NICKMAX + UHOSTMAX + 1] = "";
-  memberlist *m = NULL;
+  Member *m = NULL;
   struct chanset_t *oldchan = NULL;
   struct userrec *u = NULL;
 
@@ -2912,7 +2843,7 @@ static int gotmsg(char *from, char *msg)
   /* Only check if flood-ctcp is active */
   detect_autokick(nick, uhost, chan, msg);
   if (flood_ctcp.count && detect_avalanche(msg)) {
-    memberlist *m = ismember(chan, nick);
+    Member *m = ismember(chan, nick);
 
     u = get_user_by_host(from);
     get_user_flagrec(u, &fr, chan->dname);
@@ -3070,7 +3001,7 @@ static int gotnotice(char *from, char *msg)
   nick = splitnick(&uhost);
   u = get_user_by_host(from);
   if (flood_ctcp.count && detect_avalanche(msg)) {
-    memberlist *m = ismember(chan, nick);
+    Member *m = ismember(chan, nick);
 
     get_user_flagrec(u, &fr, chan->dname);
     /* Discard -- kick user if it was to the channel */

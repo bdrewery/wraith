@@ -86,7 +86,7 @@ do_autoop(void *client_data)
 static bool
 do_op(char *nick, struct chanset_t *chan, time_t delay, bool force)
 {
-  memberlist *m = ismember(chan, nick);
+  Member *m = ismember(chan, nick);
 
   if (!me_op(chan) || !m || (!force && (chan_hasop(m) || chan_sentop(m))))
     return 0;
@@ -319,7 +319,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
   if (!me_op(chan))
     return;
 
-  memberlist *mx = NULL;
+  Member *mx = NULL;
 
   if (mode == 'o' || mode == 'v') {
     mx = ismember(chan, op);
@@ -516,7 +516,7 @@ got_key(struct chanset_t *chan, char *key)
 }
 
 static void
-got_op(struct chanset_t *chan, memberlist *m, memberlist *mv)
+got_op(struct chanset_t *chan, Member *m, Member *mv)
 {
   bool check_chan = 0;
 
@@ -617,7 +617,7 @@ got_op(struct chanset_t *chan, memberlist *m, memberlist *mv)
 }
 
 static void
-got_deop(struct chanset_t *chan, memberlist *m, memberlist *mv, char *isserver)
+got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
 {
   char s1[UHOSTLEN] = "";
   
@@ -673,9 +673,9 @@ got_deop(struct chanset_t *chan, memberlist *m, memberlist *mv, char *isserver)
   /* Was the bot deopped? */
   if (match_my_nick(mv->nick)) {
     /* Cancel any pending kicks and modes */
-    memberlist *m2 = NULL;
+    Member *m2 = NULL;
 
-    for (m2 = chan->channel.member; m2 && m2->nick[0]; m2 = m2->next)
+    PFOR(chan->channel.hmember, Member, m2) 
       m2->flags &= ~(SENTKICK | SENTDEOP | SENTOP | SENTVOICE | SENTDEVOICE);
 
     chan->channel.do_opreq = 1;
@@ -693,7 +693,7 @@ got_deop(struct chanset_t *chan, memberlist *m, memberlist *mv, char *isserver)
 }
 
 static void
-got_ban(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
+got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char me[UHOSTLEN] = "", meip[UHOSTLEN] = "", s[UHOSTLEN] = "";
 
@@ -718,8 +718,9 @@ got_ban(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
     }
     /* remove bans on ops unless a master/bot set it */
     char s1[UHOSTLEN] = "";
+    Member *m2 = NULL;
 
-    for (memberlist *m2 = chan->channel.member; m2 && m2->nick[0]; m2 = m2->next) {
+    PFOR(chan->channel.hmember, Member, m2) {
       simple_snprintf(s1, sizeof s1, "%s!%s", m2->nick, m2->userhost);
       if ((wild_match(mask, s1) || match_cidr(mask, s1))
           && !isexempted(chan, s1)) {
@@ -761,7 +762,7 @@ got_ban(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
 }
 
 static void
-got_unban(struct chanset_t *chan, memberlist *m, char *mask)
+got_unban(struct chanset_t *chan, Member *m, char *mask)
 {
   masklist *b = NULL, *old = NULL;
 
@@ -794,7 +795,7 @@ got_unban(struct chanset_t *chan, memberlist *m, char *mask)
 }
 
 static void
-got_exempt(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
+got_exempt(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char s[UHOSTLEN] = "";
 
@@ -817,7 +818,7 @@ got_exempt(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
 }
 
 static void
-got_unexempt(struct chanset_t *chan, memberlist *m, char *mask)
+got_unexempt(struct chanset_t *chan, Member *m, char *mask)
 {
   masklist *e = chan->channel.exempt, *old = NULL;
   masklist *b = NULL;
@@ -863,7 +864,7 @@ got_unexempt(struct chanset_t *chan, memberlist *m, char *mask)
 }
 
 static void
-got_invite(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
+got_invite(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char s[UHOSTLEN] = "";
 
@@ -887,7 +888,7 @@ got_invite(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
 }
 
 static void
-got_uninvite(struct chanset_t *chan, memberlist *m, char *mask)
+got_uninvite(struct chanset_t *chan, Member *m, char *mask)
 {
   masklist *inv = chan->channel.invite, *old = NULL;
 
@@ -920,9 +921,9 @@ got_uninvite(struct chanset_t *chan, memberlist *m, char *mask)
     add_mode(chan, '+', 'I', mask);
 }
 
-static memberlist *assert_ismember(struct chanset_t *chan, const char *nick)
+static Member *assert_ismember(struct chanset_t *chan, const char *nick)
 {
-  memberlist *m = ismember(chan, nick);
+  Member *m = ismember(chan, nick);
 
   if (m) {
     if (!m->user) {
@@ -976,7 +977,7 @@ gotmode(char *from, char *msg)
       char *nick = NULL, *chg = NULL, s[UHOSTLEN] = "", sign = '+', *mp = NULL, *isserver = NULL;
       size_t z = strlen(msg);
       struct userrec *u = NULL;
-      memberlist *m = NULL, *mv = NULL;
+      Member *m = NULL, *mv = NULL;
 
       if (!strchr(from, '!'))
         isserver = strdup(from);

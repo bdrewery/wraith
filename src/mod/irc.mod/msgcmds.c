@@ -512,7 +512,7 @@ static int msgc_op(Auth *a, char *chname, char *par)
   struct chanset_t *chan = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   int force = 0;
-  memberlist *m = NULL;
+  Member *m = NULL;
 
   if (chname && chname[0]) {
     chan = findchan_by_dname(chname);
@@ -562,7 +562,7 @@ static int msgc_voice(Auth *a, char *chname, char *par)
   struct chanset_t *chan = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   int force = 0;
-  memberlist *m = NULL;
+  Member *m = NULL;
 
   if (chname && chname[0]) {
     chan = findchan_by_dname(chname);

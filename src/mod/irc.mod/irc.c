@@ -75,7 +75,7 @@ static bool include_lk = 1;      /* For correct calculation
 #include "msgcmds.c"
 
 static int
-voice_ok(memberlist *m, struct chanset_t *chan)
+voice_ok(Member *m, struct chanset_t *chan)
 {
   if (m->flags & EVOICE)
     return 0;
@@ -356,7 +356,7 @@ getin_request(char *botnick, char *code, char *par)
 
 
   struct userrec *u = NULL;
-  memberlist *mem = NULL;
+  Member *mem = NULL;
   char nick[NICKLEN] = "", uhost[UHOSTLEN] = "", uip[UHOSTLEN] = "";
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
@@ -648,13 +648,13 @@ request_op(struct chanset_t *chan)
     chan->channel.no_op = now + op_requests.time + 1;
     return;
   }
-  int cnt = op_bots, i2;
-  memberlist *ml = NULL;
-  memberlist *botops[MAX_BOTS];
+  int cnt = op_bots, i2 = 0;
+  Member *ml = NULL, *botops[MAX_BOTS];
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   char s[UHOSTLEN] = "";
 
-  for (i = 0, ml = chan->channel.member; (i < MAX_BOTS) && ml && ml->nick[0]; ml = ml->next) {
+  i = 0;
+  PFOR (chan->channel.hmember, Member, ml) {
     /* If bot, linked, global op & !split & chanop & (chan is reserver | bot isn't +a) -> 
      * add to temp list */
     if (!ml->user && !ml->tried_getuser) {
@@ -669,6 +669,7 @@ request_op(struct chanset_t *chan)
       if (chk_op(fr, chan))
         botops[i++] = ml;
     }
+    if (i == MAX_BOTS) break;
   }
   if (!i) {
     if (channel_active(chan) && !channel_pending(chan)) {
@@ -829,7 +830,7 @@ static void
 punish_badguy(struct chanset_t *chan, char *whobad,
               struct userrec *u, char *badnick, char *victimstr, bool mevictim, int type)
 {
-  memberlist *m = ismember(chan, badnick);
+  Member *m = ismember(chan, badnick);
 
   if (!m)
     return;
@@ -863,7 +864,7 @@ punish_badguy(struct chanset_t *chan, char *whobad,
       /* ... unless there's no more to do */
       !(chan_deop(fr) || glob_deop(fr))) {
     char s[UHOSTLEN], s1[UHOSTLEN];
-    memberlist *mx = NULL;
+    Member *mx = NULL;
 
     /* Removing op */
     if (chan_op(fr) || (glob_op(fr) && !chan_deop(fr))) {
@@ -1005,36 +1006,16 @@ new_mask(masklist *m, char *s, char *who)
 static bool
 killmember(struct chanset_t *chan, char *nick)
 {
-  memberlist *x = NULL, *old = NULL;
+  Member *m = NULL;
+  
+  m = Member::Find(chan, nick);
 
-  for (x = chan->channel.member; x && x->nick[0]; old = x, x = x->next)
-    if (!rfc_casecmp(x->nick, nick))
-      break;
-  if (!x || !x->nick[0]) {
+  if (m) {
+    m->Remove();
+  } else {
     if (!channel_pending(chan))
       putlog(LOG_MISC, "*", "(!) killmember(%s, %s) -> nonexistent", chan->dname, nick);
     return 0;
-  }
-  if (old)
-    old->next = x->next;
-  else
-    chan->channel.member = x->next;
-  free(x);
-  chan->channel.members--;
-
-  /* The following two errors should NEVER happen. We will try to correct
-   * them though, to keep the bot from crashing.
-   */
-  if (chan->channel.members < 0) {
-    chan->channel.members = 0;
-    for (x = chan->channel.member; x && x->nick[0]; x = x->next)
-      chan->channel.members++;
-    putlog(LOG_MISC, "*", "(!) actually I know of %d members.", chan->channel.members);
-  }
-  if (!chan->channel.member) {
-    chan->channel.member = (memberlist *) my_calloc(1, sizeof(memberlist));
-    chan->channel.member->nick[0] = 0;
-    chan->channel.member->next = NULL;
   }
   return 1;
 }
@@ -1044,7 +1025,7 @@ killmember(struct chanset_t *chan, char *nick)
 bool
 me_op(struct chanset_t *chan)
 {
-  memberlist *mx = ismember(chan, botname);
+  Member *mx = ismember(chan, botname);
 
   if (!mx)
     return 0;
@@ -1059,7 +1040,7 @@ me_op(struct chanset_t *chan)
 static bool
 me_voice(struct chanset_t *chan)
 {
-  memberlist *mx = ismember(chan, botname);
+  Member *mx = ismember(chan, botname);
 
   if (!mx)
     return 0;
@@ -1075,9 +1056,9 @@ me_voice(struct chanset_t *chan)
 static bool
 any_ops(struct chanset_t *chan)
 {
-  memberlist *x = NULL;
+  Member *x = NULL;
 
-  for (x = chan->channel.member; x && x->nick[0]; x = x->next)
+  PFOR(chan->channel.hmember, Member, x)
     if (chan_hasop(x))
       break;
   if (!x || !x->nick[0])
@@ -1151,15 +1132,16 @@ check_lonely_channel(struct chanset_t *chan)
       !shouldjoin(chan) || (chan->channel.mode & CHANANON))
     return;
 
-  memberlist *m = NULL;
+  Member *m = NULL;
   char s[UHOSTLEN] = "";
   int i = 0;
   static int whined = 0;
 
   /* Count non-split channel members */
-  for (m = chan->channel.member; m && m->nick[0]; m = m->next)
+  PFOR(chan->channel.hmember, Member, m) {
     if (!chan_issplit(m))
       i++;
+  }
   if (i == 1 && channel_cycle(chan) && !channel_stop_cycle(chan)) {
     if (chan->name[0] != '+') { /* Its pointless to cycle + chans for ops */
       putlog(LOG_MISC, "*", "Trying to cycle %s to regain ops.", chan->dname);
@@ -1188,7 +1170,7 @@ check_lonely_channel(struct chanset_t *chan)
         putlog(LOG_MISC, "*", "%s is active but has no ops :(", chan->dname);
       whined = 1;
     }
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       simple_sprintf(s, "%s!%s", m->nick, m->userhost);
       u = get_user_by_host(s);
       if (!match_my_nick(m->nick) && (!u || !u->bot)) {
@@ -1223,7 +1205,9 @@ warn_pls_take(struct chanset_t *chan)
 static void
 check_servers(struct chanset_t *chan)
 {
-  for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  Member *m = NULL;
+
+  PFOR(chan->channel.hmember, Member, m) {
     if (!match_my_nick(m->nick) && chan_hasop(m) && (m->hops == -1)) {
       putlog(LOG_DEBUG, "*", "Updating WHO for '%s' because '%s' is missing data.", chan->dname, m->nick);
       dprintf(DP_HELP, "WHO %s\n", chan->name);
@@ -1277,7 +1261,7 @@ check_expired_chanstuff(struct chanset_t *chan)
 {
   if (channel_active(chan)) {
     masklist *b = NULL, *e = NULL;
-    memberlist *m = NULL, *n = NULL;
+    ptrlist<Member>::iterator m, n, p;
     char s[UHOSTLEN] = "";
     struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
@@ -1331,8 +1315,16 @@ check_expired_chanstuff(struct chanset_t *chan)
     } /* me_op */
 
 //    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
-    for (m = chan->channel.member; m && m->nick[0]; m = n) {
-      n = m->next;
+//#ifdef BROKEN
+//    for (m = chan->channel.member; m && m->nick[0]; m = n) {
+//PFOR - unstandard
+//    for (ptrlist<Member>::iterator m = chan->channel.hmember->list.begin(); m; m = n) {
+    for (m = chan->channel.hmember->list.begin(); m; m = n) {
+      p = m;
+      p++;
+      n = p;
+//      n = m->next;
+//      n = m + 1;
       if (m->split && now - m->split > wait_split) {
         simple_sprintf(s, "%s!%s", m->nick, m->userhost);
         putlog(LOG_JOIN, chan->dname, "%s (%s) got lost in the net-split.", m->nick, m->userhost);
@@ -1379,8 +1371,8 @@ check_expired_chanstuff(struct chanset_t *chan)
           }
         }
       }
-      m = n;
     }
+//#endif
     check_lonely_channel(chan);
   } else if (shouldjoin(chan) && !channel_pending(chan) && !channel_joining(chan)) {
     dprintf(DP_MODE, "JOIN %s %s\n",
@@ -1436,10 +1428,10 @@ flush_modes()
   if (!modesperline)		/* Haven't received 005 yet :) */
     return;
 
-  memberlist *m = NULL;
+  Member *m = NULL;
 
   for (register struct chanset_t *chan = chanset; chan; chan = chan->next) {
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+    PFOR(chan->channel.hmember, Member, m) {
       if (m->delay && m->delay <= now) {
         m->delay = 0L;
         m->flags &= ~FULL_DELAY;

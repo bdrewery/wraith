@@ -810,7 +810,7 @@ void channels_writeuserfile(FILE *f)
  */
 bool expired_mask(struct chanset_t *chan, char *who)
 {
-  memberlist *m = NULL, *m2 = NULL;
+  Member *m = NULL, *m2 = NULL;
   char buf[UHOSTLEN] = "", *snick = NULL, *sfrom = NULL;
   struct userrec *u = NULL;
 
@@ -822,12 +822,13 @@ bool expired_mask(struct chanset_t *chan, char *who)
     return 1;
 
   m = ismember(chan, snick);
-  if (!m)
-    for (m2 = chan->channel.member; m2 && m2->nick[0]; m2 = m2->next)
+  if (!m) {
+    PFOR(chan->channel.hmember, Member, m2)
       if (!egg_strcasecmp(sfrom, m2->userhost)) {
 	m = m2;
 	break;
       }
+  }
 
   if (!m || !chan_hasop(m) || !rfc_casecmp(m->nick, botname))
     return 1;

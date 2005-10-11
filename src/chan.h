@@ -8,6 +8,8 @@
 #ifndef _EGG_CHAN_H
 #define _EGG_CHAN_H
 
+#include "member-class.h"
+
 typedef struct memstruct {
   struct memstruct *next;
   struct userrec *user;
@@ -85,7 +87,7 @@ extern maskrec *global_bans, *global_exempts, *global_invites;
 
 /* For every channel i join */
 struct chan_t {
-  memberlist *member;
+  Htree<Member> *hmember;
   masklist *ban;
   masklist *exempt;
   masklist *invite;
@@ -244,7 +246,7 @@ struct chanset_t {
 #define CHAN_DYNAMICINVITES BIT4
 #define CHAN_NOUSERINVITES  BIT5
 /* prototypes */
-memberlist *ismember(struct chanset_t *, const char *);
+Member *ismember(struct chanset_t *, const char *);
 struct chanset_t *findchan(const char *name);
 struct chanset_t *findchan_by_dname(const char *name);
 

@@ -666,29 +666,24 @@ static void notes_hourly()
   expire_notes();
   if (notify_users) {
     register struct chanset_t	*chan = NULL;
-    register memberlist	*m = NULL;
+    register Member *m = NULL;
     int k;
     register int l;
-    char s1[256] = "";
     struct userrec *u = NULL;
 
     for (chan = chanset; chan; chan = chan->next) {
-      for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
-	simple_sprintf(s1, "%s!%s", m->nick, m->userhost);
-	u = get_user_by_host(s1);
+      PFOR(chan->channel.hmember, Member, m) {
+        u = m->GetUser();
 	if (u) {
 	  k = num_notes(u->handle);
 	  for (l = 0; l < dcc_total; l++)
-	    if (dcc[l].type && (dcc[l].type->flags & DCT_CHAT) &&
-		!egg_strcasecmp(dcc[l].nick, u->handle)) {
+	    if (dcc[l].type && (dcc[l].type->flags & DCT_CHAT) && !egg_strcasecmp(dcc[l].nick, u->handle)) {
 	      k = 0;		/* They already know they have notes */
 	      break;
 	    }
 	  if (k) {
-	    dprintf(DP_HELP, "NOTICE %s :You have %d note%s waiting on %s.\n",
-		    m->nick, k, k == 1 ? "" : "s", botname);
-	    dprintf(DP_HELP, "NOTICE %s :%s /MSG %s NOTES <pass> INDEX\n",
-		        m->nick, NOTES_FORLIST, botname);
+	    dprintf(DP_HELP, "NOTICE %s :You have %d note%s waiting on %s.\n", m->nick, k, k == 1 ? "" : "s", botname);
+	    dprintf(DP_HELP, "NOTICE %s :%s /MSG %s NOTES <pass> INDEX\n", m->nick, NOTES_FORLIST, botname);
 	  }
 	}
       }

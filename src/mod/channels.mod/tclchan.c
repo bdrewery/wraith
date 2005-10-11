@@ -728,10 +728,9 @@ static void init_channel(struct chanset_t *chan, bool reset)
   chan->channel.invite = (masklist *) my_calloc(1, sizeof(masklist));
   init_masklist(chan->channel.invite);
 
-  chan->channel.member = (memberlist *) my_calloc(1, sizeof(memberlist));
-  chan->channel.member->nick[0] = 0;
-  chan->channel.member->next = NULL;
   chan->channel.topic = NULL;
+
+  chan->channel.hmember = new Htree<Member>();
 }
 
 static void clear_masklist(masklist *m)
@@ -752,14 +751,11 @@ static void clear_masklist(masklist *m)
  */
 void clear_channel(struct chanset_t *chan, bool reset)
 {
-  memberlist *m = NULL, *m1 = NULL;
-
   if (chan->channel.topic)
     free(chan->channel.topic);
-  for (m = chan->channel.member; m; m = m1) {
-    m1 = m->next;
-    free(m);
-  }
+
+  if (chan->channel.hmember)
+    delete chan->channel.hmember;  
 
   clear_masklist(chan->channel.ban);
   chan->channel.ban = NULL;
