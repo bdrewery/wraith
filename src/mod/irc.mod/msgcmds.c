@@ -496,13 +496,15 @@ static int msgc_test(Auth *a, char *chname, char *par)
 
 static int msgc_dcc(Auth *a, char *chname, char *cmd, char *par)
 {
+  int x = 0;
+
   LOGC(cmd);
 
   if (a->GetIdx(chname)) {
-    check_auth_dcc(a, cmd, par);
+    x = check_auth_dcc(a, cmd, par);
   }
 
-  return BIND_RET_BREAK;
+  return x;
 }
 
 static int msgc_op(Auth *a, char *chname, char *par)
