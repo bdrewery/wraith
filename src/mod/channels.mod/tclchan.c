@@ -217,9 +217,9 @@ int SplitList(char *resultBuf, const char *list, int *argcPtr, const char ***arg
     const char *l = NULL;
     const char *element = NULL;
     char *p = NULL;
-    int result, brace;
+    int result = 0, brace = 0;
     size_t size = 2;		/* initialized to 1 for NULL pointer */
-    size_t length, elSize, i = 0;
+    size_t length = 0, elSize = 0, i = 0;
 
     /*
      * Figure out how much space to allocate.  There must be enough
