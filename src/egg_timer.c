@@ -203,6 +203,11 @@ int timer_run()
 		callback = timer->callback;
 		client_data = timer->client_data;
 
+		if (timer->name)
+			simple_snprintf(get_buf[current_get_buf], SGRAB + 10, "Execing timer: %s", timer->name);
+		if (++current_get_buf == GET_BUFS)
+			current_get_buf = 0;
+
 		if (timer->flags & TIMER_REPEAT) {
 			/* Update timer. */
 			timer->trigger_time.sec += timer->howlong.sec;
