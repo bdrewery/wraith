@@ -19,6 +19,8 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Added build os/architechture to output for ./binary -v
 * Added ARCH entry for bots in .whois
 * Removed references to the old 'greet' features of eggdrop from help.
+* Removed/fixed references to the old 'config' to the new 'set' in help.
+* Fixed references to 'set manop/mop' to point to chanset instead.
 * Fixed tempdir checking to attempt to 'mkdir ~/.ssh/' for '~/.ssh/...' tempdir.
 * Cmds (op, deop, voice, devoice) now recognize console '*' and take '*'.
   -Cmds will also attempt to find your irc nickname if not provided.
