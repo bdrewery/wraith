@@ -1,13 +1,41 @@
-/* this code isnt mine. */
 
-#ifndef _PTRLIST_H
-#define _PTRLIST_H
+/***************************************************************************
+ *   Copyright (C) 2003-2005 by Grzegorz Rusin                             *
+ *   grusin@gmail.com                                                      *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
 
-//template <class T> class ptrlist;
+#ifndef PKS_PTRLIST_H
+#define PKS_PTRLIST_H 1
 
+#include "iterator.h"
+//#include "hashlist.h"
+
+//#define SETPTR(__type, __ptr) __ptr = (_p ? ((__type *) _p->ptr()) : NULL)
+//#define SETPTR(__type, __ptr) _ptr = _p
 #define PFOR(_init, _type, _ptr) \
-ptrlist<_type>::link *_p;\
-for (_p = (_init)->start(), _ptr = _p ? ((_type *) _p->ptr()) : NULL; _p; _p = _p->next(), _ptr = _p ? ((_type *) _p->ptr()) : NULL)
+_ptr = NULL;\
+for (\
+ ptrlist<_type>::iterator _ptr = _init->list.begin();\
+ _ptr;\
+ _ptr++\
+)
+// ptrlist<_type>::iterator _ptr = _init->list.begin();
+// _ptr = _init->list.begin();
 
 /* Usage:
   Member *m = NULL;
@@ -17,22 +45,16 @@ for (_p = (_init)->start(), _ptr = _p ? ((_type *) _p->ptr()) : NULL; _p; _p = _
   }
 */
 
-template <class T> class ptrlist
+
+
+template <class T> class ptrlist;
+
+template <class T>
+class ptrlist
 {
 	public:
-	class link
-	{
-		private:
-		T *_ptr;
-		link *_next;
-		link *_prev;
-
-		public:
-		link *next()	{ return _next; };
-		T *ptr()		{ return _ptr; };
-		link(T *p)		{ _ptr = p; };
-		friend class ptrlist;
-	};
+	typedef iterator_type<T> iterator;
+	typedef link_type<T> link;
 
 	private:
 	link *first;
@@ -41,7 +63,7 @@ template <class T> class ptrlist
 
 	public:
 	////////////////////////////////////////
-	int expire(time_t t, time_t now)
+	int expire(const time_t t, const time_t now)
 	{
 		link *q, *p = first;
 		while(p)
@@ -49,7 +71,7 @@ template <class T> class ptrlist
 			if(p->ptr()->creation() + t <= now)
 			{
 				q = p->next();
-				remove(p);
+				removeLink(p);
 				p = q;
 			}
 			else p = p->next();
@@ -58,11 +80,11 @@ template <class T> class ptrlist
 	}
 
 	////////////////////////////////////////
-	int entries()			{ return ent; };
+	int entries() const		{ return ent; };
 
 	////////////////////////////////////////
-	// returns pointer to a first link
-	link *start()	{ return first; };
+	// return interator
+    iterator begin() const { return iterator(first); };
 
 	////////////////////////////////////////
 	// enable deletion of ptr() on removal
@@ -73,23 +95,23 @@ template <class T> class ptrlist
 	}
 
 	////////////////////////////////////////
-	// gets pointer to n-th link
-	link *getItem(int num)
+	// gets to n-th element
+	iterator getItem(const int num) const
 	{
 		link *p;
 		int i;
 
-		if(num + 1 > ent) return NULL;
+		if(num + 1 > ent || num < 0) return iterator(NULL);
 		p = first;
 		i = 0;
 
 		while(p)
 		{
-			if(i == num) return p;
+			if(i == num) return iterator(p);
 			p = p->_next;
 			i++;
 		}
-		return NULL;
+		return iterator(NULL);
 	}
 
 	//////////////////////////////////////////////////
@@ -98,139 +120,98 @@ template <class T> class ptrlist
 	// object which will be identical to one you
 	// want to remove (in aspect of == operator, ofc)
 	// and then pass it as argument to this fucntion
-	link *find(T &obj)
+	iterator find(const T &obj) const
 	{
 		link *p = first;
 
 		while(p)
 		{
-			if(obj == *p->_ptr) return p;
+				if(*p->_ptr == obj)
+				return iterator(p);
 			p = p->_next;
 		}
-		return NULL;
+		return iterator(NULL);
 	}
 
 	//////////////////////////////////////
 	// find by pointer
-	link *find(T *ptr)
+	iterator find(const T *ptr) const
 	{
 		link *p = first;
 
 		while(p)
 		{
-			if(ptr == p->_ptr) return p;
+			if(ptr == p->_ptr)
+				return iterator(p);
 			p = p->_next;
 		}
-		return NULL;
+		return iterator(NULL);
 	}
 
-	//////////////////////////////
-	// remove by link
-	int removeLink(link *p)
+	//////////////////////////////////
+	// remove link
+	void removeLink(link *p, bool rm=1)
 	{
 		if(first == p)
 		{
 			first = first->_next;
 			if(first) first->_prev = NULL;
-			if(_removePtrs) delete p->ptr();
-			delete p;
-			--ent;
-			return 1;
 		}
 		else
 		{
 			p->_prev->_next = p->_next;
 			if(p->_next) p->_next->_prev = p->_prev;
-			if(_removePtrs) delete p->ptr();
-			delete p;
-			--ent;
-			return 1;
 		}
-		return 0;
+
+		--ent;
+		if(_removePtrs && rm)
+			delete p->ptr();
+		delete p;
 	}
+
 	/////////////////////////////////
 	// remove by object
-	int remove(T &obj)
+	int remove(const T &obj, bool rm=1)
 	{
-		link *p = first;
+		iterator i = find(obj);
 
-		if(!ent) return 0;
-		if(*first->_ptr == obj)
+		if(i)
 		{
-			first = first->_next;
-			if(first) first->_prev = NULL;
-			if(_removePtrs) delete p->ptr();
-			delete p;
-			--ent;
+			removeLink(i, rm);
 			return 1;
-		}
-		else
-		{
-			while(p)
-			{
-				if(*p->_ptr == obj)
-				{
-					p->_prev->_next = p->_next;
-					if(p->_next) p->_next->_prev = p->_prev;
-					if(_removePtrs) delete p->ptr();
-					delete p;
-					--ent;
-					return 1;
-				}
-				p = p->_next;
-			}
 		}
 		return 0;
 	}
 	//////////////////////////////
 	// remove by pointer
-	int remove(T *ptr)
+	int remove(T *ptr, bool rm=1)
 	{
-		link *p = first;
+		iterator i = find(ptr);
 
-		if(!ent) return 0;
-		if(first->_ptr == ptr)
+		if(i)
 		{
-			first = first->_next;
-			if(first) first->_prev = NULL;
-			if(_removePtrs) delete p->ptr();
-			delete p;
-			--ent;
+			removeLink(i, rm);
 			return 1;
 		}
-		else
-		{
-			while(p)
-			{
-				if(p->_ptr == ptr)
-				{
-					p->_prev->_next = p->_next;
-					if(p->_next) p->_next->_prev = p->_prev;
-					if(_removePtrs) delete p->ptr();
-					delete p;
-					--ent;
-					return 1;
-				}
-				p = p->_next;
-			}
-		}
+
 		return 0;
 	}
 
 	//////////////////////////////////
 	// sort add pointer to a list
-	void sortAdd(T *ptr)
+	iterator sortAdd(const T *ptr)
 	{
 		link *p, *q;
 
-		if(!ptr)  return;
+		if(!ptr)
+			return(NULL);
 
 		if(!ent)
 		{
 			first = new link(ptr);
 			first->_next = first->_prev = NULL;
 			++ent;
-			return;
+			return(first);
 		}
 		else
 		{
@@ -243,7 +224,7 @@ template <class T> class ptrlist
 				q->_next = first;
 				first = q;
 				++ent;
-				return;
+				return iterator(q);
 			}
 			else
 			{
@@ -253,7 +234,7 @@ template <class T> class ptrlist
 					//if(!strcmp(ptr->nick, p->ptr->nick)) return;
 					//if(strcmp(ptr->nick, p->ptr->nick) < 0)
 
-					if(*ptr == *p->_ptr) return;
+					if(*ptr == *p->_ptr) return(NULL);
 					if(*ptr < *p->_ptr)
 					{
 						q = new link(ptr);
@@ -262,7 +243,7 @@ template <class T> class ptrlist
 						p->_prev->_next = q;
 						p->_prev = q;
 						++ent;
-						return;
+						return iterator(q);
 					}
 					else if(p->_next == NULL)
 					{
@@ -271,7 +252,7 @@ template <class T> class ptrlist
 						q->_prev = p;
 						p->_next = q;
 						++ent;
-						return;
+						return iterator(q);;
 					}
 					p = p->_next;
 				}
@@ -281,7 +262,7 @@ template <class T> class ptrlist
 
 	//////////////////////////////
 	// add to begining of a list
-	void add(T *ptr)
+	iterator add(const T *ptr)
 	{
 		link *p;
 
@@ -298,16 +279,19 @@ template <class T> class ptrlist
 			first = p;
 		}
 		++ent;
+		return iterator(first);
 	}
 
 	//////////////////////////////////
 	// add to the end of a list
-	void addLast(T *ptr)
+	iterator addLast(const T *ptr)
 	{
 		if(!ent)
 		{
 			first = new link(ptr);
 			first->_next = first->_prev = NULL;
+			++ent;
+			return iterator(first);
 		}
 		else
 		{
@@ -319,8 +303,10 @@ template <class T> class ptrlist
 			p->_next = new link(ptr);
 			p->_next->_prev = p;
 			p->_next->_next = NULL;
+			++ent;
+			return iterator(p->_next);
 		}
-		++ent;
+
 	}
 
 	//////////////////////
@@ -334,7 +320,7 @@ template <class T> class ptrlist
 
     //////////////////////
 	// destructor
-	~ptrlist()
+	virtual ~ptrlist()
 	{
 		link *p = first;
 		link *q;
@@ -349,16 +335,15 @@ template <class T> class ptrlist
 	}
 
 	/////////////////////////////
-	// clean all entries
-	void reset()
+	// clear all entries
+	void clear()
 	{
 		this->~ptrlist();
 
 		first = NULL;
 		ent = 0;
-		_removePtrs = 0;
 	}
-	////////////////////////////
+
 #ifdef HAVE_DEBUG
 	void display()
 	{
@@ -371,4 +356,7 @@ template <class T> class ptrlist
 	}
 #endif
 };
-#endif /* !_PTRLIST_H */
+
+#endif
+
+

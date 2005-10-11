@@ -4,6 +4,10 @@
 #include "bits.h"
 #include "ptrlist.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define HASH_TABLE_STRINGS	BIT0
 #define HASH_TABLE_INTS		BIT1
 #define HASH_TABLE_MIXED	BIT2
@@ -84,7 +88,11 @@ template <class T> class Htree {
     }
     
     int add(const void *key, T *data) {
-      list.add(data);
+      if (randint(2))
+        list.add(data);
+      else
+        list.addLast(data);
+
       my_entries++;
       return hash_table_insert(table, key, (void *)data);
     }
