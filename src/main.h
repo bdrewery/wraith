@@ -14,7 +14,7 @@ enum {
   CONF_STATIC
 };
 
-#define GET_BUFS 10
+#define GET_BUFS 20
 
 extern int		role, default_flags, default_uflags, do_confedit,
 			updating, do_restart, current_get_buf;
