@@ -1578,7 +1578,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 
   for (ch = chanset; ch; ch = ch->next) {
     if (channel_active(ch) && ch != chan) {
-      ml = ismember(chan, m->nick);
+      ml = ismember(ch, m->nick);
       if (ml) {
         ml->hops = m->hops;
       }
