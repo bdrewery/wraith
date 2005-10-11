@@ -9,6 +9,8 @@
 #ifndef _EGG_EGGDROP_H
 #define _EGG_EGGDROP_H
 
+#include <stdlib.h>
+
 /*
 
  * HANDLEN note:
