@@ -1151,8 +1151,8 @@ do_take(struct chanset_t *chan)
       }
     }
   }
-  shuffle(to_op, " ");
-  shuffle(to_deop, " ");
+//  shuffle(to_op, " ");
+//  shuffle(to_deop, " ");
   /*
   putlog(LOG_MISC, "*", "op: %s", to_op);
   putlog(LOG_MISC, "*", "deop: %s", to_deop);

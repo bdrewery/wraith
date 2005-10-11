@@ -53,6 +53,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Unsetting auth-prefix disables authing/cmds.
 * Channel member list is now stored in a hash table / linked list mix (speeds up 50% of lookups to about O(1))
 * Re-enabled hops sharing between member lists.
+* Disabled +take nick list randomizing as the new member list should do this already.
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
