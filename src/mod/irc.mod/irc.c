@@ -1411,7 +1411,9 @@ int check_bind_authc(char *cmd, Auth *auth, char *chname, char *args)
 
   get_user_flagrec(auth->user, &fr, chname);
   x = check_bind(BT_msgc, cmd, &fr, auth, chname, args);
-
+  
+  if (!x)
+    x = msgc_dcc(auth, chname, cmd, args);
 
   if (x & BIND_RET_LOG) {
     if (chname)

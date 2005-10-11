@@ -494,6 +494,17 @@ static int msgc_test(Auth *a, char *chname, char *par)
   return BIND_RET_BREAK;
 }
 
+static int msgc_dcc(Auth *a, char *chname, char *cmd, char *par)
+{
+  LOGC(cmd);
+
+  if (a->GetIdx(chname)) {
+    check_auth_dcc(a, cmd, par);
+  }
+
+  return BIND_RET_BREAK;
+}
+
 static int msgc_op(Auth *a, char *chname, char *par)
 {
   struct chanset_t *chan = NULL;
@@ -646,7 +657,7 @@ static int msgc_help(Auth *a, char *chname, char *par)
 {
   LOGC("HELP");
 
-  char outbuf[201] = "";
+  char outbuf[1024] = "";
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   bind_entry_t *entry = NULL;
   bind_table_t *table = NULL;
@@ -659,6 +670,13 @@ static int msgc_help(Auth *a, char *chname, char *par)
     if (((chname && chname[0] && (entry->cflags & AUTH_CHAN)) || 
         (!(chname && chname[0]) && (entry->cflags & AUTH_MSG))) && flagrec_ok(&entry->user_flags, &fr))
       simple_snprintf(outbuf, sizeof(outbuf), "%s%s%s", outbuf[0] ? outbuf : "", outbuf[0] ? " " : "", &entry->function_name[6]);
+
+  table = bind_table_lookup("dcc");
+
+  for (entry = table->entries; entry && entry->next; entry = entry->next)
+    if (((chname && chname[0] && (entry->cflags & AUTH_CHAN)) || 
+        (!(chname && chname[0]) && (entry->cflags & AUTH_MSG))) && flagrec_ok(&entry->user_flags, &fr))
+      simple_snprintf(outbuf, sizeof(outbuf), "%s%s%s", outbuf[0] ? outbuf : "", outbuf[0] ? " " : "", &entry->function_name[5]);
 
   strncat(outbuf, "\n", sizeof(outbuf));
 

@@ -87,6 +87,7 @@ static char *quickban(struct chanset_t *, char *);
 static bool killmember(struct chanset_t *chan, char *nick);
 static void check_lonely_channel(struct chanset_t *chan);
 static int gotmode(char *, char *);
+static int msgc_dcc(Auth *, char *, char *, char *);
 #define newban(chan, mask, who)         new_mask((chan)->channel.ban, mask, who)
 #define newexempt(chan, mask, who)      new_mask((chan)->channel.exempt, mask, who)
 #define newinvite(chan, mask, who)      new_mask((chan)->channel.invite, mask, who)
