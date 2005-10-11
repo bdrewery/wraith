@@ -52,6 +52,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Many botnet signals are now passed onto to other bots before being parsed. (Affects botcmd)
 * Unsetting auth-prefix disables authing/cmds.
 * Channel member list is now stored in a hash table / linked list mix (speeds up 50% of lookups to about O(1))
+* Re-enabled hops sharing between member lists.
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.

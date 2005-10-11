@@ -1557,8 +1557,8 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   char userhost[UHOSTLEN] = "";
   Member *m = ismember(chan, nick);	/* in my channel list copy? */
   bool waschanop = 0, me = 0;
-//  struct chanset_t *ch = NULL;
-//  memberlist *ml = NULL;
+  struct chanset_t *ch = NULL;
+  Member *ml = NULL;
 
   me = match_my_nick(nick);
 
@@ -1575,16 +1575,15 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   m->hops = hops;
 
   /* Propagate hops to other channel memlists... might save us a WHO #chan */
-/* FIXME: great concept, HORRIBLE CPU USAGE 
+
   for (ch = chanset; ch; ch = ch->next) {
-    if (ch != chan) {
+    if (channel_active(ch) && ch != chan) {
       ml = ismember(chan, m->nick);
       if (ml) {
         ml->hops = m->hops;
       }
     }
   }
-*/
 
   waschanop = me_op(chan);      /* Am I opped here? */
   if (strchr(flags, '@') != NULL)	/* Flags say he's opped? */
