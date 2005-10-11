@@ -278,7 +278,7 @@ makebdhash(char *randstring)
   return MD5(hash);
 }
 
-void check_auth_dcc(Auth *auth, const char *cmd, const char *par)
+int check_auth_dcc(Auth *auth, const char *cmd, const char *par)
 {
-  real_check_bind_dcc(cmd, auth->idx, par, auth);
+  return real_check_bind_dcc(cmd, auth->idx, par, auth);
 }

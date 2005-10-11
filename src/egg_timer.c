@@ -4,11 +4,12 @@
 #include "common.h"
 
 #include "egg_timer.h"
+#include "main.h"
 
 typedef int (*TimerFunc) (void *);
 
 /* From main.c */
-static egg_timeval_t now;
+static egg_timeval_t my_now;
 
 /* Internal use only. */
 typedef struct egg_timer_b {
@@ -40,25 +41,25 @@ int timer_get_time(egg_timeval_t *curtime)
 
 int timer_update_now(egg_timeval_t *_now)
 {
-	timer_get_time(&now);
+	timer_get_time(&my_now);
 	if (_now) {
-		_now->sec = now.sec;
-		_now->usec = now.usec;
+		_now->sec = my_now.sec;
+		_now->usec = my_now.usec;
 	}
-	return(now.sec);
+	return(my_now.sec);
 }
 
 
 void timer_get_now(egg_timeval_t *_now)
 {
-	_now->sec = now.sec;
-	_now->usec = now.usec;
+	_now->sec = my_now.sec;
+	_now->usec = my_now.usec;
 }
 
 int timer_get_now_sec(int *sec)
 {
-	if (sec) *sec = now.sec;
-	return(now.sec);
+	if (sec) *sec = my_now.sec;
+	return(my_now.sec);
 }
 
 
@@ -133,8 +134,8 @@ int timer_create_complex(egg_timeval_t *howlong, const char *name, Function call
 	timer->flags = flags;
 	timer->howlong.sec = howlong->sec;
 	timer->howlong.usec = howlong->usec;
-	timer->trigger_time.sec = now.sec + howlong->sec;
-	timer->trigger_time.usec = now.usec + howlong->usec;
+	timer->trigger_time.sec = my_now.sec + howlong->sec;
+	timer->trigger_time.usec = my_now.usec + howlong->usec;
 	timer->called = 0;
 
 	timer_add_to_list(timer);
@@ -182,7 +183,7 @@ int timer_get_shortest(egg_timeval_t *howlong)
 	/* No timers? Boo. */
 	if (!timer) return(1);
 
-	timer_diff(&now, &timer->trigger_time, howlong);
+	timer_diff(&my_now, &timer->trigger_time, howlong);
 	return(0);
 }
 
@@ -195,8 +196,8 @@ int timer_run()
 	while (timer_list_head) {
 		timer = timer_list_head;
 
-		if (timer->trigger_time.sec > now.sec || 
-			(timer->trigger_time.sec == now.sec && timer->trigger_time.usec > now.usec)) break;
+		if (timer->trigger_time.sec > my_now.sec || 
+			(timer->trigger_time.sec == my_now.sec && timer->trigger_time.usec > my_now.usec)) break;
 
 		timer_list_head = timer_list_head->next;
 
