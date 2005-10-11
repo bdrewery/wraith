@@ -128,14 +128,18 @@ template <class T> class Htree {
 
     T *find(const void *key) {
       T *x = NULL;
-      hash_table_find(table, key, &x);
+
+      if (hash_table_find(table, key, &x))
+        x = NULL;
 
       return x;
     }
 
     T *find(const char *key) {
       T *x = NULL;
-      hash_table_find(table, key, &x);
+
+      if (hash_table_find(table, key, &x))
+        x = NULL;
 
       return x;
     }

@@ -151,8 +151,11 @@ int hash_table_rename(hash_table_t *ht, const void *key, const void *newkey)
         row = ht->rows+idx;
 
         last = NULL;
+//sdprintf("R key: %s hash: %d", key, hash);
         for (entry = row->head; entry; entry = entry->next) {
+//sdprintf("  loop - key: %s hash: %d", entry->key, entry->hash);
                 if (hash == entry->hash && !ht->cmp(key, entry->key)) {
+//sdprintf("  FOUND ENTRY: key: %s hash: %d", entry->key, entry->hash);
                         /* Remove it from the row's list. */
                         if (last) last->next = entry->next;
                         else row->head = entry->next;
@@ -167,6 +170,7 @@ int hash_table_rename(hash_table_t *ht, const void *key, const void *newkey)
 			/* Fix the entry */
 			entry->hash = newhash;
 
+//sdprintf("  RENAME (new) - key: %s hash: %d", entry->key, entry->hash);
 		        /* Insert it into the list. */
 		        entry->next = newrow->head;
 		        newrow->head = entry;
@@ -199,9 +203,11 @@ int hash_table_find(hash_table_t *ht, const void *key, void *dataptr)
 	hash = ht->hash(key);
 	idx = hash % ht->max_rows;
 	row = ht->rows+idx;
-
+//sdprintf("F key: %s hash: %d", key, hash);
 	for (entry = row->head; entry; entry = entry->next) {
+//sdprintf("  loop - key: %s hash: %d", entry->key, entry->hash);
 		if (hash == entry->hash && !ht->cmp(key, entry->key)) {
+//sdprintf("  FOUND ENTRY: key: %s hash: %d", entry->key, entry->hash);
 			*(void **)dataptr = entry->data;
 			return(0);
 		}
