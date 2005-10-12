@@ -53,6 +53,7 @@ static char *getnick(char *handle, struct chanset_t *chan)
   struct userrec *u = NULL;
   struct chanset_t *my_chan = NULL;
   register Member *m = NULL;
+  ptrlist<Member>::iterator _p;
 
   for (my_chan = chan ? chan : chanset; my_chan; my_chan = my_chan->next) {
     PFOR(my_chan->channel.hmember, Member, m) {
@@ -565,6 +566,7 @@ static void cmd_mdop(int idx, char *par)
     i;
   struct chanset_t *chan = NULL;
   char work[1024] = "";
+  ptrlist<Member>::iterator _p;
   
 
   putlog(LOG_CMDS, "*", "#%s# mdop %s", dcc[idx].nick, par);
@@ -1063,6 +1065,7 @@ static void cmd_mop(int idx, char *par)
 
   Member *m = NULL;
   char s[256] = "";
+  ptrlist<Member>::iterator _p;
 
   while (chan) {
     get_user_flagrec(dcc[idx].user, &user, chan->dname);
@@ -1130,6 +1133,7 @@ static void cmd_find(int idx, char *par)
   int fcount = 0;
   bool tr = 0, lookup_user = 0;
   struct userrec *u = NULL;
+  ptrlist<Member>::iterator _p;
 
   if (!strchr(par, '!')) {
     lookup_user = 1;
@@ -1303,6 +1307,7 @@ static void cmd_channel(int idx, char *par)
   Member *m = NULL, *m2 = NULL;
   size_t maxnicklen, maxhandlen;
   char format[81] = "";
+  ptrlist<Member>::iterator _p;
 
   get_user_flagrec(dcc[idx].user, &user, chan->dname);
 

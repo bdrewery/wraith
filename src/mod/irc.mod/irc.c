@@ -652,6 +652,7 @@ request_op(struct chanset_t *chan)
   Member *ml = NULL, *botops[MAX_BOTS];
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   char s[UHOSTLEN] = "";
+  ptrlist<Member>::iterator _p;
 
   i = 0;
   PFOR (chan->channel.hmember, Member, ml) {
@@ -1057,10 +1058,13 @@ static bool
 any_ops(struct chanset_t *chan)
 {
   Member *x = NULL;
+  ptrlist<Member>::iterator _p;
 
-  PFOR(chan->channel.hmember, Member, x)
+  PFOR(chan->channel.hmember, Member, x) {
     if (chan_hasop(x))
       break;
+  }
+
   if (!x || !x->nick[0])
     return 0;
   return 1;
@@ -1136,6 +1140,7 @@ check_lonely_channel(struct chanset_t *chan)
   char s[UHOSTLEN] = "";
   int i = 0;
   static int whined = 0;
+  ptrlist<Member>::iterator _p;
 
   /* Count non-split channel members */
   PFOR(chan->channel.hmember, Member, m) {
@@ -1206,6 +1211,7 @@ static void
 check_servers(struct chanset_t *chan)
 {
   Member *m = NULL;
+  ptrlist<Member>::iterator _p;
 
   PFOR(chan->channel.hmember, Member, m) {
     if (!match_my_nick(m->nick) && chan_hasop(m) && (m->hops == -1)) {
@@ -1429,6 +1435,7 @@ flush_modes()
     return;
 
   Member *m = NULL;
+  ptrlist<Member>::iterator _p;
 
   for (register struct chanset_t *chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {

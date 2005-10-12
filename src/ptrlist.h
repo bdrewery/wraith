@@ -27,12 +27,15 @@
 
 //#define SETPTR(__type, __ptr) __ptr = (_p ? ((__type *) _p->ptr()) : NULL)
 //#define SETPTR(__type, __ptr) _ptr = _p
+//#ifndef _p
+//#endif
+//ptrlist<_type>::iterator _p;
+//#define SERPTR(__type, __ptr) __ptr = _p;
 #define PFOR(_init, _type, _ptr) \
-_ptr = NULL;\
 for (\
- ptrlist<_type>::iterator _ptr = _init->list.begin();\
- _ptr;\
- _ptr++\
+ _p = _init->list.begin(), _ptr = _p;\
+ _p;\
+ _p++, _ptr = _p\
 )
 // ptrlist<_type>::iterator _ptr = _init->list.begin();
 // _ptr = _init->list.begin();

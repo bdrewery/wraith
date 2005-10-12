@@ -103,6 +103,7 @@ struct userrec *check_chanlist(const char *host)
   char				*nick = NULL, *uhost = NULL, buf[UHOSTLEN] = "";
   register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
+  ptrlist<Member>::iterator _p;
 
   strlcpy(buf, host, sizeof buf);
   uhost = buf;
@@ -122,6 +123,7 @@ struct userrec *check_chanlist_hand(const char *hand)
 {
   register struct chanset_t	*chan = NULL;
   register Member		*m = NULL;
+  ptrlist<Member>::iterator _p;
 
   for (chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
@@ -141,6 +143,7 @@ void clear_chanlist(void)
 {
   register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
+  ptrlist<Member>::iterator _p;
 
   for (chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
@@ -160,6 +163,7 @@ void clear_chanlist_member(const char *nick)
 {
   register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
+  ptrlist<Member>::iterator _p;
 
   for (chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
@@ -179,6 +183,7 @@ void set_chanlist(const char *host, struct userrec *rec)
   char				*nick = NULL, *uhost = NULL, buf[UHOSTLEN] = "";
   register Member		*m = NULL;
   register struct chanset_t	*chan = NULL;
+  ptrlist<Member>::iterator _p;
 
   strlcpy(buf, host, sizeof buf);
   uhost = buf;

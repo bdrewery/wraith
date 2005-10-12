@@ -670,6 +670,7 @@ static void notes_hourly()
     int k;
     register int l;
     struct userrec *u = NULL;
+    ptrlist<Member>::iterator _p;
 
     for (chan = chanset; chan; chan = chan->next) {
       PFOR(chan->channel.hmember, Member, m) {

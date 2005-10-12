@@ -813,6 +813,7 @@ bool expired_mask(struct chanset_t *chan, char *who)
   Member *m = NULL, *m2 = NULL;
   char buf[UHOSTLEN] = "", *snick = NULL, *sfrom = NULL;
   struct userrec *u = NULL;
+  ptrlist<Member>::iterator _p;
 
   strcpy(buf, who);
   sfrom = buf;

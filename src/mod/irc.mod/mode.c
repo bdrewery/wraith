@@ -674,6 +674,7 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
   if (match_my_nick(mv->nick)) {
     /* Cancel any pending kicks and modes */
     Member *m2 = NULL;
+    ptrlist<Member>::iterator _p;
 
     PFOR(chan->channel.hmember, Member, m2) 
       m2->flags &= ~(SENTKICK | SENTDEOP | SENTOP | SENTVOICE | SENTDEVOICE);
@@ -719,6 +720,7 @@ got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
     /* remove bans on ops unless a master/bot set it */
     char s1[UHOSTLEN] = "";
     Member *m2 = NULL;
+    ptrlist<Member>::iterator _p;
 
     PFOR(chan->channel.hmember, Member, m2) {
       simple_snprintf(s1, sizeof s1, "%s!%s", m2->nick, m2->userhost);

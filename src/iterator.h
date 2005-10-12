@@ -50,13 +50,13 @@ class iterator_type
     iterator_type operator++(int) { return (_lnk = _lnk->next()); };
     iterator_type operator--(int) { return (_lnk = _lnk->prev()); };
     operator bool() { return _lnk != 0; };
-    operator pointer() { return _lnk->ptr(); };
+    operator pointer() { return _lnk ? _lnk->ptr() : NULL; };
     operator link_ptr() { return _lnk; };
 //    iterator_type &operator=(iterator_type &r) { _lnk = r.link_ptr(); return *this; };
     T *&operator->() { return _lnk->ptr(); };
-    T *&operator&() { return _lnk->ptr(); };
-    T *&ptr() { return _lnk->ptr(); };
-    T &obj() { return *_lnk->ptr(); };
+    T *&operator&() { return _lnk ? _lnk->ptr() : NULL; };
+    T *&ptr() { return _lnk ? _lnk->ptr() : NULL; };
+    T &obj() { return _lnk ? *_lnk->ptr() : NULL; };
     link *lnk() { return _lnk; };
 };
 

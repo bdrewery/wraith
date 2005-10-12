@@ -31,6 +31,8 @@ static void resolv_member_callback(int id, void *client_data, const char *host, 
   char *ps = NULL, *pe = NULL, s[UHOSTLEN + 1];
 
   if (ips && ips[0]) {
+    ptrlist<Member>::iterator _p;
+
     PFOR(r->chan->channel.hmember, Member, m) {
       if (!rfc_casecmp(m->nick, r->nick)) {
         if (!m->userip[0] && m->userhost[0]) {
@@ -160,6 +162,7 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
 
   Member *m = NULL;
   int ops = 0, targets = 0, bpos = 0, tpos = 0, ft = 0, ct = 0, actions = 0, sent = 0;
+  ptrlist<Member>::iterator _p;
 
   PFOR(chan->channel.hmember, Member, m) {
     if (!m->user && !m->tried_getuser) {
@@ -504,7 +507,8 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
       strcpy(ftype + 4, " flood");
       u_addmask('b', chan, h, conf.bot->nick, ftype, now + (60 * chan->ban_time), 0);
       if (!channel_enforcebans(chan) && me_op(chan)) {
-	  char s[UHOSTLEN];
+	  char s[UHOSTLEN] = "";
+          ptrlist<Member>::iterator _p;
 
           PFOR (chan->channel.hmember, Member, m) {
 	    simple_sprintf(s, "%s!%s", m->nick, m->userhost);
@@ -595,6 +599,7 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
   char s[UHOSTLEN] = "";
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   Member *m = NULL;
+  ptrlist<Member>::iterator _p;
 
   PFOR(chan->channel.hmember, Member, m) {
     simple_sprintf(s, "%s!%s", m->nick, m->userhost);
@@ -842,6 +847,7 @@ void check_this_ban(struct chanset_t *chan, char *banmask, bool sticky)
 
   char user[UHOSTLEN] = "";
   Member *m = NULL;
+  ptrlist<Member>::iterator _p;
   
   PFOR(chan->channel.hmember, Member, m) {
     simple_sprintf(user, "%s!%s", m->nick, m->userhost);
@@ -1022,6 +1028,7 @@ void check_this_user(char *hand, int del, char *host)
   Member *m = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
+  ptrlist<Member>::iterator _p;
 
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
@@ -1130,6 +1137,7 @@ do_take(struct chanset_t *chan)
   register bool hasop, isbot;
   register unsigned int lines_max = 5, lines = 0, deopn, i;
   register Member *m = NULL;
+  ptrlist<Member>::iterator _p;
 
   if (floodless)
     lines_max = 15;
@@ -1226,6 +1234,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
   char s[UHOSTLEN] = "";
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   int stop_reset = 0, botops = 0, nonbotops = 0, botnonops = 0;
+  ptrlist<Member>::iterator _p;
 
   stacking++;
 
@@ -2690,6 +2699,7 @@ void check_should_cycle(struct chanset_t *chan)
   //If there are other ops split off and i'm the only op on this side of split, cycle
   int localops = 0, localbotops = 0, splitops = 0, splitbotops = 0, localnonops = 0;
   Member *ml = NULL;
+  ptrlist<Member>::iterator _p;
   
   PFOR(chan->channel.hmember, Member, ml) {
     if (chan_hasop(ml)) {
