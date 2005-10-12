@@ -10,21 +10,6 @@
 
 #include "member-class.h"
 
-typedef struct memstruct {
-  struct memstruct *next;
-  struct userrec *user;
-  time_t joined;
-  time_t split;			/* in case they were just netsplit	*/
-  time_t last;			/* for measuring idle time		*/
-  time_t delay;                  /* for delayed autoop                   */
-  int hops;
-  int tried_getuser;
-  unsigned short flags;
-  char nick[NICKLEN];
-  char userhost[UHOSTLEN];
-  char userip[UHOSTLEN];
-} memberlist;
-
 #define CHANMETA "#&!+"
 #define NICKVALID "[{}]^`|\\_-"
 
