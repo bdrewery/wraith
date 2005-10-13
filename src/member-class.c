@@ -5,6 +5,7 @@
 #include "common.h"
 #include "member-class.h"
 #include "chan.h"
+#include "client-class.h"
 #include "main.h"
 #include "socket.h"
 
@@ -28,9 +29,16 @@ Member::Member(struct chanset_t *chan, const char *nick)
   delay = 0;
   hops = -1;
   tried_getuser = 0;
+  client = NULL;
 
   chan->channel.hmember->add(this);
   my_chan->channel.members++;
+
+  client = clients.find(nick);
+  if (!client)
+    client = new Client(nick, chan);
+  else
+    client->AddChan(chan);
 }
 
 Member::~Member()
@@ -72,6 +80,9 @@ void Member::Remove(struct chanset_t *chan, const char *nick)
 void Member::Remove(bool do_delete)
 {
   my_chan->channel.hmember->remove(this);
+  if (client->RemoveChan(my_chan))
+    client = NULL;
+
   removed = 1;
 
   my_chan->channel.members--;

@@ -21,6 +21,7 @@ OBJS = auth.o \
 	botmsg.o \
 	botnet.o \
 	chanprog.o \
+	client-class.o \
 	cmds.o \
 	core_binds.o \
 	conf.o \

@@ -2632,12 +2632,19 @@ static int gotnick(char *from, char *msg)
   struct chanset_t *oldchan = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
+  Client *client = NULL;
 
   strcpy(uhost, from);
   nick = splitnick(&uhost);
   fixcolon(msg);
   irc_log(NULL, "[%s] Nick change: %s -> %s", samechans(nick, ","), nick, msg);
   clear_chanlist_member(nick);	/* Cache for nick 'nick' is meaningless now. */
+
+  client = Client::Find(nick);
+  if (client) {
+    client->NewNick(msg);
+  }
+
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     oldchan = chan;
     chname = chan->dname; 

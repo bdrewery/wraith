@@ -4262,6 +4262,8 @@ static void cmd_quit(int idx, char *text)
 void cmd_test(int idx, char *par)
 {
   putlog(LOG_CMDS, "*", "#%s# test", dcc[idx].nick);
+
+  clients.dump_idx(idx);
 }
 
 /* DCC CHAT COMMANDS

@@ -5,8 +5,8 @@
 #include "config.h"
 #endif
 
-#include "chan.h"
 #include "hash_table.h"
+#include "client-class.h"
 
 class Member {
   public:
@@ -18,6 +18,7 @@ class Member {
     static void Remove(struct chanset_t *chan, const char *nick);
 
     void Remove(bool = 1);
+//mFIXME
     void NewNick(const char *newnick);
 
     void SetUHost(const char *);
@@ -55,6 +56,7 @@ class Member {
     int i_family;
     int h_family;
     bool tried_getuser;
+    Client *client;
 
   private:
     struct chanset_t *my_chan;

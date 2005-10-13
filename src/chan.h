@@ -9,6 +9,8 @@
 #define _EGG_CHAN_H
 
 #include "member-class.h"
+#include "client-class.h"
+#include "hash_table.h"
 
 #define CHANMETA "#&!+"
 #define NICKVALID "[{}]^`|\\_-"
