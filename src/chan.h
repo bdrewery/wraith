@@ -212,7 +212,7 @@ struct chanset_t {
 #define CHAN_CYCLE          BIT11	/* cycle the channel if possible      */
 #define CHAN_INACTIVE       BIT12	/* no irc support for this channel */
 #define CHAN_VOICE          BIT13	/* a bot +y|y will voice *, except +q */
-#undef  CHAN_14             /* BIT14	 */
+#define CHAN_NOMASSJOIN     BIT14       /* watch for mass join for flood nets and react */
 #define CHAN_NODESYNCH      BIT15
 #define CHAN_FASTOP         BIT16	/* Bots will not use +o-b to op (no cookies) */ 
 #define CHAN_PRIVATE        BIT17	/* users need |o to access chan */ 
@@ -275,6 +275,7 @@ struct chanset_t *findchan_by_dname(const char *name);
 #define channel_privchan(chan) (chan->status & CHAN_PRIVATE)
 #define channel_autoop(chan) (chan->status & CHAN_AUTOOP)
 #define channel_relay(chan) (chan->status & CHAN_RELAY)
+#define channel_nomassjoin(chan) (chan->status & CHAN_NOMASSJOIN)
 /* Chanflag template
  *#define channel_temp(chan) (chan->status & CHAN_PRIVATE)
  */

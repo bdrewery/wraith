@@ -717,7 +717,7 @@ exempt-time %lu invite-time %lu voice-non-ident %d \
 %cenforcebans %cdynamicbans %cuserban %cbitch %cprotectops \
 %cprivate %ccycle %cinactive %cdynamicexempts %cuserexempts \
 %cdynamicinvites %cuserinvites %cnodesynch %cclosed %cvoice \
-%cfastop %cautoop %cbotbitch %crelay %c%s}\n",
+%cfastop %cautoop %cbotbitch %crelay %cnomassjoin %c%s}\n",
 	chan->dname,
 	w,
         chan->added_by,
@@ -768,7 +768,8 @@ exempt-time %lu invite-time %lu voice-non-ident %d \
 	PLSMNS(channel_fastop(chan)),
         PLSMNS(channel_autoop(chan)),
         PLSMNS(channel_botbitch(chan)),
-	PLSMNS(channel_relay(chan)),
+        PLSMNS(channel_relay(chan)),
+        PLSMNS(channel_nomassjoin(chan)),
 	have_take ? PLSMNS(channel_take(chan)) : 0,
         have_take ? "take " : " "
 /* Chanflag template
