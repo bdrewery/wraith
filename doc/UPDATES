@@ -55,6 +55,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Re-enabled hops sharing between member lists.
 * Disabled +take nick list randomizing as the new member list should do this already.
 * Fixed an invalid killsock error in sharing.
+* Fixed chanset 'flood-*' not working correctly. (#69)
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
