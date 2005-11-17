@@ -406,8 +406,7 @@ tellconfig(settings_t *incfg)
 void
 check_sum(const char *fname, const char *cfgfile)
 {
-   if (!settings.hash[0]) {
-
+  if (!settings.hash[0]) {
     if (!cfgfile)
       fatal("Binary not initialized.", 0);
 
