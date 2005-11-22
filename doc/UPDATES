@@ -57,6 +57,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed an invalid killsock error in sharing.
 * Fixed chanset 'flood-*' not working correctly. (#69)
 * Added somewhat advanced password scoring to replace current password restrictions. (#56)
+* Fixed cmd_rehash killing hubs. And revised help for 'rehash'. (#186)
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.

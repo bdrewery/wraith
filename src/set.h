@@ -30,6 +30,8 @@
 #define VAR_CHANSET	BIT15
 /* Don't set the default on startup if a leaf (servers) */
 #define VAR_NOLDEF	BIT16
+/* Don't set global on hub */
+#define VAR_NOGHUB	BIT17
 
 #define VAR_LDATA 	1
 #define VAR_GDATA	2

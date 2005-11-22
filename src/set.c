@@ -131,7 +131,7 @@ static variable_t vars[] = {
  VAR("msg-invite",	msginvite,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
  VAR("msg-op",		msgop,			VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
  VAR("msg-pass",	msgpass,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
- VAR("nick",		origbotname,		VAR_STRING|VAR_NOLHUB|VAR_NICK|VAR_NODEF,	0, 0, NULL),
+ VAR("nick",		origbotname,		VAR_STRING|VAR_NOLHUB|VAR_NICK|VAR_NODEF|VAR_NOGHUB,	0, 0, NULL),
  VAR("op-bots",		&op_bots,		VAR_INT|VAR_NOLOC,				0, 0, "1"),
  VAR("op-requests",	&op_requests,		VAR_RATE|VAR_NOLOC,				0, 0, "2:5"),
  VAR("process-list",	process_list,		VAR_STRING|VAR_LIST,				0, 0, NULL),
@@ -381,6 +381,9 @@ void var_set(variable_t *var, const char *target, const char *datain)
     if (botu && (bot_hublevel(botu) != 999) && (var->flags & VAR_NOLHUB))
       return;
   }
+
+  if (conf.bot->hub && (var->flags & VAR_NOGHUB))
+    return;
 
   bool domem = 1, clear = 0;
 //  bool freedata = 0;
