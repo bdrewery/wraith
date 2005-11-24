@@ -1564,27 +1564,30 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 {
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   char userhost[UHOSTLEN] = "";
-  Member *m = ismember(chan, nick);	/* in my channel list copy? */
+  Member *m = NULL;	/* in my channel list copy? */
   bool waschanop = 0, me = 0;
   struct chanset_t *ch = NULL;
   Member *ml = NULL;
+  Client *client = NULL;
 
-  me = match_my_nick(nick);
 
-  if (!m) {			/* Nope, so update */
+  m = ismember(chan, nick);
+  
+  if (!m) {		/* Nope, so update */
     m = newmember(chan, nick);	/* Get a new channel entry */
     m->joined = m->split = m->delay = 0L;	/* Don't know when he joined */
     m->flags = 0;		/* No flags for now */
     m->last = now;		/* Last time I saw him */
     m->user = NULL;
   }
+  client = m->client;
+
   if (!m->nick[0])
     strcpy(m->nick, nick);	/* Store the nick in list */
 
   m->hops = hops;
 
   /* Propagate hops to other channel memlists... might save us a WHO #chan */
-
   for (ch = chanset; ch; ch = ch->next) {
     if (!channel_inactive(ch) && ch != chan) {
       ml = ismember(ch, m->nick);
@@ -1615,6 +1618,8 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
     simple_snprintf(m->userhost, sizeof(m->userhost), "%s@%s", user, host);
 
   simple_snprintf(userhost, sizeof(userhost), "%s!%s", nick, m->userhost);
+
+  me = match_my_nick(nick);
 
   if (me) {			/* Is it me? */
 //    strcpy(botuserhost, m->userhost);		/* Yes, save my own userhost */
@@ -2230,6 +2235,7 @@ static int gotjoin(char *from, char *chname)
   char *ch_dname = NULL;
   struct chanset_t *chan = NULL;
   Member *m = NULL;
+  Client *client = NULL;
   masklist *b = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
@@ -2317,6 +2323,7 @@ static int gotjoin(char *from, char *chname)
       int splitjoin = 0;
 
       m = ismember(chan, nick);
+
       if (m && m->split && !egg_strcasecmp(m->userhost, uhost)) {
 	chan = findchan(chname);
 	if (!chan) {
@@ -2353,20 +2360,29 @@ static int gotjoin(char *from, char *chname)
 	if (m)
 	  killmember(chan, nick);
 	m = newmember(chan, nick);
+
+        client = m->client;
+
 	m->joined = now;
 	m->split = 0L;
 	m->flags = 0;
 	m->last = now;
 	m->delay = 0L;
 	strlcpy(m->nick, nick, sizeof(m->nick));
-	strlcpy(m->userhost, uhost, sizeof(m->userhost));
-	m->user = u;
+        strlcpy(m->userhost, uhost, sizeof(m->userhost));
+        m->user = u;
         m->tried_getuser = 1;
 
         if (!m->user && doresolv(chan)) {
-          if (is_dotted_ip(host)) 
+          if (is_dotted_ip(host))
             strlcpy(m->userip, uhost, sizeof(m->userip));
           else
+
+//        client->SetUHost(uhost);
+//        client->SetUser(u);
+
+//        if (!client->user && doresolv(chan)) {
+//          if (!client->Family())
             resolve_to_member(chan, nick, host); 
         }
 
@@ -2389,7 +2405,8 @@ static int gotjoin(char *from, char *chname)
 
 	/* The record saved in the channel record always gets updated,
 	   so we can use that. */
-	u = m->user;
+        u = m->user;
+//        u = client->GetUser();
 
 	if (match_my_nick(nick)) {
 	  /* It was me joining! Need to update the channel record with the
