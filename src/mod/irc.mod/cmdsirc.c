@@ -1353,8 +1353,8 @@ static void cmd_channel(int idx, char *par)
 	simple_snprintf(s1, sizeof s1, "%s!%s", m->nick, m->client->GetUHost());
 	m->user = get_user_by_host(s1);
         if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
-          simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
-          m->user = get_user_by_host(s);
+          simple_snprintf(s1, sizeof(s1), "%s!%s", m->nick, m->client->GetUIP());
+          m->user = get_user_by_host(s1);
         }
         m->tried_getuser = 1;
       }
