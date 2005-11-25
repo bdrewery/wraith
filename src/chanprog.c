@@ -110,7 +110,7 @@ struct userrec *check_chanlist(const char *host)
   nick = splitnick(&uhost);
   for (chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
-      if (!rfc_casecmp(nick, m->nick) && !egg_strcasecmp(uhost, m->userhost))
+      if (!rfc_casecmp(nick, m->nick) && !egg_strcasecmp(uhost, m->client->GetUHost()))
 	return m->user;
     }
   }
@@ -190,7 +190,7 @@ void set_chanlist(const char *host, struct userrec *rec)
   nick = splitnick(&uhost);
   for (chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
-      if (!rfc_casecmp(nick, m->nick) && !egg_strcasecmp(uhost, m->userhost))
+      if (!rfc_casecmp(nick, m->nick) && !egg_strcasecmp(uhost, m->client->GetUHost()))
 	m->user = rec;
     }
   }

@@ -622,7 +622,7 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
   char s1[UHOSTLEN] = "";
   
   if (m)
-    simple_sprintf(s1, "%s!%s", m->nick, m->userhost);
+    simple_sprintf(s1, "%s!%s", m->nick, m->client->GetUHost());
 
   get_user_flagrec(mv->user, &victim, chan->dname);
 
@@ -662,7 +662,7 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
     putlog(LOG_MODES, chan->dname, "TS resync (%s): %s deopped by %s", chan->dname, mv->nick, isserver);
   /* Check for mass deop */
   else if (m)
-    detect_chan_flood(m->nick, m->userhost, s1, chan, FLOOD_DEOP, mv->nick);
+    detect_chan_flood(m->nick, m->client->GetUHost(), s1, chan, FLOOD_DEOP, mv->nick);
   /* Having op hides your +v and +h  status -- so now that someone's lost ops,
    * check to see if they have +v or +h
    */
@@ -688,7 +688,7 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
   if (m) {
     char s[UHOSTLEN] = "";
 
-    simple_sprintf(s, "%s!%s", mv->nick, mv->userhost);
+    simple_sprintf(s, "%s!%s", mv->nick, mv->client->GetUHost());
 //    maybe_revenge(chan, s1, s, REVENGE_DEOP);
   }
 }
@@ -700,7 +700,7 @@ got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 
   simple_sprintf(me, "%s!%s", botname, botuserhost);
   simple_sprintf(meip, "%s!%s", botname, botuserip);
-  simple_snprintf(s, sizeof s, "%s!%s", m ? m->nick : "", m ? m->userhost : isserver);
+  simple_snprintf(s, sizeof s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newban(chan, mask, s);
 
   if (channel_pending(chan) || !me_op(chan))
@@ -723,7 +723,7 @@ got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
     ptrlist<Member>::iterator _p;
 
     PFOR(chan->channel.hmember, Member, m2) {
-      simple_snprintf(s1, sizeof s1, "%s!%s", m2->nick, m2->userhost);
+      simple_snprintf(s1, sizeof s1, "%s!%s", m2->nick, m2->client->GetUHost());
       if ((wild_match(mask, s1) || match_cidr(mask, s1))
           && !isexempted(chan, s1)) {
         if (m2->user || (!m2->user && (m2->user = get_user_by_host(s1)))) {
@@ -801,7 +801,7 @@ got_exempt(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char s[UHOSTLEN] = "";
 
-  simple_sprintf(s, "%s!%s", m ? m->nick : "", m ? m->userhost : isserver);
+  simple_sprintf(s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newexempt(chan, mask, s);
 
   if (channel_pending(chan))
@@ -870,7 +870,7 @@ got_invite(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char s[UHOSTLEN] = "";
 
-  simple_sprintf(s, "%s!%s", m ? m->nick : "", m ? m->userhost : isserver);
+  simple_sprintf(s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newinvite(chan, mask, s);
 
   if (channel_pending(chan))
@@ -931,10 +931,10 @@ static Member *assert_ismember(struct chanset_t *chan, const char *nick)
     if (!m->user) {
       char s[UHOSTLEN] = "";
 
-      simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+      simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
       m->user = get_user_by_host(s);
-      if (!m->user && doresolv(chan) && m->userip[0]) {
-        simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userip);
+      if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
+        simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
         m->user = get_user_by_host(s);
       }
       m->tried_getuser = 1;
@@ -1123,7 +1123,7 @@ gotmode(char *from, char *msg)
                       simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_BADOP));
                       tputs(serv, tmp, strlen(tmp));
                     }
-                    simple_sprintf(tmp, "%s!%s MODE %s %s", m->nick, m->userhost, chan->dname, modes[modecnt - 1]);
+                    simple_sprintf(tmp, "%s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
                     deflag_user(u, DEFLAG_BADCOOKIE, tmp, chan);
                     break;
                   default:
@@ -1151,11 +1151,11 @@ gotmode(char *from, char *msg)
                 }
 
                 if (isbadop == BC_NOCOOKIE)
-                  putlog(LOG_WARN, "*", "Missing cookie: %s!%s MODE %s %s", m->nick, m->userhost, chan->dname, modes[modecnt - 1]);
+                  putlog(LOG_WARN, "*", "Missing cookie: %s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
                 else if (isbadop == BC_HASH)
-                  putlog(LOG_WARN, "*", "Invalid cookie (bad hash): %s!%s MODE %s %s", m->nick, m->userhost, chan->dname, modes[modecnt - 1]);
+                  putlog(LOG_WARN, "*", "Invalid cookie (bad hash): %s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
                 else if (isbadop == BC_SLACK)
-                  putlog(LOG_WARN, "*", "Invalid cookie (bad time): %s!%s MODE %s %s", m->nick, m->userhost, chan->dname, modes[modecnt - 1]);
+                  putlog(LOG_WARN, "*", "Invalid cookie (bad time): %s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
               } else
                 putlog(LOG_DEBUG, "@", "Good op: %s", modes[modecnt - 1]);
             }
@@ -1174,7 +1174,7 @@ gotmode(char *from, char *msg)
                     if (m)
                       m->flags |= SENTKICK;
                   }
-                  simple_sprintf(tmp, "%s!%s MODE %s %s", m->nick, m->userhost, chan->dname, modes[modecnt - 1]);
+                  simple_sprintf(tmp, "%s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
                   deflag_user(u, DEFLAG_MANUALOP, tmp, chan);
                   break;
                 default:

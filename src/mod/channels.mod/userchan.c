@@ -826,7 +826,7 @@ bool expired_mask(struct chanset_t *chan, char *who)
   m = ismember(chan, snick);
   if (!m) {
     PFOR(chan->channel.hmember, Member, m2)
-      if (!egg_strcasecmp(sfrom, m2->userhost)) {
+      if (!egg_strcasecmp(sfrom, m2->client->GetUHost())) {
 	m = m2;
 	break;
       }
@@ -842,7 +842,7 @@ bool expired_mask(struct chanset_t *chan, char *who)
   if (m->user)
     u = m->user;
   else {
-    simple_sprintf(buf, "%s!%s", m->nick, m->userhost);
+    simple_sprintf(buf, "%s!%s", m->nick, m->client->GetUHost());
     u = get_user_by_host(buf);
   }
   /* Do not expire masks set by bots. */

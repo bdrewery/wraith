@@ -35,16 +35,16 @@ static void resolv_member_callback(int id, void *client_data, const char *host, 
 
     PFOR(r->chan->channel.hmember, Member, m) {
       if (!rfc_casecmp(m->nick, r->nick)) {
-        if (!m->userip[0] && m->userhost[0]) {
-          ps = m->userhost;
+        if (!m->client->GetUIP()[0] && m->client->GetUHost()[0]) {
+          ps = m->client->GetUHost();
           pe = strchr(ps, '@');
           if (pe) {
             char user[15] = "";
 
-            simple_snprintf(user, pe - ps + 1, m->userhost);
-            simple_snprintf(m->userip, sizeof(m->userip), "%s@%s", user, ips[0]);
+            simple_snprintf(user, pe - ps + 1, m->client->GetUHost());
+            m->client->SetUIP(ips[0], user);
             if (!m->user) {
-              simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userip);
+              simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
               m->user = get_user_by_host(s);
             }
             return;
@@ -168,10 +168,10 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
     if (!m->user && !m->tried_getuser) {
       char s[256] = "";
 
-      simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+      simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
       m->user = get_user_by_host(s);
-      if (!m->user && doresolv(chan) && m->userip[0]) {
-        simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userip);
+      if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
+        simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
         m->user = get_user_by_host(s);
       }
       m->tried_getuser = 1;
@@ -511,7 +511,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
           ptrlist<Member>::iterator _p;
 
           PFOR (chan->channel.hmember, Member, m) {
-	    simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+	    simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
 	    if (wild_match(h, s) &&
 		(m->joined >= chan->floodtime[which]) &&
 		!chan_sentkick(m) && !match_my_nick(m->nick) && me_op(chan)) {
@@ -558,7 +558,7 @@ static void doban(struct chanset_t *chan, Member *m)
 
   char s[UHOSTLEN] = "", *s1 = NULL;
 
-  simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+  simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
 
   if (!(use_exempts &&
         (u_match_mask(global_exempts,s) ||
@@ -567,7 +567,7 @@ static void doban(struct chanset_t *chan, Member *m)
       refresh_ban_kick(chan, s, m->nick);
 
     check_exemptlist(chan, s);
-    s1 = quickban(chan, m->userhost);
+    s1 = quickban(chan, m->client->GetUHost());
     u_addmask('b', chan, s1, conf.bot->nick, "joined closed chan", now + (60 * chan->ban_time), 0);
   }
   return;
@@ -602,7 +602,7 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
   ptrlist<Member>::iterator _p;
 
   PFOR(chan->channel.hmember, Member, m) {
-    simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+    simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
     get_user_flagrec(m->user ? m->user : get_user_by_host(s), &fr, chan->dname);
     if (me_op(chan) &&
 	(wild_match(hostmask, s) || match_cidr(hostmask, s)) && 
@@ -643,7 +643,7 @@ static void refresh_ban_kick(struct chanset_t *chan, char *user, char *nick)
 	char c[512] = "";		/* The ban comment.	*/
 	char s[UHOSTLEN] = "";
 
-	simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+	simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
 	get_user_flagrec(m->user ? m->user : get_user_by_host(s), &fr,
 			 chan->dname);
         if (role == 1)
@@ -850,7 +850,7 @@ void check_this_ban(struct chanset_t *chan, char *banmask, bool sticky)
   ptrlist<Member>::iterator _p;
   
   PFOR(chan->channel.hmember, Member, m) {
-    simple_sprintf(user, "%s!%s", m->nick, m->userhost);
+    simple_sprintf(user, "%s!%s", m->nick, m->client->GetUHost());
     if (wild_match(banmask, user) &&
         !(use_exempts &&
           (u_match_mask(global_exempts, user) ||
@@ -998,7 +998,7 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
     }
   }
 
-  simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+  simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
   /* check vs invites */
   if (use_invites &&
       (u_match_mask(global_invites,s) ||
@@ -1015,7 +1015,7 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
       char *p = (char *) get_user(&USERENTRY_COMMENT, m->user);
 
       check_exemptlist(chan, s);
-      quickban(chan, m->userhost);
+      quickban(chan, m->client->GetUHost());
       dprintf(DP_SERVER, "KICK %s %s :%s%s\n", chan->name, m->nick, bankickprefix, p ? p : response(RES_KICKBAN));
       m->flags |= SENTKICK;
     }
@@ -1032,7 +1032,7 @@ void check_this_user(char *hand, int del, char *host)
 
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     PFOR(chan->channel.hmember, Member, m) {
-      simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+      simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
       u = m->user ? m->user : get_user_by_host(s);
       if ((u && !egg_strcasecmp(u->handle, hand) && del < 2) ||
 	  (!u && del == 2 && wild_match(host, s))) {
@@ -1284,13 +1284,13 @@ void recheck_channel(struct chanset_t *chan, int dobans)
   }
 
   PFOR (chan->channel.hmember, Member, m) {
-    simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+    simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
 
     if (!m->user && !m->tried_getuser) {
            m->tried_getuser = 1;
            m->user = get_user_by_host(s);
-           if (!m->user && doresolv(chan) && m->userip[0]) {
-             simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userip);
+           if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
+             simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
              m->user = get_user_by_host(s);
            }
     }
@@ -1568,8 +1568,6 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   bool waschanop = 0, me = 0;
   struct chanset_t *ch = NULL;
   Member *ml = NULL;
-  Client *client = NULL;
-
 
   m = ismember(chan, nick);
   
@@ -1580,7 +1578,6 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
     m->last = now;		/* Last time I saw him */
     m->user = NULL;
   }
-  client = m->client;
 
   if (!m->nick[0])
     strcpy(m->nick, nick);	/* Store the nick in list */
@@ -1614,15 +1611,15 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
     m->flags |= STOPWHO;
 
   /* Store the userhost */
-  if (!m->userhost[0])
-    simple_snprintf(m->userhost, sizeof(m->userhost), "%s@%s", user, host);
+  if (!m->client->GetUHost()[0])
+    m->client->SetUHost(host, user);
 
-  simple_snprintf(userhost, sizeof(userhost), "%s!%s", nick, m->userhost);
+  simple_snprintf(userhost, sizeof(userhost), "%s!%s", nick, m->client->GetUHost());
 
   me = match_my_nick(nick);
 
   if (me) {			/* Is it me? */
-//    strcpy(botuserhost, m->userhost);		/* Yes, save my own userhost */
+//    strcpy(botuserhost, m->client->GetUHost());		/* Yes, save my own userhost */
     m->joined = now;				/* set this to keep the whining masses happy */
 
     if (!waschanop && me_op(chan))
@@ -1639,7 +1636,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   //userhost failed, let's try resolving them...
   if (!m->user && doresolv(chan)) {
     if (is_dotted_ip(host))
-      simple_snprintf(m->userip, sizeof(m->userip), "%s@%s", user, host);
+      m->client->SetUIP(host, user);
     else  
       resolve_to_member(chan, nick, host);
   }
@@ -2235,7 +2232,6 @@ static int gotjoin(char *from, char *chname)
   char *ch_dname = NULL;
   struct chanset_t *chan = NULL;
   Member *m = NULL;
-  Client *client = NULL;
   masklist *b = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
@@ -2324,7 +2320,7 @@ static int gotjoin(char *from, char *chname)
 
       m = ismember(chan, nick);
 
-      if (m && m->split && !egg_strcasecmp(m->userhost, uhost)) {
+      if (m && m->split && !egg_strcasecmp(m->client->GetUHost(), uhost)) {
 	chan = findchan(chname);
 	if (!chan) {
 	  if (ch_dname)
@@ -2343,7 +2339,7 @@ static int gotjoin(char *from, char *chname)
  
           if (!m->user && doresolv(chan)) {
             if (is_dotted_ip(host)) 
-              strlcpy(m->userip, uhost, sizeof(m->userip));
+              m->client->SetUIP(uhost);
             else
               resolve_to_member(chan, nick, host); 
           }
@@ -2361,24 +2357,23 @@ static int gotjoin(char *from, char *chname)
 	  killmember(chan, nick);
 	m = newmember(chan, nick);
 
-        client = m->client;
-
 	m->joined = now;
 	m->split = 0L;
 	m->flags = 0;
 	m->last = now;
 	m->delay = 0L;
 	strlcpy(m->nick, nick, sizeof(m->nick));
-        strlcpy(m->userhost, uhost, sizeof(m->userhost));
+//        strlcpy(m->client->GetUHost(), uhost, sizeof(m->client->GetUHost()));
         m->user = u;
         m->tried_getuser = 1;
 
+        m->client->SetUHost(uhost);
+
         if (!m->user && doresolv(chan)) {
           if (is_dotted_ip(host))
-            strlcpy(m->userip, uhost, sizeof(m->userip));
+            m->client->SetUIP(uhost);
           else
 
-//        client->SetUHost(uhost);
 //        client->SetUser(u);
 
 //        if (!client->user && doresolv(chan)) {
@@ -2474,7 +2469,7 @@ static int gotjoin(char *from, char *chname)
         if (cache) {
           cache_chan_t *cchan = NULL;
 
-          if (egg_strcasecmp(cache->uhost, m->userhost)) {
+          if (egg_strcasecmp(cache->uhost, m->client->GetUHost())) {
 
 
           }
@@ -2616,7 +2611,7 @@ static int gotkick(char *from, char *origmsg)
     if ((m = ismember(chan, nick))) {
       struct userrec *u2 = NULL;
 
-      simple_sprintf(s1, "%s!%s", m->nick, m->userhost);
+      simple_sprintf(s1, "%s!%s", m->nick, m->client->GetUHost());
       u2 = get_user_by_host(s1);
       set_handle_laston(chan->dname, u2, now);
 //      maybe_revenge(chan, from, s1, REVENGE_KICK);

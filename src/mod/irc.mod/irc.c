@@ -80,7 +80,7 @@ voice_ok(Member *m, struct chanset_t *chan)
   if (m->flags & EVOICE)
     return 0;
 
-  if (m->userhost[0] && !chan->voice_non_ident && m->userhost[0] == '~')
+  if (m->client->GetUHost()[0] && !chan->voice_non_ident && m->client->GetUHost()[0] == '~')
     return 0;
 
   return 1;
@@ -659,7 +659,7 @@ request_op(struct chanset_t *chan)
     /* If bot, linked, global op & !split & chanop & (chan is reserver | bot isn't +a) -> 
      * add to temp list */
     if (!ml->user && !ml->tried_getuser) {
-      simple_sprintf(s, "%s!%s", ml->nick, ml->userhost);
+      simple_sprintf(s, "%s!%s", ml->nick, ml->client->GetUHost());
       ml->user = get_user_by_host(s);
       ml->tried_getuser = 1;
     }
@@ -1176,7 +1176,7 @@ check_lonely_channel(struct chanset_t *chan)
       whined = 1;
     }
     PFOR(chan->channel.hmember, Member, m) {
-      simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+      simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
       u = get_user_by_host(s);
       if (!match_my_nick(m->nick) && (!u || !u->bot)) {
         ok = 0;
@@ -1332,8 +1332,8 @@ check_expired_chanstuff(struct chanset_t *chan)
 //      n = m->next;
 //      n = m + 1;
       if (m->split && now - m->split > wait_split) {
-        simple_sprintf(s, "%s!%s", m->nick, m->userhost);
-        putlog(LOG_JOIN, chan->dname, "%s (%s) got lost in the net-split.", m->nick, m->userhost);
+        simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
+        putlog(LOG_JOIN, chan->dname, "%s (%s) got lost in the net-split.", m->nick, m->client->GetUHost());
         killmember(chan, m->nick);
         continue;
       }
@@ -1341,7 +1341,7 @@ check_expired_chanstuff(struct chanset_t *chan)
       if (me_op(chan)) {
         if (chan->idle_kick) {
           if (now - m->last >= chan->idle_kick * 60 && !match_my_nick(m->nick) && !chan_issplit(m)) {
-            simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+            simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
             get_user_flagrec(m->user ? m->user : get_user_by_host(s), &fr, chan->dname);
             if (!(glob_bot(fr) || (glob_op(fr) && !glob_deop(fr)) || chan_op(fr))) {
               dprintf(DP_SERVER, "KICK %s %s :%sidle %d min\n", chan->name, m->nick, kickprefix, chan->idle_kick);
@@ -1351,10 +1351,10 @@ check_expired_chanstuff(struct chanset_t *chan)
         } else if (dovoice(chan) && !loading) {      /* autovoice of +v users if bot is +y */
           if (!chan_hasop(m) && !chan_hasvoice(m)) {
             if (!m->user && !m->tried_getuser) {
-              simple_sprintf(s, "%s!%s", m->nick, m->userhost);
+              simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
               m->user = get_user_by_host(s);
-              if (!m->user && doresolv(chan) && m->userip[0]) {
-                simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userip);
+              if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
+                simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
                 m->user = get_user_by_host(s);
               }
               m->tried_getuser = 1;

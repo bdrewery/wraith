@@ -21,10 +21,6 @@ class Member {
 //mFIXME
     void NewNick(const char *newnick);
 
-    void SetUHost(const char *);
-    void SetUIP(const char *);
-
-
     char *GetKey() { return nick; };
     struct userrec *GetUser();
     void SetUser(struct userrec *u, bool getuser = 0) { user = u; tried_getuser = getuser; };
@@ -49,8 +45,8 @@ class Member {
     unsigned short flags;
     unsigned int hash;
     char nick[NICKLEN];
-    char userhost[UHOSTLEN];
-    char userip[UHOSTLEN];
+//    char userhost[UHOSTLEN];
+//    char userip[UHOSTLEN];
 //    char fullhost[NICKLEN + UHOSTLEN];
 //    char fullip[NICKLEN + UHOSTLEN];
     int i_family;

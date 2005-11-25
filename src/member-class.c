@@ -21,8 +21,8 @@ Member::Member(struct chanset_t *chan, const char *nick)
   removed = 0;
   my_chan = chan;
   user = NULL;
-  userhost[0] = 0;
-  userip[0] = 0;
+//  userhost[0] = 0;
+//  userip[0] = 0;
   split = 0;
   last = now;
   joined = 0;
@@ -47,17 +47,6 @@ Member::~Member()
   if (!removed)
     Remove(0);
 //  my_chan->channel.members--;
-}
-
-void Member::SetUHost(const char *uhost)
-{
-  h_family = is_dotted_ip(uhost);
-  strlcpy(userhost, uhost, sizeof(userhost));
-}
-void Member::SetUIP(const char *uip)
-{
-  i_family = is_dotted_ip(uip);
-  strlcpy(userip, uip, sizeof(userhost));
 }
 
 void Member::NewNick(const char *newnick)
@@ -146,8 +135,8 @@ struct userrec *Member::GetUser()
 {
   char s[UHOSTLEN + NICKLEN] = "";
 
-  if (userhost[0]) {
-    simple_snprintf(s, sizeof(s), "%s!%s", nick, userhost);
+  if (client->GetUHost()[0]) {
+    simple_snprintf(s, sizeof(s), "%s!%s", nick, client->GetUHost());
     user = get_user_by_host(s);
     tried_getuser = 1;
   }
@@ -158,8 +147,8 @@ void Member::dump_idx(int idx)
 {
   dprintf(idx, "nick: %s\n", nick);
   dprintf(idx, "  user: %s\n", user ? user->handle : "");
-  dprintf(idx, "  userhost: %s\n", userhost);
-  dprintf(idx, "  userip: %s\n", userip);
+  dprintf(idx, "  userhost: %s\n", client->GetUHost());
+  dprintf(idx, "  userip: %s\n", client->GetUIP());
   dprintf(idx, "  split: %d\n", split);
   dprintf(idx, "  joined: %d\n", joined);
   dprintf(idx, "  last: %d\n", last);

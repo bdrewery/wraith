@@ -10,15 +10,18 @@
 
 class Client {
   private:
-    struct userrec *_user;
+    char _userhost[UHOSTLEN];
+    char _userip[UHOSTLEN];
+    char _user[11];
+
+    struct userrec *_u;
     int _hops;
-    int _uhost_family;
+    int _i_family;
+    int _h_family;
 
     bool _tried_getuser;
 
     char _nick[NICKLEN];
-    char _userhost[UHOSTLEN];
-    char _userip[UHOSTLEN];
 
 //    char **_chans;
     int _channels;
@@ -41,6 +44,10 @@ class Client {
     int AddChan(struct chanset_t *chan);
 
     void dump_idx(int idx);
+    void SetUHost(const char *, const char * = NULL);
+    char *GetUHost();
+    void SetUIP(const char *, const char * = NULL);
+    char *GetUIP();
 };
 
 
