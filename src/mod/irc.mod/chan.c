@@ -1579,9 +1579,6 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
     m->user = NULL;
   }
 
-  if (!m->nick[0])
-    strcpy(m->nick, nick);	/* Store the nick in list */
-
   m->hops = hops;
 
   /* Propagate hops to other channel memlists... might save us a WHO #chan */
@@ -2362,7 +2359,6 @@ static int gotjoin(char *from, char *chname)
 	m->flags = 0;
 	m->last = now;
 	m->delay = 0L;
-	strlcpy(m->nick, nick, sizeof(m->nick));
 //        strlcpy(m->client->GetUHost(), uhost, sizeof(m->client->GetUHost()));
         m->user = u;
         m->tried_getuser = 1;
