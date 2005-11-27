@@ -21,8 +21,6 @@ class Client {
 
     bool _tried_getuser;
 
-    char _nick[NICKLEN];
-
 //    char **_chans;
     int _channels;
     ptrlist<struct chanset_t> _chans;
@@ -48,6 +46,9 @@ class Client {
     char *GetUHost();
     void SetUIP(const char *, const char * = NULL);
     char *GetUIP();
+
+
+    char _nick[NICKLEN];
 };
 
 

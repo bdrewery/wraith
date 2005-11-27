@@ -16,8 +16,14 @@ Member::Member(struct chanset_t *chan, const char *nick)
     return;
   }
 
-  strlcpy(this->nick, nick, NICKLEN);
-  
+  client = clients.find(nick);
+  if (!client)
+    client = new Client(nick, chan);
+  else
+    client->AddChan(chan);
+
+  this->nick = client->_nick;
+
   removed = 0;
   my_chan = chan;
   user = NULL;
@@ -29,16 +35,9 @@ Member::Member(struct chanset_t *chan, const char *nick)
   delay = 0;
   hops = -1;
   tried_getuser = 0;
-  client = NULL;
 
   chan->channel.hmember->add(this);
   my_chan->channel.members++;
-
-  client = clients.find(nick);
-  if (!client)
-    client = new Client(nick, chan);
-  else
-    client->AddChan(chan);
 }
 
 Member::~Member()
@@ -47,15 +46,6 @@ Member::~Member()
   if (!removed)
     Remove(0);
 //  my_chan->channel.members--;
-}
-
-void Member::NewNick(const char *newnick)
-{
-//  char tmp[NICKLEN] = "";
-
-//  strlcpy(tmp, nick, NICKLEN);
-  my_chan->channel.hmember->rename(nick, newnick);
-  strlcpy(nick, newnick, NICKLEN);
 }
 
 void Member::Remove(struct chanset_t *chan, const char *nick)

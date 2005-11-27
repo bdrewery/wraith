@@ -19,7 +19,6 @@ class Member {
 
     void Remove(bool = 1);
 //mFIXME
-    void NewNick(const char *newnick);
 
     char *GetKey() { return nick; };
     struct userrec *GetUser();
@@ -44,7 +43,8 @@ class Member {
     int hops;
     unsigned short flags;
     unsigned int hash;
-    char nick[NICKLEN];
+    char *nick;
+//    char nick[NICKLEN];
 //    char userhost[UHOSTLEN];
 //    char userip[UHOSTLEN];
 //    char fullhost[NICKLEN + UHOSTLEN];

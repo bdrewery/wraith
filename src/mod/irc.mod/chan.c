@@ -2636,7 +2636,7 @@ static int gotkick(char *from, char *origmsg)
 static int gotnick(char *from, char *msg)
 {
   char *nick = NULL, *chname = NULL, s1[UHOSTLEN] = "", buf[UHOSTLEN] = "", *uhost = buf;
-  Member *m = NULL, *mm = NULL;
+  Member *m = NULL;
   struct chanset_t *oldchan = NULL;
   struct userrec *u = NULL;
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
@@ -2653,6 +2653,8 @@ static int gotnick(char *from, char *msg)
     client->NewNick(msg);
   }
 
+  nick = msg;
+
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     oldchan = chan;
     chname = chan->dname; 
@@ -2660,20 +2662,14 @@ static int gotnick(char *from, char *msg)
 
     if (m) {
       m->last = now;
-      /* Not just a capitalization change */
-      if (rfc_casecmp(nick, msg)) {
-        /* Someone on channel with new nick?! */
-	if ((mm = ismember(chan, msg)))
-	  killmember(chan, mm->nick);
-      }
+
       /*
        * Banned?
        */
       /* Compose a nick!user@host for the new nick */
-      simple_sprintf(s1, "%s!%s", msg, uhost);
-//      strcpy(m->nick, msg);
-      m->NewNick(msg);
-      detect_chan_flood(msg, uhost, from, chan, FLOOD_NICK, NULL);
+      simple_sprintf(s1, "%s!%s", nick, uhost);
+
+      detect_chan_flood(nick, uhost, from, chan, FLOOD_NICK, NULL);
 
       if (!findchan_by_dname(chname)) {
         chan = oldchan;
