@@ -41,15 +41,13 @@ class Member {
     time_t last;
     time_t delay;
     unsigned short flags;
-    unsigned int hash;
+
     char *nick;
 //    char nick[NICKLEN];
 //    char userhost[UHOSTLEN];
 //    char userip[UHOSTLEN];
 //    char fullhost[NICKLEN + UHOSTLEN];
 //    char fullip[NICKLEN + UHOSTLEN];
-    int i_family;
-    int h_family;
     bool tried_getuser;
     Client *client;
 
