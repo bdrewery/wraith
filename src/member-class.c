@@ -69,6 +69,11 @@ void Member::Remove(bool do_delete)
     delete this;
 }
 
+void Member::NewNick(const char *newnick) {
+  /* Our nick is a pointer to the Client::Nick which was already changed */
+  my_chan->channel.hmember->rename(nick, newnick);
+}
+
 void Member::UpdateIdle()
 {
   last = now;

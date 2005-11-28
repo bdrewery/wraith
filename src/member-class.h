@@ -18,6 +18,8 @@ class Member {
     static void Remove(struct chanset_t *chan, const char *nick);
 
     void Remove(bool = 1);
+    void NewNick(const char *);
+
 //mFIXME
 
     char *GetKey() { return nick; };
