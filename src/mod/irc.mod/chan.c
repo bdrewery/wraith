@@ -2639,11 +2639,14 @@ static int gotnick(char *from, char *msg)
 /* FIXME: This should loop the client's channels. */
   /* We must do this because of capitalization changes */
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
-    if ((m = ismember(chan, nick)))
+    if ((m = ismember(chan, nick))) {
+      client = m->client;
       m->NewNick(msg);
+    }
   }
 
-  client = Client::Find(nick);
+  if (!client)
+    client = Client::Find(nick);
   if (client) {
     client->NewNick(msg);
   }
