@@ -15,7 +15,6 @@ class Client {
     char _user[11];
 
     struct userrec *_u;
-    int _hops;
     int _i_family;
     int _h_family;
 
@@ -49,6 +48,7 @@ class Client {
 
 
     char _nick[NICKLEN];
+    int hops;
 };
 
 

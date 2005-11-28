@@ -687,7 +687,7 @@ request_op(struct chanset_t *chan)
 
   /* look for bots 0-1 hops away */
   for (i2 = 0; i2 < i; i2++) {
-    if (botops[i2]->hops < 2) {
+    if (botops[i2]->client->hops < 2) {
       putbot(botops[i2]->user->handle, s);
       chan->opreqtime[first] = n;
       if (l[0]) {
@@ -1214,7 +1214,7 @@ check_servers(struct chanset_t *chan)
   ptrlist<Member>::iterator _p;
 
   PFOR(chan->channel.hmember, Member, m) {
-    if (!match_my_nick(m->nick) && chan_hasop(m) && (m->hops == -1)) {
+    if (!match_my_nick(m->nick) && chan_hasop(m) && (m->client->hops == -1)) {
       putlog(LOG_DEBUG, "*", "Updating WHO for '%s' because '%s' is missing data.", chan->dname, m->nick);
       dprintf(DP_HELP, "WHO %s\n", chan->name);
       break;                    /* lets just do one chan at a time to save from flooding */

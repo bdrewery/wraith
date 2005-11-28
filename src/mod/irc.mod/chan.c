@@ -1566,8 +1566,6 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   char userhost[UHOSTLEN] = "";
   Member *m = NULL;	/* in my channel list copy? */
   bool waschanop = 0, me = 0;
-  struct chanset_t *ch = NULL;
-  Member *ml = NULL;
 
   m = ismember(chan, nick);
   
@@ -1579,17 +1577,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
     m->user = NULL;
   }
 
-  m->hops = hops;
-
-  /* Propagate hops to other channel memlists... might save us a WHO #chan */
-  for (ch = chanset; ch; ch = ch->next) {
-    if (!channel_inactive(ch) && ch != chan) {
-      ml = ismember(ch, m->nick);
-      if (ml) {
-        ml->hops = m->hops;
-      }
-    }
-  }
+  m->client->hops = hops;
 
   waschanop = me_op(chan);      /* Am I opped here? */
   if (strchr(flags, '@') != NULL)	/* Flags say he's opped? */

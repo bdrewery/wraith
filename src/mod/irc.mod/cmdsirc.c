@@ -1426,7 +1426,7 @@ static void cmd_channel(int idx, char *par)
         egg_snprintf(format, sizeof format, 
 			"%%c%%c%%-%us %%-%us   %%d %%s %%c     <- netsplit, %%lus\n", 
 			maxnicklen, maxhandlen);
-	dprintf(idx, format, chanflag[0],chanflag[1], m->nick, handle, s, m->hops, atrflag,
+	dprintf(idx, format, chanflag[0],chanflag[1], m->nick, handle, s, m->client->hops, atrflag,
 		now - (m->split));
       } else if (!rfc_casecmp(m->nick, botname)) {
         egg_snprintf(format, sizeof format, 
@@ -1445,7 +1445,7 @@ static void cmd_channel(int idx, char *par)
 	  strlcpy(s1, "   ", sizeof s1);
 	egg_snprintf(format, sizeof format, "%%c%%c%%-%us %%-%us %%s %%c   %%d %%s  %%s %%s\n", 
 			maxnicklen, maxhandlen);
-	dprintf(idx, format, chanflag[0], chanflag[1], m->nick,	handle, s, atrflag, m->hops,
+	dprintf(idx, format, chanflag[0], chanflag[1], m->nick,	handle, s, atrflag, m->client->hops,
                      s1, m->client->GetUHost(), m->client->GetUIP());
       }
       if (chan_fakeop(m))

@@ -40,7 +40,6 @@ class Member {
     time_t split;
     time_t last;
     time_t delay;
-    int hops;
     unsigned short flags;
     unsigned int hash;
     char *nick;

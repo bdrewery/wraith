@@ -33,7 +33,6 @@ Member::Member(struct chanset_t *chan, const char *nick)
   last = now;
   joined = 0;
   delay = 0;
-  hops = -1;
   tried_getuser = 0;
 
   chan->channel.hmember->add(this);

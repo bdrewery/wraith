@@ -12,7 +12,7 @@ Htree < Client > clients;
 Client::Client(const char *nick, struct chanset_t *chan)
 {
   _u = NULL;
-  _hops = -1;
+  hops = -1;
   _h_family = 0;
   _i_family = 0;
   _tried_getuser = 0;
