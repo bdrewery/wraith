@@ -66,3 +66,16 @@ _rfc_toupper(int c)
   return rfc_touppertab[(unsigned char) (c)];
 }
 
+char *
+rfc_strtoupper(char *s)
+{
+  char *p = s;
+
+  while (*p) {
+    *p = rfc_toupper(*p);
+    p++;
+  }
+  return s;
+
+}
+
