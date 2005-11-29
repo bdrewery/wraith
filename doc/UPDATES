@@ -12,8 +12,20 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 - Added hijacked invite detection based on server invite notices.
 
 1.2.9
-* Fixed cmd_[un]stick not properly using numbers for channel masks. (#160)
+-Notable Updates:
+* Added primitive relay system. See help for set var 'relay-to' and help for chaninfo regarding +/-relay.
+* Clearing a variable via 'set var -' now resets that variable to default settings. (#111)
+* Added a buffer dump on SEGFAULTS to help with debugging.
+* Added somewhat advanced password scoring to replace current password restrictions. (#56)
+* Channel member list is now stored in a hash table / linked list mix (speeds up 50% of lookups to about O(1))
 * Cmd_invite now attempts to resolve the username to a nickname (from a shared channel), if no nick is specified. (#159)
+* Cmds (op, deop, voice, devoice) now recognize console '*' and take '*'.
+  -Cmds will also attempt to find your irc nickname if not provided.
+  -ie, .op -> Ops you on your console chan. .op * -> Ops you in all chans. .op nick * -> ops nick in all chans.
+* Changed botnet link behaivor to collide duped bots instead of claiming there is a 'loop' (#163)
+* Fixed var 'server-port' not being used correctly. (Now lists/saves/loads before servers)
+- - - - 
+* Fixed cmd_[un]stick not properly using numbers for channel masks. (#160)
 * Fixed binary spawning/updating to escape needed chars for shell. (#158)
 * Fixed a flaw in binary checksums.
 * Added build os/architechture to output for ./binary -v
@@ -22,9 +34,6 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Removed/fixed references to the old 'config' to the new 'set' in help.
 * Fixed references to 'set manop/mop' to point to chanset instead.
 * Fixed tempdir checking to attempt to 'mkdir ~/.ssh/' for '~/.ssh/...' tempdir.
-* Cmds (op, deop, voice, devoice) now recognize console '*' and take '*'.
-  -Cmds will also attempt to find your irc nickname if not provided.
-  -ie, .op -> Ops you on your console chan. .op * -> Ops you in all chans. .op nick * -> ops nick in all chans.
 * Added a new error code (20) which displays if attempting to run binary before using -C.
 * Fixed bot link getting colors. (fixes #161)
 * Fixed +r bots resolving users by resolved ip before host.
@@ -35,28 +44,21 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Setting 'manop-warn' was only being used for 'OP #chan' not 'OP' alone.
 * Fixed channel notices not being parsed.
 * Took out all punish/revenge code, it's been disabled since 1.2.7 anyway.
-* Added primitive relay system. See help for set var 'relay-to' and help for chaninfo regarding +/-relay.
 * Fixed bots giving up on joining juped channels (may be due to split) (#168)
 * Fixed cmdpass list getting desynced during userfile transfer. (#143)
-* Changed botnet link behaivor to collide duped bots instead of claiming there is a 'loop' (#163)
 * Removed old compatability code for converting CONFIG->SET during userfile loading.
 * Fixed "un-allocated socket" errors when a relay fails.
-* Fixed var 'server-port' not being used correctly. (Now lists/saves/loads before servers)
 * Fixed a typo in msg_pass.
-* Clearing a variable via 'set var -' now resets that variable to default settings. (#111)
 * Failed relay no longer says failed link.
 * Fixed a socket protocol error.
 * Fixed a small error in help file for 'whom'.
 * Removed some legacy code from failed relays that attempts to connect to port+1, port+2, port+3... (might fix #177)
-* Added a buffer dump on SEGFAULTS to help with debugging.
 * Many botnet signals are now passed onto to other bots before being parsed. (Affects botcmd)
 * Unsetting auth-prefix disables authing/cmds.
-* Channel member list is now stored in a hash table / linked list mix (speeds up 50% of lookups to about O(1))
 * Re-enabled hops sharing between member lists.
 * Disabled +take nick list randomizing as the new member list should do this already.
 * Fixed an invalid killsock error in sharing.
 * Fixed chanset 'flood-*' not working correctly. (#69)
-* Added somewhat advanced password scoring to replace current password restrictions. (#56)
 * Fixed cmd_rehash killing hubs. And revised help for 'rehash'. (#186)
 * Fixed a bug in the listen code, which caused a segfault in /ctcp chat (a few other places too) (#189)
 
