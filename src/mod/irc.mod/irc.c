@@ -268,55 +268,68 @@ static void cache_invite(struct chanset_t *chan, char *nick, char *host, char *h
   dprintf(DP_SERVER, "INVITE %s %s\n", nick, chan->name);
 }
 
-static char *
-makecookie(char *chn, char *bnick)
-{
-  char *buf = NULL, randstring[5] = "", ts[11] = "", *chname = NULL, *hash = NULL, tohash[50] = "";
+inline char *
+cookie_hash(char *bnick, const char *chname, const char *ts, const char *randstring) {
+  char tohash[26] = "";
 
-  chname = strdup(chn);
+  strtolower(bnick);
+
+  /* Only use first 3 chars of chan */
+  simple_snprintf(tohash, sizeof(tohash), "%c%s%c%c%c%s%s%c", 
+		settings.salt2[0], 
+		bnick, 
+  		toupper(chname[0]),
+		toupper(chname[1]),
+		toupper(chname[2]),  
+		&ts[4], 
+		randstring, 
+		settings.salt2[15]);
+
+  return MD5(tohash);
+}
+
+static char *
+makecookie(char *chname, char *bnick)
+{
+  char *buf = NULL, randstring[5] = "", ts[11] = "", *hash = NULL;
 
   make_rand_str(randstring, 4);
 
-  /* &ts[4] is now last 6 digits of time */
-  sprintf(ts, "%010li", now + timesync);
+  egg_snprintf(ts, sizeof(ts), "%010li", now + timesync);		/* &ts[4] is now last 6 digits of time */
   
-  /* Only use first 3 chars of chan */
-  if (strlen(chname) > 2)
-    chname[3] = 0;
-  strtoupper(chname);
-  strtolower(bnick);
-  simple_sprintf(tohash, "%c%s%s%s%s%c", settings.salt2[0], bnick, chname, &ts[4], randstring, settings.salt2[15]);
-  hash = MD5(tohash);
+  hash = cookie_hash(bnick, chname, ts, randstring);
+
   buf = (char *) my_calloc(1, 20);
-  simple_sprintf(buf, "%c%c%c!%s@%s", hash[8], hash[16], hash[18], randstring, ts);
+  simple_snprintf(buf, 20, "%c%c%c!%s@%s", hash[8], hash[16], hash[18], randstring, ts);
   /* sprintf(buf, "%c/%s!%s@%X", hash[16], randstring, ts, BIT31); */
-  free(chname);
   return buf;
 }
 
 static int
-checkcookie(char *chn, char *bnick, char *cookie)
+checkcookie(char *chname, char *bnick, char *cookie)
 {
-  char randstring[5] = "", ts[11] = "", *chname = NULL, *hash = NULL, tohash[50] = "", *p = NULL;
+  char randstring[5] = "", ts[11] = "", *hash = NULL, *p = NULL;
   time_t optime = 0;
 
-  chname = strdup(chn);
+  /* md5!rand@timestamp */
   p = cookie;
-  p += 4; /* has! */
-  strlcpy(randstring, p, sizeof(randstring));
+
+  p += 4; /* md5! */
+
+  randstring[0] = *(p + 0);
+  randstring[1] = *(p + 1);
+  randstring[2] = *(p + 2);
+  randstring[3] = *(p + 3);
+  randstring[4] = 0;
+
   p += 5; /* rand@ */
-  /* &ts[4] is now last 6 digits of time */
-  strlcpy(ts, p, sizeof(ts));
+
+  strlcpy(ts, p, sizeof(ts));		/* &ts[4] is now last 6 digits of time */
+
   optime = atol(ts);
 
-  /* Only use first 3 chars of chan */
-  if (strlen(chname) > 2)
-    chname[3] = 0;
-  strtoupper(chname);
-  /* hash!rand@ts */
-  strtolower(bnick);
-  simple_sprintf(tohash, "%c%s%s%s%s%c", settings.salt2[0], bnick, chname, &ts[4], randstring, settings.salt2[15]);
-  hash = MD5(tohash);
+  hash = cookie_hash(bnick, chname, ts, randstring);
+
   if (!(hash[8] == cookie[0] && hash[16] == cookie[1] && hash[18] == cookie[2]))
     return BC_HASH;
   if (((now + timesync) - optime) > 1800)
