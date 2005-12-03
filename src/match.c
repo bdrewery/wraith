@@ -28,112 +28,12 @@
 #include "rfc1459.h"
 #include "socket.h"
 
-#define QUOTE '\\' /* quoting character (overrides wildcards) */
 #define WILDS '*'  /* matches 0 or more characters (including spaces) */
-#define WILDP '%'  /* matches 0 or more non-space characters */
 #define WILDQ '?'  /* matches ecactly one character */
 #define WILDT '~'  /* matches 1 or more spaces */
 
 #define NOMATCH 0
 #define MATCH (match+sofar)
-#define PERMATCH (match+saved+sofar)
-
-/* binds matching */
-int _wild_match_per(register unsigned char *m, register unsigned char *n)
-{
-  /* null strings should never match */
-  if ((m == 0) || (n == 0) || (!*n))
-    return NOMATCH;
-
-  unsigned char *ma = m, *lsm = NULL, *lsn = NULL, *lpm = NULL, *lpn = NULL;
-  int match = 1, saved = 0, space;
-  register int sofar = 0;
-
-  while (*n) {
-    if (*m == WILDT) {          /* Match >=1 space */
-      space = 0;                /* Don't need any spaces */
-      do {
-        m++;
-        space++;
-      }                         /* Tally 1 more space ... */
-      while ((*m == WILDT) || (*m == ' '));     /*  for each space or ~ */
-      sofar += space;           /* Each counts as exact */
-      while (*n == ' ') {
-        n++;
-        space--;
-      }                         /* Do we have enough? */
-      if (space <= 0)
-        continue;               /* Had enough spaces! */
-    }
-    /* Do the fallback       */
-    else {
-      switch (*m) {
-      case 0:
-        do
-          m--;                  /* Search backwards */
-        while ((m > ma) && (*m == '?'));        /* For first non-? char */
-        if ((m > ma) ? ((*m == '*') && (m[-1] != QUOTE)) : (*m == '*'))
-          return PERMATCH;      /* nonquoted * = match */
-        break;
-      case WILDP:
-        while (*(++m) == WILDP);        /* Zap redundant %s */
-        if (*m != WILDS) {      /* Don't both if next=* */
-          if (*n != ' ') {      /* WILDS can't match ' ' */
-            lpm = m;
-            lpn = n;            /* Save '%' fallback spot */
-            saved += sofar;
-            sofar = 0;          /* And save tally count */
-          }
-          continue;             /* Done with '%' */
-        }
-        /* FALL THROUGH */
-      case WILDS:
-        do
-          m++;                  /* Zap redundant wilds */
-        while ((*m == WILDS) || (*m == WILDP));
-        lsm = m;
-        lsn = n;
-        lpm = 0;                /* Save '*' fallback spot */
-        match += (saved + sofar);       /* Save tally count */
-        saved = sofar = 0;
-        continue;               /* Done with '*' */
-      case WILDQ:
-        m++;
-        n++;
-        continue;               /* Match one char */
-      case QUOTE:
-        m++;                    /* Handle quoting */
-      }
-      if (rfc_toupper(*m) == rfc_toupper(*n)) { /* If matching */
-        m++;
-        n++;
-        sofar++;
-        continue;               /* Tally the match */
-      }
-#ifdef WILDT
-    }
-#endif
-    if (lpm) {                  /* Try to fallback on '%' */
-      n = ++lpn;
-      m = lpm;
-      sofar = 0;                /* Restore position */
-      if ((*n | 32) == 32)
-        lpm = 0;                /* Can't match 0 or ' ' */
-      continue;                 /* Next char, please */
-    }
-    if (lsm) {                  /* Try to fallback on '*' */
-      n = ++lsn;
-      m = lsm;                  /* Restore position */
-      saved = sofar = 0;
-      continue;                 /* Next char, please */
-    }
-    return NOMATCH;             /* No fallbacks=No match */
-  }
-  while ((*m == WILDS) || (*m == WILDP))
-    m++;                        /* Zap leftover %s & *s */
-  return (*m) ? NOMATCH : PERMATCH;     /* End of both = match */
-}
-
 
 /* general/host matching */
 int _wild_match(register unsigned char *m, register unsigned char *n)

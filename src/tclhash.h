@@ -13,7 +13,7 @@ typedef int (*HashFunc) (void *, void *, void *, void *, void *, void *, void *,
 /* Match type flags for bind tables. */
 #define MATCH_PARTIAL       BIT0
 #define MATCH_EXACT         BIT1
-#define MATCH_MASK          BIT2
+//			    BIT2
 #define MATCH_CASE          BIT3
 #define MATCH_NONE          BIT4
 #define MATCH_FLAGS_AND	    BIT5

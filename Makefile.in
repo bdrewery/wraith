@@ -30,7 +30,8 @@ STRIP = @STRIP@
 DIFF = @DIFF@
 
 #LIBS = @LIBS@ @ZLIB@ @SSL@ 
-LIBS = @LIBS@ @ZLIB@ 
+LIBS = @LIBS@ @ZLIB@ -ltcmalloc -lprofiler
+
 
 DEBCXXFLAGS = -DDEBUG -fno-inline -g3 -ggdb3
 CFLGS = @GCC3@

@@ -313,7 +313,7 @@ static int bind_entry_exec(bind_table_t *table, bind_entry_t *entry, void **al)
 
 	retval = entry->callback(al[0], al[1], al[2], al[3], al[4], al[5], al[6], al[7], al[8], al[9]);
 
-	if (table->match_type & (MATCH_MASK | MATCH_PARTIAL | MATCH_NONE)) return(retval);
+	if (table->match_type & (MATCH_PARTIAL | MATCH_NONE)) return(retval);
 
 	/* Search for the last entry that isn't deleted. */
 	for (prev = entry->prev; prev; prev = prev->prev) {
@@ -406,10 +406,7 @@ static int bind_vcheck_hits (bind_table_t *table, const char *match, struct flag
 		}
 
 
-		if (table->match_type & MATCH_MASK) {
-			cmp = !wild_match_per(entry->mask, (char *) match);
-		}
-		else if (table->match_type & MATCH_NONE) {
+		if (table->match_type & MATCH_NONE) {
 			cmp = 0;
 		}
 		else if (table->match_type & MATCH_PARTIAL) {
