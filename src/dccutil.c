@@ -374,7 +374,7 @@ dcc_chatter(int idx)
   struct flag_record fr = { FR_GLOBAL | FR_CHAN | FR_ANYWH, 0, 0, 0 };
 
   strcpy(dcc[idx].u.chat->con_chan, "***");
-  check_bind_chon(dcc[idx].nick, idx);
+  check_chon(dcc[idx].nick, idx);
 
   dprintf(idx, "Connected to %s, running %s\n", conf.bot->nick, version);
   show_banner(idx);             /* check STAT_BANNER inside function */
@@ -626,7 +626,7 @@ not_away(int idx)
   dprintf(idx, "You're not away any more.\n");
   free(dcc[idx].u.chat->away);
   dcc[idx].u.chat->away = NULL;
-  check_bind_away(conf.bot->nick, idx, NULL);
+  check_away(conf.bot->nick, idx, NULL);
 }
 
 void
@@ -650,7 +650,7 @@ set_away(int idx, char *s)
     }
   }
   dprintf(idx, "You are now away. (%s)\n", s);
-  check_bind_away(conf.bot->nick, idx, s);
+  check_away(conf.bot->nick, idx, s);
 }
 
 
@@ -768,7 +768,7 @@ detect_dcc_flood(time_t * timer, struct chat_info *chat, int idx)
         if (chat->channel < GLOBAL_CHANS)
           botnet_send_part_idx(idx, x);
       }
-      check_bind_chof(dcc[idx].nick, idx);
+      check_chof(dcc[idx].nick, idx);
       if ((dcc[idx].sock != STDOUT) || backgrd) {
         killsock(dcc[idx].sock);
         lostdcc(idx);
@@ -802,7 +802,7 @@ do_boot(int idx, char *by, char *reason)
     if (dcc[idx].u.chat->channel < GLOBAL_CHANS)
       botnet_send_part_idx(idx, x);
   }
-  check_bind_chof(dcc[idx].nick, idx);
+  check_chof(dcc[idx].nick, idx);
 
   if (dcc[idx].u.chat->su_nick) {
     dcc[idx].user = get_user_by_handle(userlist, dcc[idx].u.chat->su_nick);

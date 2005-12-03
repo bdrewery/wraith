@@ -1352,7 +1352,7 @@ static void cont_tandem_relay(int idx, char *buf, register int len)
     if (dcc[uidx].u.chat->channel < GLOBAL_CHANS)
       botnet_send_part_idx(uidx, NULL);
   }
-  check_bind_chof(dcc[uidx].nick, uidx);
+  check_chof(dcc[uidx].nick, uidx);
   dcc[uidx].type = &DCC_RELAYING;
   dcc[uidx].u.relay = ri;
 }
@@ -1389,7 +1389,7 @@ static void eof_dcc_relay(int idx)
     if (dcc[j].u.chat->channel < GLOBAL_CHANS)
       botnet_send_join_idx(j);
   }
-  check_bind_chon(dcc[j].nick, j);
+  check_chon(dcc[j].nick, j);
   killsock(dcc[idx].sock);
   lostdcc(idx);
 }
@@ -1482,7 +1482,7 @@ static void dcc_relaying(int idx, char *buf, int j)
   free(dcc[idx].u.relay);
   dcc[idx].u.chat = ci;
   dcc[idx].type = &DCC_CHAT;
-  check_bind_chon(dcc[idx].nick, idx);
+  check_chon(dcc[idx].nick, idx);
   killsock(dcc[j].sock);
   lostdcc(j);
 }

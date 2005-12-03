@@ -1055,7 +1055,7 @@ static void bot_away(int idx, char *par)
   }
   etc = newsplit(&par);
   sock = base64_to_int(etc);
-  check_bind_away(bot, idx, par);
+  check_away(bot, idx, par);
   if (par[0]) {
     partystat(bot, sock, PLSTAT_AWAY, 0);
     partyaway(bot, sock, par);

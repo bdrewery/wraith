@@ -4227,7 +4227,7 @@ static void cmd_quit(int idx, char *text)
 
 	putlog(LOG_CMDS, "*", "#%s# quit %s", dcc[idx].nick, text);
 
-	check_bind_chof(dcc[idx].nick, idx);
+	check_chof(dcc[idx].nick, idx);
 	dprintf(idx, "*** Ja Mata\n");
 	flush_lines(idx, dcc[idx].u.chat);
 	putlog(LOG_MISC, "*", "DCC connection closed (%s!%s)", dcc[idx].nick, dcc[idx].host);

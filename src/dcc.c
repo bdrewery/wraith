@@ -1090,7 +1090,7 @@ eof_dcc_chat(int idx)
     if (dcc[idx].u.chat->channel < GLOBAL_CHANS)
       botnet_send_part_idx(idx, "lost dcc link");
   }
-  check_bind_chof(dcc[idx].nick, idx);
+  check_chof(dcc[idx].nick, idx);
   killsock(dcc[idx].sock);
   lostdcc(idx);
 }

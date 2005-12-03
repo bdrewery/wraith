@@ -175,7 +175,7 @@ void check_bind_bot(const char *nick, const char *code, const char *param)
   free(p2);
 }
 
-void check_bind_chon(char *hand, int idx)
+void check_chon(char *hand, int idx)
 {
   struct userrec        *u = NULL;
 
@@ -186,7 +186,7 @@ void check_bind_chon(char *hand, int idx)
   channels_chon(hand, idx);
 }
 
-void check_bind_chof(char *hand, int idx)
+void check_chof(char *hand, int idx)
 {
   struct userrec        *u = NULL;
 
@@ -194,12 +194,12 @@ void check_bind_chof(char *hand, int idx)
   touch_laston(u, "partyline", now);
 }
 
-void check_bind_nkch(const char *ohand, const char *nhand)
+void check_nkch(const char *ohand, const char *nhand)
 {
   notes_change(ohand, nhand);
 }
 
-void check_bind_away(const char *bot, int idx, const char *msg)
+void check_away(const char *bot, int idx, const char *msg)
 {
   away_notes(bot, idx, msg);
 }
