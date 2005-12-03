@@ -92,7 +92,7 @@ int num_notes(const char *user)
 
 /* Change someone's handle.
  */
-static void notes_change(const char *oldnick, const char *newnick)
+void notes_change(const char *oldnick, const char *newnick)
 {
   if (!egg_strcasecmp(oldnick, newnick))
     return;
@@ -718,12 +718,6 @@ int notes_chon(int idx)
   return 0;
 }
 
-static cmd_t notes_nkch[] =
-{
-  {"*",		"",	(Function) notes_change,	"notes", 0},
-  {NULL,	NULL,	NULL,				NULL, 0}
-};
-
 static cmd_t notes_msgs[] =
 {
   {"notes",	"",	(Function) msg_notes,		NULL, LEAF},
@@ -751,7 +745,6 @@ void notes_init()
   timer_create_secs(3600, "notes_hourly", (Function) notes_hourly);
 
   add_builtins("dcc", notes_cmds);
-  add_builtins("nkch", notes_nkch);
 
   notes_server_setup(0);
   egg_memcpy(&USERENTRY_FWD, &USERENTRY_INFO, sizeof(void *) * 12);

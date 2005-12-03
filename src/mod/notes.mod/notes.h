@@ -67,5 +67,6 @@ void notes_report(int, int);
 int storenote(char *, char *, char *, int, char *, int);
 int notes_chon(int);
 void away_notes(const char *, int, const char *);
+void notes_change(const char *, const char *);
 
 #endif				/* _EGG_MOD_NOTES_H */
