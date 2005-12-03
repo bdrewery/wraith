@@ -24,7 +24,6 @@ extern cmd_t 		C_dcc[];
 static bind_table_t *BT_away = NULL, *BT_dcc = NULL;
 static bind_table_t *BT_note = NULL;
 static bind_table_t *BT_bot = NULL, *BT_nkch = NULL, *BT_chon = NULL;
-static bind_table_t *BT_time = NULL;
 
 void core_binds_init()
 {
@@ -36,7 +35,6 @@ void core_binds_init()
         add_builtins("dcc", C_dcc);
         BT_nkch = bind_table_add("nkch", 2, "ss", MATCH_MASK, BIND_STACKABLE);
         BT_note = bind_table_add("note", 3 , "sss", MATCH_EXACT, 0);
-	BT_time = bind_table_add("time", 5, "iiiii", MATCH_MASK, BIND_STACKABLE);
 }
 
 bool check_aliases(int idx, const char *cmd, const char *args)
@@ -212,11 +210,3 @@ void check_bind_away(const char *bot, int idx, const char *msg)
 {
   check_bind(BT_away, bot, NULL, bot, idx, msg);
 }
-
-void check_bind_time(struct tm *tm)
-{
-	char full[32] = "";
-	egg_snprintf(full, sizeof(full), "%02d %02d %02d %02d %04d", tm->tm_min, tm->tm_hour, tm->tm_mday, tm->tm_mon, tm->tm_year + 1900);
-	check_bind(BT_time, full, NULL, tm->tm_min, tm->tm_hour, tm->tm_mday, tm->tm_mon, tm->tm_year + 1900);
-}
-

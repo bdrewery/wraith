@@ -529,7 +529,6 @@ static void core_minutely()
   } else
     send_timesync(-1);
 
-  check_bind_time(&nowtm);
   if (dcc_autoaway)
     check_autoaway();
 
