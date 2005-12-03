@@ -19,5 +19,6 @@
 #define CONSOLE_COLOR		"Color:"
 
 void console_dostore(int);
+int console_chon(const char *, int);
 
 #endif				/* _EGG_MOD_CONSOLE_CONSOLE_H */

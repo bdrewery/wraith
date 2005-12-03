@@ -713,7 +713,7 @@ void remove_channel(struct chanset_t *chan)
 /* Bind this to chon and *if* the users console channel == ***
  * then set it to a specific channel
  */
-static int channels_chon(char *handle, int idx)
+int channels_chon(const char *handle, int idx)
 {
   struct flag_record fr = {FR_CHAN | FR_ANYWH | FR_GLOBAL, 0, 0, 0 };
   int find;
@@ -751,12 +751,6 @@ static int channels_chon(char *handle, int idx)
   }
   return 0;
 }
-
-static cmd_t my_chon[] =
-{
-  {"*",		"",	(Function) channels_chon,	"channels:chon", 0},
-  {NULL,	NULL,	NULL,				NULL, 0}
-};
 
 void channels_report(int idx, int details)
 {
@@ -927,5 +921,4 @@ void channels_init()
 
   add_builtins("dcc", C_dcc_channels);
   add_builtins("bot", channels_bot);
-  add_builtins("chon", my_chon);
 }

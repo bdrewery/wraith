@@ -236,8 +236,8 @@ static struct user_entry_type USERENTRY_CONSOLE = {
   "CONSOLE"
 };
 
-static int
-console_chon(char *handle, int idx)
+int
+console_chon(const char *handle, int idx)
 {
   if (dcc[idx].type == &DCC_CHAT) {
     struct console_info *i = (struct console_info *) get_user(&USERENTRY_CONSOLE, dcc[idx].user);
@@ -368,11 +368,6 @@ console_dostore(int idx)
   return;
 }
 
-static cmd_t mychon[] = {
-  {"*", "", (Function) console_chon, "console:chon", 0},
-  {NULL, NULL, NULL, NULL, 0}
-};
-
 static cmd_t mydcc[] = {
   {"store", "", (Function) console_store, NULL, 0},
   {NULL, NULL, NULL, NULL, 0}
@@ -382,7 +377,6 @@ void
 console_init()
 {
   add_builtins("dcc", mydcc);
-  add_builtins("chon", mychon);
 
   add_entry_type(&USERENTRY_CONSOLE);
 }

@@ -19,17 +19,18 @@
 #include "tclhash.h"
 #include "dcc.h"
 #include "src/mod/notes.mod/notes.h"
+#include "src/mod/channels.mod/channels.h"
+#include "src/mod/console.mod/console.h"
 
 extern cmd_t 		C_dcc[];
 
 static bind_table_t *BT_dcc = NULL;
 static bind_table_t *BT_note = NULL;
-static bind_table_t *BT_bot = NULL, *BT_chon = NULL;
+static bind_table_t *BT_bot = NULL;
 
 void core_binds_init()
 {
         BT_bot = bind_table_add("bot", 3, "sss", MATCH_EXACT, 0);
-        BT_chon = bind_table_add("chon", 2, "si", MATCH_MASK | MATCH_FLAGS, BIND_STACKABLE);
         BT_dcc = bind_table_add("dcc", 2, "is", MATCH_PARTIAL | MATCH_FLAGS, 0);
 	egg_bzero(&cmdlist, 500);
         add_builtins("dcc", C_dcc);
@@ -178,13 +179,13 @@ void check_bind_bot(const char *nick, const char *code, const char *param)
 
 void check_bind_chon(char *hand, int idx)
 {
-  struct flag_record     fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   struct userrec        *u = NULL;
 
   u = get_user_by_handle(userlist, hand);
   touch_laston(u, "partyline", now);
-  get_user_flagrec(u, &fr, NULL);
-  check_bind(BT_chon, hand, &fr, hand, idx);
+
+  console_chon(hand, idx);
+  channels_chon(hand, idx);
 }
 
 void check_bind_chof(char *hand, int idx)
