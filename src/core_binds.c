@@ -25,7 +25,6 @@
 extern cmd_t 		C_dcc[];
 
 static bind_table_t *BT_dcc = NULL;
-static bind_table_t *BT_note = NULL;
 static bind_table_t *BT_bot = NULL;
 
 void core_binds_init()
@@ -34,7 +33,6 @@ void core_binds_init()
         BT_dcc = bind_table_add("dcc", 2, "is", MATCH_PARTIAL | MATCH_FLAGS, 0);
 	egg_bzero(&cmdlist, 500);
         add_builtins("dcc", C_dcc);
-        BT_note = bind_table_add("note", 3 , "sss", MATCH_EXACT, 0);
 }
 
 bool check_aliases(int idx, const char *cmd, const char *args)
@@ -199,11 +197,6 @@ void check_bind_chof(char *hand, int idx)
 void check_bind_nkch(const char *ohand, const char *nhand)
 {
   notes_change(ohand, nhand);
-}
-
-int check_bind_note(const char *from, const char *to, const char *text)
-{
-  return check_bind(BT_note, to, NULL, from, to, text);
 }
 
 void check_bind_away(const char *bot, int idx, const char *msg)
