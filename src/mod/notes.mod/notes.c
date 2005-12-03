@@ -701,7 +701,7 @@ static void notes_hourly()
   }
 }
 
-static void away_notes(char *bot, int idx, char *msg)
+void away_notes(const char *bot, int idx, const char *msg)
 {
   if (egg_strcasecmp(bot, conf.bot->nick))
     return;
@@ -721,12 +721,6 @@ int notes_chon(int idx)
 static cmd_t notes_nkch[] =
 {
   {"*",		"",	(Function) notes_change,	"notes", 0},
-  {NULL,	NULL,	NULL,				NULL, 0}
-};
-
-static cmd_t notes_away[] =
-{
-  {"*",		"",	(Function) away_notes,		"notes", 0},
   {NULL,	NULL,	NULL,				NULL, 0}
 };
 
@@ -757,7 +751,6 @@ void notes_init()
   timer_create_secs(3600, "notes_hourly", (Function) notes_hourly);
 
   add_builtins("dcc", notes_cmds);
-  add_builtins("away", notes_away);
   add_builtins("nkch", notes_nkch);
 
   notes_server_setup(0);

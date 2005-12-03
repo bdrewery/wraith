@@ -18,16 +18,16 @@
 #include "misc.h"
 #include "tclhash.h"
 #include "dcc.h"
+#include "src/mod/notes.mod/notes.h"
 
 extern cmd_t 		C_dcc[];
 
-static bind_table_t *BT_away = NULL, *BT_dcc = NULL;
+static bind_table_t *BT_dcc = NULL;
 static bind_table_t *BT_note = NULL;
 static bind_table_t *BT_bot = NULL, *BT_nkch = NULL, *BT_chon = NULL;
 
 void core_binds_init()
 {
-        BT_away = bind_table_add("away", 3, "sis", MATCH_MASK, BIND_STACKABLE);
         BT_bot = bind_table_add("bot", 3, "sss", MATCH_EXACT, 0);
         BT_chon = bind_table_add("chon", 2, "si", MATCH_MASK | MATCH_FLAGS, BIND_STACKABLE);
         BT_dcc = bind_table_add("dcc", 2, "is", MATCH_PARTIAL | MATCH_FLAGS, 0);
@@ -208,5 +208,5 @@ int check_bind_note(const char *from, const char *to, const char *text)
 
 void check_bind_away(const char *bot, int idx, const char *msg)
 {
-  check_bind(BT_away, bot, NULL, bot, idx, msg);
+  away_notes(bot, idx, msg);
 }
