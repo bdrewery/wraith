@@ -289,7 +289,7 @@ console_chon(const char *handle, int idx)
           char x[1024] = "";
 
           chanout_but(-1, dcc[idx].u.chat->channel, "*** [%s] %s\n", dcc[idx].nick, p);
-          simple_sprintf(x, "[%s] %s", dcc[idx].nick, p);
+          simple_snprintf(x, sizeof(x), "[%s] %s", dcc[idx].nick, p);
           botnet_send_chan(-1, conf.bot->nick, NULL, dcc[idx].u.chat->channel, x);
         }
       }

@@ -69,9 +69,12 @@ static void send_tand_but(int x, char *buf, size_t len)
 void botnet_send_cmdpass(int idx, char *cmd, char *pass)
 {
   if (tands > 0) {
-    char *buf = (char *) my_calloc(1, strlen(cmd) + strlen(pass) + 5 + 1);
+    char *buf = NULL;
+    size_t siz = strlen(cmd) + strlen(pass) + 5 + 1;
 
-    simple_sprintf(buf, "cp %s %s\n", cmd, pass);
+    buf = (char *) my_calloc(1, siz);
+
+    simple_snprintf(buf, siz, "cp %s %s\n", cmd, pass);
     send_tand_but(idx, buf, strlen(buf));
     free(buf);
   }
@@ -87,7 +90,7 @@ int botnet_send_cmd(char * fbot, char * bot, char *fhnd, int fromidx, char * cmd
   } else if (!egg_strcasecmp(bot, conf.bot->nick)) {
     char tmp[24] = "";
 
-    simple_sprintf(tmp, "%i", fromidx);
+    simple_snprintf(tmp, sizeof(tmp), "%i", fromidx);
     gotremotecmd(conf.bot->nick, conf.bot->nick, fhnd, tmp, cmd);
   }
   return 0;
@@ -101,7 +104,7 @@ void botnet_send_cmd_broad(int idx, char * fbot, char *fhnd, int fromidx, char *
   if (idx < 0) {
     char tmp[24] = "";
 
-    simple_sprintf(tmp, "%i", fromidx);
+    simple_snprintf(tmp, sizeof(tmp), "%i", fromidx);
     gotremotecmd("*", conf.bot->nick, fhnd, tmp, cmd);
   }
 }
@@ -262,11 +265,11 @@ void botnet_send_reject(int idx, char *fromp, char *frombot, char *top, char *to
   char to[NOTENAMELEN + 1] = "", from[NOTENAMELEN + 1] = "";
 
   if (tobot) {
-    simple_sprintf(to, "%s@%s", top, tobot);
+    simple_snprintf(to, sizeof(to), "%s@%s", top, tobot);
     top = to;
   }
   if (frombot) {
-    simple_sprintf(from, "%s@%s", fromp, frombot);
+    simple_snprintf(from, sizeof(from), "%s@%s", fromp, frombot);
     fromp = from;
   }
   if (!reason)
@@ -451,7 +454,7 @@ int add_note(char *to, char *from, char *msg, int idx, int echo)
       if (strchr(from, '@')) {
 	strcpy(botf, from);
       } else
-	simple_sprintf(botf, "%s@%s", from, conf.bot->nick);
+	simple_snprintf(botf, sizeof(botf), "%s@%s", from, conf.bot->nick);
     } else
       strcpy(botf, conf.bot->nick);
     i = nextbot(p);
@@ -463,7 +466,7 @@ int add_note(char *to, char *from, char *msg, int idx, int echo)
     if ((idx >= 0) && (echo))
       dprintf(idx, "-> %s@%s: %s\n", x, p, msg);
     if (idx >= 0) {
-      simple_sprintf(ssf, "%d:%s", dcc[idx].sock, botf);
+      simple_snprintf(ssf, sizeof(ssf), "%d:%s", dcc[idx].sock, botf);
       botnet_send_priv(i, ssf, x, p, "%s", msg);
     } else
       botnet_send_priv(i, botf, x, p, "%s", msg);
@@ -519,7 +522,7 @@ int add_note(char *to, char *from, char *msg, int idx, int echo)
 	while ((*msg == '<') || (*msg == '>')) {
 	  p2 = newsplit(&msg);
 	  if (*p2 == '<')
-	    l += simple_sprintf(work + l, "via %s, ", p2 + 1);
+	    l += simple_snprintf(work + l, sizeof(work) - l, "via %s, ", p2 + 1);
 	  else if (*from == '@')
 	    fr = p2 + 1;
 	}

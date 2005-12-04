@@ -106,7 +106,7 @@ void notes_change(const char *oldnick, const char *newnick)
   f = fopen(notefile, "r");
   if (f == NULL)
     return;
-  simple_sprintf(s, "%s~new", notefile);
+  simple_snprintf(s, sizeof(s), "%s~new", notefile);
   g = fopen(s, "w");
   if (g == NULL) {
     fclose(f);
@@ -134,7 +134,7 @@ void notes_change(const char *oldnick, const char *newnick)
   fclose(f);
   fclose(g);
   unlink(notefile);
-  simple_sprintf(s, "%s~new", notefile);
+  simple_snprintf(s, sizeof(s), "%s~new", notefile);
   movefile(s, notefile);
   putlog(LOG_MISC, "*", NOTES_SWITCHED_NOTES, tot, tot == 1 ? "" : "s",
          oldnick, newnick);
@@ -154,7 +154,7 @@ static void expire_notes()
   f = fopen(notefile, "r");
   if (f == NULL)
     return;
-  simple_sprintf(s, "%s~new", notefile);
+  simple_snprintf(s, sizeof(s), "%s~new", notefile);
   g = fopen(s, "w");
   if (g == NULL) {
     fclose(f);
@@ -186,7 +186,7 @@ static void expire_notes()
   fclose(f);
   fclose(g);
   unlink(notefile);
-  simple_sprintf(s, "%s~new", notefile);
+  simple_snprintf(s, sizeof(s), "%s~new", notefile);
   movefile(s, notefile);
   if (tot > 0)
     putlog(LOG_MISC, "*", NOTES_EXPIRED, tot, tot == 1 ? "" : "s");
@@ -247,13 +247,11 @@ int storenote(char *argv1, char *argv2, char *argv3, int idx, char *who, int buf
       }
       if (ok) {
 	if (p && strchr(argv1, '@')) {
-	  simple_sprintf(work, "<%s@%s >%s %s", argv2, conf.bot->nick,
-			 argv1, argv3);
-	  simple_sprintf(u, "@%s", conf.bot->nick);
+	  simple_snprintf(work, sizeof(work), "<%s@%s >%s %s", argv2, conf.bot->nick, argv1, argv3);
+	  simple_snprintf(u, sizeof(u), "@%s", conf.bot->nick);
 	  p = u;
 	} else {
-	  simple_sprintf(work, "<%s@%s %s", argv2, conf.bot->nick,
-			 argv3);
+	  simple_snprintf(work, sizeof(work), "<%s@%s %s", argv2, conf.bot->nick, argv3);
 	  p = argv1;
 	}
       }
@@ -293,7 +291,7 @@ int storenote(char *argv1, char *argv2, char *argv3, int idx, char *who, int buf
 	while ((argv3[0] == '<') || (argv3[0] == '>')) {
 	  p = newsplit(&(argv3));
 	  if (*p == '<')
-	    len += simple_sprintf(work + len, "via %s, ", p + 1);
+	    len += simple_snprintf(work + len, sizeof(work) - len, "via %s, ", p + 1);
 	  else if (argv1[0] == '@')
 	    from = p + 1;
 	}
@@ -494,7 +492,7 @@ void notes_del(const char *hand, const char *nick, const char *sdl, int idx)
       dprintf(DP_HELP, "NOTICE %s :%s.\n", nick, NOTES_NO_MESSAGES);
     return;
   }
-  simple_sprintf(s, "%s~new", notefile);
+  simple_snprintf(s, sizeof(s), "%s~new", notefile);
   g = fopen(s, "w");
   if (g == NULL) {
     if (idx >= 0)
@@ -530,7 +528,7 @@ void notes_del(const char *hand, const char *nick, const char *sdl, int idx)
   fclose(f);
   fclose(g);
   unlink(notefile);
-  simple_sprintf(s, "%s~new", notefile);
+  simple_snprintf(s, sizeof(s), "%s~new", notefile);
   movefile(s, notefile);
   if ((er == 0) && (in > 1)) {
     if (idx >= 0)

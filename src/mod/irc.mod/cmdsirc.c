@@ -745,7 +745,7 @@ ContextNote("!mdop!");
   /* now use bots/deops to distribute nicks to deop */
   while (bots) {
     if (!simul)
-      simple_sprintf(work, "dp %s", chan->name);
+      simple_snprintf(work, sizeof(work), "dp %s", chan->name);
     else
       work[0] = 0;
     for (i = 0; i < deops; i++) {

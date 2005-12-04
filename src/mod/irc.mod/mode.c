@@ -163,7 +163,7 @@ flush_cookies(struct chanset_t *chan, int pri)
     if (pri == QUICK) {
       char outbuf[201] = "";
 
-      simple_sprintf(outbuf, "MODE %s %s\r\n", chan->name, out);
+      simple_snprintf(outbuf, sizeof(outbuf), "MODE %s %s\r\n", chan->name, out);
       tputs(serv, outbuf, strlen(outbuf));
       /* dprintf(DP_MODE, "MODE %s %s\n", chan->name, out); */
     } else
@@ -302,7 +302,7 @@ flush_mode(struct chanset_t *chan, int pri)
 /* floods too much
       char outbuf[201] = "";
 
-      simple_sprintf(outbuf, "MODE %s %s\r\n", chan->name, out);
+      simple_snprintf(outbuf, sizeof(outbuf), "MODE %s %s\r\n", chan->name, out);
       tputs(serv, outbuf, strlen(outbuf));
 */
       dprintf(DP_MODE, "MODE %s %s\n", chan->name, out);
@@ -552,13 +552,13 @@ got_op(struct chanset_t *chan, Member *m, Member *mv)
 /* should kick the oppee first, then deal with the opper */
 
       if (num == 4) {
-        simple_sprintf(outbuf, "MODE %s -o %s\r\n", chan->name, mv->nick);
+        simple_snprintf(outbuf, sizeof(outbuf), "MODE %s -o %s\r\n", chan->name, mv->nick);
       } else if (num == 5) {
-        simple_sprintf(outbuf, "MODE %s -o %s\r\n", chan->name, m->nick);
+        simple_snprintf(outbuf, sizeof(outbuf), "MODE %s -o %s\r\n", chan->name, m->nick);
       } else if (bitch && num == 6) {
-        simple_sprintf(outbuf, "KICK %s %s :%s\r\n", chan->name, mv->nick, response(RES_BITCHOPPED));
+        simple_snprintf(outbuf, sizeof(outbuf), "KICK %s %s :%s\r\n", chan->name, mv->nick, response(RES_BITCHOPPED));
       } else if (bitch && num == 7) {
-        simple_sprintf(outbuf, "KICK %s %s :%s\r\n", chan->name, m->nick, response(RES_BITCHOP));
+        simple_snprintf(outbuf, sizeof(outbuf), "KICK %s %s :%s\r\n", chan->name, m->nick, response(RES_BITCHOP));
       } else
         add_mode(chan, '-', 'o', mv->nick);
 
@@ -606,9 +606,11 @@ got_op(struct chanset_t *chan, Member *m, Member *mv)
   if (check_chan) {
 #ifdef no
     /* tell other bots to set jointime to 0 and join */
-    char *buf = (char *) my_calloc(1, strlen(chan->dname) + 3 + 1);
+    char *buf = NULL;
+    size_t siz = strlen(chan->dname) + 3 + 1;
 
-    simple_sprintf(buf, "jn %s", chan->dname);
+    buf = my_calloc(1, siz);
+    simple_snprintf(buf, siz, "jn %s", chan->dname);
     putallbots(buf);
     free(buf);
 #endif
@@ -622,7 +624,7 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
   char s1[UHOSTLEN] = "";
   
   if (m)
-    simple_sprintf(s1, "%s!%s", m->nick, m->client->GetUHost());
+    simple_snprintf(s1, sizeof(s1), "%s!%s", m->nick, m->client->GetUHost());
 
   get_user_flagrec(mv->user, &victim, chan->dname);
 
@@ -688,7 +690,7 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
   if (m) {
     char s[UHOSTLEN] = "";
 
-    simple_sprintf(s, "%s!%s", mv->nick, mv->client->GetUHost());
+    simple_snprintf(s, sizeof(s), "%s!%s", mv->nick, mv->client->GetUHost());
 //    maybe_revenge(chan, s1, s, REVENGE_DEOP);
   }
 }
@@ -698,8 +700,8 @@ got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char me[UHOSTLEN] = "", meip[UHOSTLEN] = "", s[UHOSTLEN] = "";
 
-  simple_sprintf(me, "%s!%s", botname, botuserhost);
-  simple_sprintf(meip, "%s!%s", botname, botuserip);
+  simple_snprintf(me, sizeof(me), "%s!%s", botname, botuserhost);
+  simple_snprintf(meip, sizeof(meip), "%s!%s", botname, botuserip);
   simple_snprintf(s, sizeof s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newban(chan, mask, s);
 
@@ -801,7 +803,7 @@ got_exempt(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char s[UHOSTLEN] = "";
 
-  simple_sprintf(s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
+  simple_snprintf(s, sizeof(s), "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newexempt(chan, mask, s);
 
   if (channel_pending(chan))
@@ -870,7 +872,7 @@ got_invite(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
   char s[UHOSTLEN] = "";
 
-  simple_sprintf(s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
+  simple_snprintf(s, sizeof(s), "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newinvite(chan, mask, s);
 
   if (channel_pending(chan))
@@ -931,7 +933,7 @@ static Member *assert_ismember(struct chanset_t *chan, const char *nick)
     if (!m->user) {
       char s[UHOSTLEN] = "";
 
-      simple_sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
+      simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUHost());
       m->user = get_user_by_host(s);
       if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
         simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUIP());
@@ -977,7 +979,7 @@ gotmode(char *from, char *msg)
       bool me_opped = 0;
       char **modes = (char **) my_calloc(1, sizeof(char *));
       char *nick = NULL, *chg = NULL, s[UHOSTLEN] = "", sign = '+', *mp = NULL, *isserver = NULL;
-      size_t z = strlen(msg);
+      size_t z = strlen(msg), siz = 0;
       struct userrec *u = NULL;
       Member *m = NULL, *mv = NULL;
 
@@ -1026,8 +1028,9 @@ gotmode(char *from, char *msg)
           modes = (char **) my_realloc(modes, (modecnt * sizeof(char *)) + sizeof(char *));
 //      char **modes = (char **) my_calloc(modesperline + 1, sizeof(char *));
 
-          modes[modecnt] = (char *) my_calloc(1, strlen(mp) + 4);
-          simple_sprintf(modes[modecnt], "%c%c %s", sign, chg[0], mp ? mp : "");
+          siz = strlen(mp) + 3 + 1;
+          modes[modecnt] = (char *) my_calloc(1, siz);
+          simple_snprintf(modes[modecnt], siz, "%c%c %s", sign, chg[0], mp ? mp : "");
           modecnt++;
           if (chg[0] == 'o') {
             if (sign == '+') {
@@ -1064,14 +1067,14 @@ gotmode(char *from, char *msg)
             if (deops >= 3 && chan->mdop) {
               if (role < 5) {
                 m->flags |= SENTKICK;
-                simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MASSDEOP));
+                simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MASSDEOP));
                 if (role <= 2)
                   tputs(serv, tmp, strlen(tmp));
                 else
                   dprintf(DP_SERVER, "%s", tmp);
               } else {
                 if (u) {
-                  simple_sprintf(tmp, "Mass deop on %s by %s", chan->dname, m->nick);
+                  simple_snprintf(tmp, sizeof(tmp), "Mass deop on %s by %s", chan->dname, m->nick);
                   deflag_user(u, DEFLAG_MDOP, tmp, chan);
                 }
               }
@@ -1082,14 +1085,14 @@ gotmode(char *from, char *msg)
               if (chan->mop) {
                 if (role < 5) {
                   m->flags |= SENTKICK;
-                  simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
+                  simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
                   if (role <= 2)
                     tputs(serv, tmp, strlen(tmp));
                   else
                     dprintf(DP_SERVER, "%s", tmp);
                 } else { 
                   if (u) {
-                    simple_sprintf(tmp, "Mass op on %s by %s", chan->dname, m->nick);
+                    simple_snprintf(tmp, sizeof(tmp), "Mass op on %s by %s", chan->dname, m->nick);
                     deflag_user(u, DEFLAG_MOP, tmp, chan);
                   }
                 }
@@ -1120,10 +1123,10 @@ gotmode(char *from, char *msg)
                     /* Kick opper */
                     if (!chan_sentkick(m)) {
                       m->flags |= SENTKICK;
-                      simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_BADOP));
+                      simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_BADOP));
                       tputs(serv, tmp, strlen(tmp));
                     }
-                    simple_sprintf(tmp, "%s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
+                    simple_snprintf(tmp, sizeof(tmp), "%s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
                     deflag_user(u, DEFLAG_BADCOOKIE, tmp, chan);
                     break;
                   default:
@@ -1142,7 +1145,7 @@ gotmode(char *from, char *msg)
                           if (!mv || !chan_sentkick(mv)) {
                             if (mv)
                               mv->flags |= SENTKICK;
-                            simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, mparam, kickprefix, response(RES_BADOPPED));
+                            simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, mparam, kickprefix, response(RES_BADOPPED));
                             tputs(serv, tmp, strlen(tmp));
                           }
                         }
@@ -1169,12 +1172,12 @@ gotmode(char *from, char *msg)
                 case 1:
                   /* Kick opper */
                   if (!m || !chan_sentkick(m)) {
-                    simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
+                    simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
                     tputs(serv, tmp, strlen(tmp));
                     if (m)
                       m->flags |= SENTKICK;
                   }
-                  simple_sprintf(tmp, "%s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
+                  simple_snprintf(tmp, sizeof(tmp), "%s!%s MODE %s %s", m->nick, m->client->GetUHost(), chan->dname, modes[modecnt - 1]);
                   deflag_user(u, DEFLAG_MANUALOP, tmp, chan);
                   break;
                 default:
@@ -1193,7 +1196,7 @@ gotmode(char *from, char *msg)
                         if (!mv || !chan_sentkick(mv)) {
                           if (mv)
                             mv->flags |= SENTKICK;
-                          simple_sprintf(tmp, "KICK %s %s :%s%s\r\n", chan->name, mparam, kickprefix, response(RES_MANUALOPPED));
+                          simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, mparam, kickprefix, response(RES_MANUALOPPED));
                           tputs(serv, tmp, strlen(tmp));
                         }
                       }
@@ -1298,10 +1301,10 @@ gotmode(char *from, char *msg)
             if (msign == '-') {
               if (channel_active(chan)) {
                 if ((reversing) && (chan->channel.maxmembers != 0)) {
-                  simple_sprintf(s, "%d", chan->channel.maxmembers);
+                  simple_snprintf(s, sizeof(s), "%d", chan->channel.maxmembers);
                   add_mode(chan, '+', 'l', s);
                 } else if ((chan->limit_prot != 0) && !glob_master(user) && !chan_master(user)) {
-                  simple_sprintf(s, "%d", chan->limit_prot);
+                  simple_snprintf(s, sizeof(s), "%d", chan->limit_prot);
                   add_mode(chan, '+', 'l', s);
                 } else {
                   if (chan->limitraise && dolimit(chan) && (!chan_master(user) && !glob_master(user) && !glob_bot(user))) {
@@ -1323,7 +1326,7 @@ gotmode(char *from, char *msg)
                 add_mode(chan, '-', 'l', "");
               if ((chan->limit_prot != chan->channel.maxmembers) && (chan->mode_pls_prot & CHANLIMIT) && (chan->limit_prot != 0) &&     /* arthur2 */
                   !glob_master(user) && !chan_master(user)) {
-                simple_sprintf(s, "%d", chan->limit_prot);
+                simple_snprintf(s, sizeof(s), "%d", chan->limit_prot);
                 add_mode(chan, '+', 'l', s);
               }
               if (chan->limitraise && dolimit(chan) && !glob_bot(user) && (!chan_master(user) && !glob_master(user)))

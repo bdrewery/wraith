@@ -286,7 +286,7 @@ static void bot_bye(int idx, char *par)
 
   bots = bots_in_subtree(findbot(dcc[idx].nick));
   users = users_in_subtree(findbot(dcc[idx].nick));
-  simple_sprintf(s, "%s %s. %s (lost %d bot%s and %d user%s)",
+  simple_snprintf(s, sizeof(s), "%s %s. %s (lost %d bot%s and %d user%s)",
 		 BOT_DISCONNECTED, dcc[idx].nick, par[0] ?
 		 par : "No reason", bots, (bots != 1) ?
 		 "s" : "", users, (users != 1) ? "s" : "");
@@ -316,7 +316,7 @@ static void remote_tell_who(int idx, char *nick, int chan)
       l = strlen(c->dname);
       if (i + l < 1021) {
 	if (i > 10) {
-          simple_sprintf(s, "%s, %s", s, c->dname);
+          simple_snprintf(s, sizeof(s), "%s, %s", s, c->dname);
 	} else {
           strcpy(s, c->dname);
 	  i += (l + 2);
@@ -612,7 +612,7 @@ static void bot_nlinked(int idx, char *par)
   s[0] = 0;
   if (!next[0]) {
     putlog(LOG_BOTS, "*", "Invalid eggnet protocol from %s (zapfing)", dcc[idx].nick);
-    simple_sprintf(s, "Disconnected %s (invalid bot)", dcc[idx].nick);
+    simple_snprintf(s, sizeof(s), "Disconnected %s (invalid bot)", dcc[idx].nick);
     dprintf(idx, "error invalid eggnet protocol for 'nlinked'\n");
   } else if ((in_chain(newbot)) || (!egg_strcasecmp(newbot, conf.bot->nick))) {
     if (bot_hublevel(dcc[idx].user) != 999) {	
@@ -638,7 +638,7 @@ static void bot_nlinked(int idx, char *par)
 
     if (bogus) {
       putlog(LOG_BOTS, "*", "Bogus link notice from %s!  (%s -> %s)", dcc[idx].nick, next, newbot);
-      simple_sprintf(s, "Bogus link notice from: %s Disconnected", dcc[idx].nick);
+      simple_snprintf(s, sizeof(s), "Bogus link notice from: %s Disconnected", dcc[idx].nick);
       dprintf(idx, "error Bogus link notice from (%s -> %s)\n", next, newbot);
     }
   }
@@ -838,7 +838,7 @@ static void bot_thisbot(int idx, char *par)
 
     putlog(LOG_BOTS, "*", "Wrong bot--wanted %s, got %s", dcc[idx].nick, par);
     dprintf(idx, "bye imposter\n");
-    simple_sprintf(s, "Disconnected %s (imposter)", dcc[idx].nick);
+    simple_snprintf(s, sizeof(s), "Disconnected %s (imposter)", dcc[idx].nick);
     chatout("*** %s\n", s);
     botnet_send_unlinked(idx, dcc[idx].nick, s);
     unvia(idx, findbot(dcc[idx].nick));
