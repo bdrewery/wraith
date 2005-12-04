@@ -29,8 +29,7 @@
 #include "socket.h"
 
 #define WILDS '*'  /* matches 0 or more characters (including spaces) */
-#define WILDQ '?'  /* matches ecactly one character */
-#define WILDT '~'  /* matches 1 or more spaces */
+#define WILDQ '?'  /* matches exactly one character */
 
 #define NOMATCH 0
 #define MATCH (match+sofar)
