@@ -63,6 +63,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed a bug in the listen code, which caused a segfault in /ctcp chat (a few other places too) (#189)
 * Optimized the cookie checking functions.
 * Fixed a memory leak in the cookie checking functions.
+* Fixed botcmd using wrong user on remote bot after doing su'ing to another user. (#190)
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
