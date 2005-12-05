@@ -238,12 +238,12 @@ void finish_update(int idx)
     fclose(f);
   }
 
-  sprintf(buf, "%s%s", conf.binpath,  strrchr(dcc[idx].u.xfer->filename, '/'));
+  simple_snprintf(buf, sizeof(buf), "%s%s", conf.binpath,  strrchr(dcc[idx].u.xfer->filename, '/'));
 
   movefile(dcc[idx].u.xfer->filename, buf); 
   fixmod(buf);
 
-  sprintf(buf, "%s", strrchr(buf, '/'));
+  simple_snprintf(buf, sizeof(buf), "%s", strrchr(buf, '/'));
   buf2 = buf;
   buf2++;
 
@@ -289,7 +289,7 @@ static void start_sending_binary(int idx)
   }
 
   /* copy the binary to our tempdir and send that one. */
-  sprintf(tmpFile, "%s.%s", tempdir, update_file);
+  simple_snprintf(tmpFile, sizeof(tmpFile), "%s.%s", tempdir, update_file);
   unlink(tmpFile);
   copyfile(update_fpath, tmpFile);
 

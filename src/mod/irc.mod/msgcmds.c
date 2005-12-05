@@ -376,7 +376,7 @@ static int msg_pls_auth(char *nick, char *host, struct userrec *u, char *par)
 
       putlog(LOG_CMDS, "*", "(%s!%s) !%s! failed +AUTH", nick, host, u->handle);
       dprintf(DP_HELP, "NOTICE %s :Invalid hash.\n", nick);
-      sprintf(s, "*!%s", host);
+      simple_snprintf(s, sizeof(s), "*!%s", host);
       addignore(s, origbotname, "Invalid auth hash.", now + (60 * ignore_time));
       delete auth;
     } 
