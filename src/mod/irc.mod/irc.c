@@ -382,7 +382,7 @@ getin_request(char *botnick, char *code, char *par)
 
   tmp = newsplit(&par);		/* userip */
   if (tmp[0])
-    egg_snprintf(uip, sizeof uip, "%s!%s", nick, tmp);
+    simple_snprintf(uip, sizeof uip, "%s!%s", nick, tmp);
     
   /*
    * if (!ismember(chan, botname)) {
