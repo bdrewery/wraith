@@ -307,7 +307,7 @@ static void got_segv(int z)
   write_debug();
   fatal("SEGMENT VIOLATION -- CRASHING!", 1);
 #ifdef DEBUG
-  char gdb[1024] = "", btfile[256] = "", stdin[101] = "", *out = NULL;
+  char gdb[1024] = "", btfile[256] = "", std_in[101] = "", *out = NULL;
   unsigned int core = 0;
 
   simple_snprintf(btfile, sizeof(btfile), ".gdb-backtrace-%d", getpid());
@@ -315,13 +315,13 @@ static void got_segv(int z)
   FILE *f = fopen(btfile, "w");
 
   if (f) {
-    simple_snprintf(stdin, sizeof(stdin), "bt 100\n");
-    simple_snprintf(stdin, sizeof(stdin), "bt 100 full\n");
+    simple_snprintf(std_in, sizeof(std_in), "bt 100\n");
+    simple_snprintf(std_in, sizeof(std_in), "%sbt 100 full\n", std_in);
 //    simple_snprintf(stdin, sizeof(stdin), "detach\n");
 //    simple_snprintf(stdin, sizeof(stdin), "q\n");
 
     simple_snprintf(gdb, sizeof(gdb), "gdb %s %d", binname, getpid());
-    shell_exec(gdb, stdin, &out, NULL);
+    shell_exec(gdb, std_in, &out, NULL);
     fprintf(f, "%s\n", out);
     fclose(f);
     free(out);
