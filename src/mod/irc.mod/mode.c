@@ -698,10 +698,8 @@ got_deop(struct chanset_t *chan, Member *m, Member *mv, char *isserver)
 static void
 got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
 {
-  char me[UHOSTLEN] = "", meip[UHOSTLEN] = "", s[UHOSTLEN] = "";
+  char s[UHOSTLEN] = "";
 
-  simple_snprintf(me, sizeof(me), "%s!%s", botname, botuserhost);
-  simple_snprintf(meip, sizeof(meip), "%s!%s", botname, botuserip);
   simple_snprintf(s, sizeof s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
   newban(chan, mask, s);
 

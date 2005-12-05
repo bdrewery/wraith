@@ -777,7 +777,7 @@ request_in(struct chanset_t *chan)
   int cnt = in_bots, n;
   char s[255] = "", *l = (char *) my_calloc(1, cnt * 30);
 
-  simple_snprintf(s, sizeof(s), "gi i %s %s %s!%s %s", chan->dname, botname, botname, botuserhost, botuserip);
+  simple_snprintf(s, sizeof(s), "gi i %s %s %s %s", chan->dname, botname, me, botuserip);
   while (cnt) {
     n = randint(i);
     if (botops[n]) {

@@ -288,7 +288,7 @@ int u_delmask(char type, struct chanset_t *c, char *who, int doit)
  */
 bool u_addmask(char type, struct chanset_t *chan, char *who, char *from, char *note, time_t expire_time, int flags)
 {
-  char host[1024] = "", s[1024] = "";
+  char host[1024] = "", s[UHOSTLEN + NICKLEN] = "", *s1 = NULL;
   maskrec *p = NULL, *l = NULL, **u = NULL;
 
   if (type == 'b')
@@ -312,11 +312,12 @@ bool u_addmask(char type, struct chanset_t *chan, char *who, char *from, char *n
     strcat(host, "!*");
     strcat(host, s);
   }
-    if (conf.bot->hub)
+    if (conf.bot->hub) {
       simple_snprintf(s, sizeof(s), "%s!%s@%s", origbotname, botuser, conf.bot->net.host);
-    else
-      simple_snprintf(s, sizeof(s), "%s!%s", botname, botuserhost);
-  if (s[0] && type == 'b' && wild_match(host, s)) {
+      s1 = s;
+    } else
+      s1 = me;
+  if (s1 && s1[0] && type == 'b' && wild_match(host, s1)) {
     putlog(LOG_MISC, "*", "Wanted to ban myself--deflected.");
     return 0;
   }

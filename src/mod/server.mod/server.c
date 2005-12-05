@@ -42,6 +42,10 @@ int curserv = 999;		/* current position in server list: */
 port_t curservport = 0;
 rate_t flood_msg = { 5, 60 };
 rate_t flood_ctcp = { 3, 60 };
+
+char me[UHOSTLEN + NICKLEN] = "";
+char meip[UHOSTLEN + NICKLEN] = "";
+
 char botuserhost[UHOSTLEN] = "";	/* bot's user@host (refreshed whenever the bot joins a channel) */
 					/* may not be correct user@host BUT it's how the server sees it */
 char botuserip[UHOSTLEN] = "";		/* bot's user@host with the ip. */

@@ -924,6 +924,10 @@ static int gotnick(char *from, char *msg)
     /* Regained nick! */
     strlcpy(botname, msg, NICKLEN);
     altnick_char = 0;
+  
+    simple_snprintf(me, sizeof(me), "%s!%s", botname, botuserhost);
+    simple_snprintf(meip, sizeof(meip), "%s!%s", botname, botuserip);
+
     if (!strcmp(msg, origbotname)) {
       putlog(LOG_SERV | LOG_MISC, "*", "Regained nickname '%s'.", msg);
       nick_juped = 0;
@@ -1180,6 +1184,7 @@ static int got311(char *from, char *msg)
     
   if (match_my_nick(nick)) {
     simple_snprintf(botuserhost, sizeof botuserhost, "%s@%s", username, address);
+    simple_snprintf(me, sizeof(me), "%s!%s", botname, botuserhost);
     check_hostmask();
   }
 

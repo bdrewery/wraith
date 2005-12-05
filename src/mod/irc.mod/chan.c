@@ -716,11 +716,6 @@ static void enforce_bans(struct chanset_t *chan)
   if (!me_op(chan))
     return;			/* Can't do it :( */
 
-  char me[UHOSTLEN] = "", meip[UHOSTLEN] = "";
-
-  simple_snprintf(me, sizeof(me), "%s!%s", botname, botuserhost);
-  simple_snprintf(meip, sizeof(meip), "%s!%s", botname, botuserip);
-
   /* Go through all bans, kicking the users. */
   for (masklist *b = chan->channel.ban; b && b->mask[0]; b = b->next) {
     if (!(wild_match(b->mask, me) || match_cidr(b->mask, meip)))
@@ -1358,6 +1353,7 @@ static int got302(char *from, char *msg)
 
   if (match_my_nick(nick)) {
     strlcpy(botuserip, uhost, UHOSTLEN);
+    simple_snprintf(meip, sizeof(meip), "%s!%s", botname, botuserip);
     sdprintf("botuserip: %s", botuserip);
     return 0;
   }

@@ -20,7 +20,7 @@ static void cmd_pls_mask(const char type, int idx, char *par)
     return;
   }
 
-  char *chname = NULL, *who = NULL, s[UHOSTLEN] = "", s1[UHOSTLEN] = "", *p = NULL, *p_expire = NULL;
+  char *chname = NULL, *who = NULL, s[UHOSTLEN] = "", s1[UHOSTLEN + NICKLEN] = "", *s2 = NULL, *p = NULL, *p_expire = NULL;
   unsigned long int expire_time = 0, expire_foo;
   int sticky = 0;
   struct chanset_t *chan = NULL;
@@ -93,11 +93,12 @@ static void cmd_pls_mask(const char type, int idx, char *par)
     simple_snprintf(s, sizeof s, "%s@*", who);	/* brain-dead? */
   else
     strlcpy(s, who, sizeof s);
-    if (conf.bot->hub)
+    if (conf.bot->hub) {
       simple_snprintf(s1, sizeof s1, "%s!%s@%s", origbotname, botuser, conf.bot->net.host);
-    else
-      simple_snprintf(s1, sizeof s1, "%s!%s", botname, botuserhost);
-  if (type == 'b' && s1[0] && wild_match(s, s1)) {
+      s2 = s1;
+    } else
+      s2 = me;
+  if (type == 'b' && s2 && s2[0] && wild_match(s, s2)) {
     dprintf(idx, "I'm not going to ban myself.\n");
     putlog(LOG_CMDS, "*", "#%s# attempted +ban %s", dcc[idx].nick, s);
     return;
