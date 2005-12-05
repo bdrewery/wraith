@@ -31,6 +31,7 @@ typedef struct connect_info {
         int port;
 } connect_info_t;
 
+#ifdef no
 /* If a connection times out, due to dns timeout or connect timeout. */
 static int egg_connect_timeout(void *client_data)
 {
@@ -51,6 +52,7 @@ static int egg_connect_timeout(void *client_data)
 //        }
         return(0);
 }
+
 static connect_info_t *attach(int idx, const char *host, int port, int timeout)
 {
         connect_info_t *connect_info = (connect_info_t *) my_calloc(1, sizeof(*connect_info));
@@ -97,6 +99,7 @@ int egg_client(int idx, const char *host, int port, const char *vip, int vport, 
         return(idx);
 }
 */
+#endif
 
 
 int socket_name(sockname_t *name, const char *ipaddr, int port)
