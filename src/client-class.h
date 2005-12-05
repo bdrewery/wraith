@@ -10,6 +10,10 @@
 
 class Client {
   private:
+    /* These will increase memory, but decrease load. */
+    char _fuhost[UHOSTLEN + NICKLEN];
+    char _fuip[UHOSTLEN + NICKLEN];
+
     char _userhost[UHOSTLEN];
     char _userip[UHOSTLEN];
     char _user[11];

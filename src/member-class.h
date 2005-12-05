@@ -37,7 +37,9 @@ class Member {
 
     static int cmp(const Member *, const Member *);
 
+//    struct userrec *user  __attribute__((deprecated));
     struct userrec *user;
+
     time_t joined;
     time_t split;
     time_t last;

@@ -18,6 +18,9 @@ void Client::_init(const char *nick)
 //  _chans = NULL;
   _channels = 0;
 
+  _fuhost[0] = 0;
+  _fuip[0] = 0;
+
   _userhost[0] = 0;
   _userip[0] = 0;
   _user[0] = 0;
@@ -107,7 +110,7 @@ void
 
 //  struct chanset_t *chan = NULL;
 
-  simple_snprintf(buf, sizeof(buf), "nick: %s user: %s uhost: %s chans: ", _nick, _user, _userhost);
+  simple_snprintf(buf, sizeof(buf), "nick: %s user: %s uhost: %s fuhost: %s chans: ", _nick, _user, _userhost, _fuhost);
 //  for (int i = 0; i < _channels; i++)
 //    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, _chans[i]);
 //  for (chan = _chans; chan; chan = chan->next);
@@ -123,6 +126,11 @@ void Client::NewNick(const char *newnick)
 {
   clients.rename(_nick, newnick);
   strlcpy(_nick, newnick, NICKLEN);
+
+  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", _nick, _userhost);
+
+  if (_userip[0])
+    simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", _nick, _userip);
 }
 
 Client *Client::Find(const char *nick)
@@ -150,6 +158,7 @@ void Client::SetUHost(const char *uhost, const char *user)
       _h_family = is_dotted_ip(++host);
     }
   }
+  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", _nick, _userhost);
 }
 
 void Client::SetUIP(const char *uip, const char *user)
@@ -168,6 +177,7 @@ void Client::SetUIP(const char *uip, const char *user)
       _i_family = is_dotted_ip(++host);
     }
   }
+  simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", _nick, _userip);
 }
 
 char *Client::GetUHost()

@@ -1329,6 +1329,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
 static int got302(char *from, char *msg)
 {
   char *p = NULL, *nick = NULL, *uhost = NULL;
+  Client *client = NULL;
 
 #ifdef CACHE
   cache_t *cache = NULL;
@@ -1351,12 +1352,21 @@ static int got302(char *from, char *msg)
   if ((p = strchr(uhost, ' ')))
     *p = 0;
 
+  if (!(client = Client::Find(nick))) {
+    client = new Client(nick);
+  }
+
   if (match_my_nick(nick)) {
+    /* Our USERHOST comes back as an ip ... */
+    client->SetUIP(uhost);
     strlcpy(botuserip, uhost, UHOSTLEN);
     simple_snprintf(meip, sizeof(meip), "%s!%s", botname, botuserip);
     sdprintf("botuserip: %s", botuserip);
     return 0;
   }
+
+  /* .. others come back as what we see in WHOIS */
+  client->SetUHost(uhost);
 
 #ifdef CACHE
   if ((cache = cache_find(nick))) {

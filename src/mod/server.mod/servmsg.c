@@ -1174,6 +1174,7 @@ static int got311(char *from, char *msg)
 {
   char *nick = NULL, *username = NULL, *address = NULL, uhost[UHOSTLEN + 1];
   struct userrec *u = NULL;
+  Client *client = NULL;
   
   newsplit(&msg);
   nick = newsplit(&msg);
@@ -1181,7 +1182,12 @@ static int got311(char *from, char *msg)
   address = newsplit(&msg);
   newsplit(&msg);
   fixcolon(msg);
-    
+  
+  if (!(client = Client::Find(nick))) {
+    client = new Client(nick);
+    client->SetUHost(address, username);
+  }
+
   if (match_my_nick(nick)) {
     simple_snprintf(botuserhost, sizeof botuserhost, "%s@%s", username, address);
     simple_snprintf(me, sizeof(me), "%s!%s", botname, botuserhost);
