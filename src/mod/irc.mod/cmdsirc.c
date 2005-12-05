@@ -47,18 +47,21 @@ static int has_op(int idx, struct chanset_t *chan)
 /* Finds a nick of the handle. Returns m->nick if
  * the nick was found, otherwise NULL (Sup 1Nov2000)
  */
-static char *getnick(char *handle, struct chanset_t *chan)
+char *getnick(const char *handle, struct chanset_t *chan)
 {
   char s[UHOSTLEN] = "";
-  struct userrec *u = NULL;
   struct chanset_t *my_chan = NULL;
   register Member *m = NULL;
   ptrlist<Member>::iterator _p;
 
   for (my_chan = chan ? chan : chanset; my_chan; my_chan = my_chan->next) {
     PFOR(my_chan->channel.hmember, Member, m) {
-      simple_snprintf(s, sizeof s, "%s!%s", m->nick, m->client->GetUHost());
-      if ((u = get_user_by_host(s)) && !egg_strcasecmp(u->handle, handle))
+      if (!m->user && !m->tried_getuser) {
+        simple_snprintf(s, sizeof s, "%s!%s", m->nick, m->client->GetUHost());
+        m->user = get_user_by_host(s);
+        m->tried_getuser = 1;
+      }
+      if (m->user && !egg_strcasecmp(m->user->handle, handle))
         return m->nick;
     }
     if (chan)
@@ -1765,7 +1768,7 @@ static cmd_t irc_dcc[] =
   {"resetexempts",	"o|o",	 (Function) cmd_resetexempts,	NULL, LEAF|AUTH},
   {"resetinvites",	"o|o",	 (Function) cmd_resetinvites,	NULL, LEAF|AUTH},
   {"say",		"o|o",	 (Function) cmd_say,		NULL, LEAF},
-  {"swhois",		"n",	 (Function) cmd_swhois,		NULL, LEAF|AUTH},
+  {"swhois",		"",	 (Function) cmd_swhois,		NULL, LEAF|AUTH},
   {"topic",		"o|o",	 (Function) cmd_topic,		NULL, LEAF|AUTH},
   {"voice",		"o|o",	 (Function) cmd_voice,		NULL, LEAF|AUTH},
   {NULL,		NULL,	 NULL,				NULL, 0}
