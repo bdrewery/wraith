@@ -1224,7 +1224,7 @@ static void do_invite(int idx, char *par, bool op)
     nick = getnick(dcc[idx].nick, NULL);
 
   if (!nick || !nick[0]) {
-    dprintf(idx, "Could not resolve your nickname from any common channels. Try specifiying one.\n";
+    dprintf(idx, "Could not resolve your nickname from any common channels. Try specifiying one.\n");
     return;
   }
 
