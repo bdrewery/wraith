@@ -537,7 +537,7 @@ dcc_write(FILE *f, int idx)
 void
 lostdcc(int n)
 {
-  sdprintf("lostdcc(%d)", n);
+  sdprintf("lostdcc(%d): %s", n, dcc[n].nick);
   /* Make sure it's a valid dcc index. */
   if (n < 0 || n >= max_dcc)
     return;
