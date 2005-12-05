@@ -577,7 +577,7 @@ getin_request(char *botnick, char *code, char *par)
     }
     if (strchr(p2, 'k')) {
       sendi = 0;
-      size_t siz = strlen(chan->dname) + strlen(p3) + 6 + 1;
+      size_t siz = chan->dlen + strlen(p3) + 6 + 1;
       tmp = (char *) my_calloc(1, siz);
       simple_snprintf(tmp, siz, "gi K %s %s", chan->dname, p3);
       putbot(botnick, tmp);

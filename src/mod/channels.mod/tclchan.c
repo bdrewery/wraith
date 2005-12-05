@@ -886,7 +886,8 @@ int channel_add(char *result, char *newname, char *options)
      * any code later on. chan->name gets updated with the channel name as
      * the server knows it, when we join the channel. <cybah>
      */
-    strlcpy(chan->dname, newname, 81);
+    chan->dlen = strlen(newname);
+    strlcpy(chan->dname, newname, chan->dlen + 1);
 
     /* Initialize chan->channel info */
     init_channel(chan, 0);

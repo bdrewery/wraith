@@ -1153,7 +1153,7 @@ static void cmd_find(int idx, char *par)
       PFOR(chan->channel.hmember, Member, m) {
         char s[UHOSTLEN] = "";
 
-        sprintf(s, "%s!%s", m->nick, m->client->GetUHost());
+        simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUHost());
         if (!m->user && !m->tried_getuser) {
           m->user = get_user_by_host(s);
           if (!m->user && doresolv(chan) && m->client->GetUIP()[0]) {
@@ -1189,12 +1189,12 @@ static void cmd_find(int idx, char *par)
 
     for (findex = 0; findex < fcount; findex++) {
       if (found[findex]) {
-        sprintf(tmp, "%s!%s %s%s%s on %s", found[findex]->nick, found[findex]->client->GetUHost(), 
+        simple_snprintf(tmp, sizeof(tmp), "%s!%s %s%s%s on %s", found[findex]->nick, found[findex]->client->GetUHost(), 
          found[findex]->user ? "(user:" : "", found[findex]->user ? found[findex]->user->handle : "", found[findex]->user ? ")" : "", 
-                                           cfound[findex]->name);
+                                           cfound[findex]->dname);
         for (i = findex + 1; i < fcount; i++) {
           if (found[i] && (!strcmp(found[i]->nick, found[findex]->nick))) {
-            sprintf(tmp + strlen(tmp), ", %s", cfound[i]->name);
+            simple_snprintf(tmp, sizeof(tmp), "%s, %s", tmp, cfound[i]->dname);
             found[i] = NULL;
           }
         }

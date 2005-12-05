@@ -172,6 +172,7 @@ struct chanset_t {
   int limit;			/* new limit to set			*/
   size_t bytes;			/* total bytes so far			*/
   size_t cbytes;
+  size_t dlen;
   int compat;			/* to prevent mixing old/new modes	*/
   int floodnum[FLOOD_CHAN_MAX];
   int opreqtime[5];             /* remember when ops was requested */

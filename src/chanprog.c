@@ -671,7 +671,7 @@ chans_addbot(const char *bot, struct chanset_t *chan)
     size_t size;
     char *buf = NULL;
    
-    size = strlen(chans) + strlen(chan->dname) + 2;
+    size = strlen(chans) + chan->dlen + 2;
     buf = (char *) my_calloc(1, size);
     simple_snprintf(buf, size, "%s %s", chans, chan->dname);
     set_user(&USERENTRY_CHANS, u, buf);
@@ -694,7 +694,7 @@ chans_delbot(const char *bot, struct chanset_t *chan)
     size_t size;
 
     chans = get_user(&USERENTRY_CHANS, u);
-    size = strlen(chans) - strlen(chan->dname) + 2;
+    size = strlen(chans) - chan->dlen + 2;
 
     
   }
@@ -734,7 +734,7 @@ int do_chanset(char *result, struct chanset_t *chan, const char *options, int lo
     char *buf = NULL;
          /* malloc(options,chan,'cset ',' ',+ 1) */
     if (chan)
-      buf = (char *) my_calloc(1, strlen(options) + strlen(chan->dname) + 5 + 1 + 1);
+      buf = (char *) my_calloc(1, strlen(options) + chan->dlen + 5 + 1 + 1);
     else
       buf = (char *) my_calloc(1, strlen(options) + 1 + 5 + 1 + 1);
 

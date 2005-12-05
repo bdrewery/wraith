@@ -313,7 +313,7 @@ static void remote_tell_who(int idx, char *nick, int chan)
   strcpy(s, "Channels: ");
   for (c = chanset; c; c = c->next)
     if (!channel_secret(c) && shouldjoin(c)) {
-      l = strlen(c->dname);
+      l = c->dlen;
       if (i + l < 1021) {
 	if (i > 10) {
           simple_snprintf(s, sizeof(s), "%s, %s", s, c->dname);

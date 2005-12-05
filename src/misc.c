@@ -394,8 +394,8 @@ void show_channels(int idx, char *handle)
 
   for (chan = chanset;chan ;chan = chan->next) {
     get_user_flagrec(u, &fr, chan->dname);
-    if (l < strlen(chan->dname)) {
-      l = strlen(chan->dname);
+    if (l < chan->dlen) {
+      l = chan->dlen;
     }
     if (real_chk_op(fr, chan, 0))
       total++;

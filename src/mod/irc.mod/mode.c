@@ -607,7 +607,7 @@ got_op(struct chanset_t *chan, Member *m, Member *mv)
 #ifdef no
     /* tell other bots to set jointime to 0 and join */
     char *buf = NULL;
-    size_t siz = strlen(chan->dname) + 3 + 1;
+    size_t siz = chan->dlen + 3 + 1;
 
     buf = my_calloc(1, siz);
     simple_snprintf(buf, siz, "jn %s", chan->dname);
