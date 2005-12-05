@@ -8,8 +8,7 @@
 
 Htree < Client > clients;
 
-//Client::Client(const char *nick, const char *chname)
-Client::Client(const char *nick, struct chanset_t *chan)
+void Client::_init(const char *nick)
 {
   _u = NULL;
   hops = -1;
@@ -23,7 +22,18 @@ Client::Client(const char *nick, struct chanset_t *chan)
   _userip[0] = 0;
   _user[0] = 0;
   strlcpy(_nick, nick, sizeof(_nick));
+}
 
+Client::Client(const char *nick)
+{
+  _init(nick);
+  clients.add(this);
+}
+
+//Client::Client(const char *nick, const char *chname)
+Client::Client(const char *nick, struct chanset_t *chan)
+{
+  _init(nick);
   AddChan(chan);
   clients.add(this);
 }

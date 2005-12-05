@@ -24,9 +24,11 @@ class Client {
     int _channels;
     ptrlist<struct chanset_t> _chans;
 //    struct chanset_t *_chans;
+    void _init(const char *);
   public:
 //    Client(const char *nick, const char *chname);
     Client(const char *nick, struct chanset_t *chan);
+    Client(const char *nick);
     ~Client();
 
     char *GetKey() { return _nick; };
