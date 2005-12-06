@@ -54,7 +54,7 @@ class Client {
 
     void ClearUser();
     void UpdateUser(bool = 0);
-    struct userrec *GetUser();
+    struct userrec *GetUser(bool = 1);
 
 
     char nick[NICKLEN];
