@@ -94,11 +94,11 @@ void Client::NewNick(const char *newnick)
   strlcpy(nick, newnick, NICKLEN);
 
 
-  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, userhost);
+  simple_snprintf(fuhost, sizeof(fuhost), "%s!%s", nick, userhost);
   UpdateUser();
 
   if (userip[0])
-    simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, userip);
+    simple_snprintf(fuip, sizeof(fuip), "%s!%s", nick, userip);
 }
 
 Client *Client::Find(const char *nick)
@@ -174,7 +174,7 @@ void Client::UpdateUser(bool ip)
   if (u || tried_getuser)
     return;
 
-  if (ip && _userip[0]) {
+  if (ip && userip[0]) {
     u = get_user_by_host(fuip);
 //    if (!_u)
 //      _u = get_user_by_host(_fuhost);
