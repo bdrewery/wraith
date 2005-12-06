@@ -112,7 +112,7 @@ Client *Client::Find(const char *nick)
 
 void Client::SetUHost(const char *uhost, const char *usr)
 {
-  if (user) {
+  if (usr) {
     simple_snprintf(userhost, sizeof(userhost), "%s@%s", usr, uhost);
     strlcpy(user, usr, sizeof(user));
     h_family = is_dotted_ip(uhost);
@@ -133,7 +133,7 @@ void Client::SetUHost(const char *uhost, const char *usr)
 
 void Client::SetUIP(const char *uip, const char *usr)
 {
-  if (user) {
+  if (usr) {
     simple_snprintf(userip, sizeof(userip), "%s@%s", usr, uip);
     i_family = is_dotted_ip(uip);
     strlcpy(user, usr, sizeof(user));
