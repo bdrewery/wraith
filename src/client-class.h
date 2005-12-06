@@ -52,6 +52,7 @@ class Client {
     void SetUIP(const char *, const char * = NULL);
     char *GetUIP();
 
+    void ClearUser();
     void UpdateUser(bool = 0);
     struct userrec *GetUser();
 

@@ -194,6 +194,12 @@ char *Client::GetUIP()
   return _userip;
 }
 
+void Client::ClearUser()
+{
+  _u = NULL;
+  _tried_getuser = 0;
+}
+
 void Client::UpdateUser(bool ip)
 {
   if (_tried_getuser)
