@@ -10,20 +10,20 @@ Htree < Client > clients;
 
 void Client::_init(const char *nick)
 {
-  _u = NULL;
+  u = NULL;
   hops = -1;
-  _h_family = 0;
-  _i_family = 0;
-  _tried_getuser = 0;
+  h_family = 0;
+  i_family = 0;
+  tried_getuser = 0;
 //  chans = NULL;
-  _channels = 0;
+  channels = 0;
 
-  _fuhost[0] = 0;
-  _fuip[0] = 0;
+  fuhost[0] = 0;
+  fuip[0] = 0;
 
-  _userhost[0] = 0;
-  _userip[0] = 0;
-  _user[0] = 0;
+  userhost[0] = 0;
+  userip[0] = 0;
+  user[0] = 0;
   strlcpy(this->nick, nick, sizeof(this->nick));
 }
 
@@ -33,7 +33,6 @@ Client::Client(const char *nick)
   clients.add(this);
 }
 
-//Client::Client(const char *nick, const char *chname)
 Client::Client(const char *nick, struct chanset_t *chan)
 {
   _init(nick);
@@ -46,40 +45,14 @@ Client::~Client()
 
 }
 
-// Client::RemoveChan(const char *chname)
 int
  Client::RemoveChan(struct chanset_t *chan)
 {
-/*
-  for (int i = 0; i < _channels; i++) {
-    if (!strcasecmp(chans[i], chname)) {
-      free(chans[i]);
-      _channels--;
-      if (i < _channels)
-        memcpy(&chans[i], &chans[_channels], sizeof(char *));
-      chans = (char **) realloc(chans, sizeof(char *) * _channels);
-
-      if (_channels == 0) {
-        free(chans);
-        clients.remove(this);
-        delete
-          this;
-
-        return 1;
-      }
-      break;
-    }
-  }
-*/
-  _channels--;
-//  list_delete((struct list_type **) &chans, (struct list_type *) chan);
+  channels--;
   chans.remove(chan);
   
   // All channels removed for this client
-  
-//  if (chans == NULL) {
-  if (_channels == 0) {
-//    free(chans);
+  if (channels == 0) {
     clients.remove(this);
     delete this;
     return 1;
@@ -88,17 +61,13 @@ int
   return 0;
 }
 
-// Client::AddChan(const char *chname)
 int
  Client::AddChan(struct chanset_t *chan)
 {
-  _channels++;
-//  chans = (char **) realloc(chans, sizeof(char *) * _channels);
-//  chans[_channels - 1] = strdup(chname);
-
+  channels++;
   chans.add(chan);
-//  list_append((struct list_type **) &chans, (struct list_type *) chan);
-  return _channels;
+
+  return channels;
 }
 
 
@@ -108,13 +77,8 @@ void
   char buf[1024] = "";
   ptrlist<struct chanset_t>::iterator chan;
 
-//  struct chanset_t *chan = NULL;
 
-  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", nick, _u ? _u->handle : "-", _userhost);
-//  for (int i = 0; i < _channels; i++)
-//    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chans[i]);
-//  for (chan = chans; chan; chan = chan->next);
-//    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chan->dname);
+  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", nick, u ? u->handle : "-", userhost);
 
   for (chan = chans.begin(); chan; chan++)
     simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chan->dname);
@@ -130,11 +94,11 @@ void Client::NewNick(const char *newnick)
   strlcpy(nick, newnick, NICKLEN);
 
 
-  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, _userhost);
+  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, userhost);
   UpdateUser();
 
-  if (_userip[0])
-    simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, _userip);
+  if (userip[0])
+    simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, userip);
 }
 
 Client *Client::Find(const char *nick)
@@ -146,94 +110,95 @@ Client *Client::Find(const char *nick)
   return client;
 }
 
-void Client::SetUHost(const char *uhost, const char *user)
+void Client::SetUHost(const char *uhost, const char *usr)
 {
   if (user) {
-    simple_snprintf(_userhost, sizeof(_userhost), "%s@%s", user, uhost);
-    strlcpy(_user, user, sizeof(_user));
-    _h_family = is_dotted_ip(uhost);
+    simple_snprintf(userhost, sizeof(userhost), "%s@%s", usr, uhost);
+    strlcpy(user, usr, sizeof(user));
+    h_family = is_dotted_ip(uhost);
   } else {
-    strlcpy(_userhost, uhost, sizeof(_userhost));
+    strlcpy(userhost, uhost, sizeof(userhost));
 
     char *host = NULL;
 
     if ((host = strchr(uhost, '@'))) {
-      strlcpy(_user, uhost, host - uhost + 1);
-      _h_family = is_dotted_ip(++host);
+      strlcpy(user, uhost, host - uhost + 1);
+      h_family = is_dotted_ip(++host);
     }
   }
-  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, _userhost);
+  simple_snprintf(fuhost, sizeof(fuhost), "%s!%s", nick, userhost);
+  ClearUser();
   UpdateUser();
 }
 
-void Client::SetUIP(const char *uip, const char *user)
+void Client::SetUIP(const char *uip, const char *usr)
 {
   if (user) {
-    simple_snprintf(_userip, sizeof(_userip), "%s@%s", user, uip);
-    _i_family = is_dotted_ip(uip);
-    strlcpy(_user, user, sizeof(_user));
+    simple_snprintf(userip, sizeof(userip), "%s@%s", usr, uip);
+    i_family = is_dotted_ip(uip);
+    strlcpy(user, usr, sizeof(user));
   } else {
-    strlcpy(_userip, uip, sizeof(_userip));
+    strlcpy(userip, uip, sizeof(userip));
 
     char *host = NULL;
 
     if ((host = strchr(uip, '@'))) {
-      strlcpy(_user, uip, host - uip + 1);
-      _i_family = is_dotted_ip(++host);
+      strlcpy(user, uip, host - uip + 1);
+      i_family = is_dotted_ip(++host);
     }
   }
 
-  simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, _userip);
-  _tried_getuser = 0;
-  UpdateUser();
+  simple_snprintf(fuip, sizeof(fuip), "%s!%s", nick, userip);
+  ClearUser();
+  UpdateUser(1);
 }
 
 char *Client::GetUHost()
 {
-  return _userhost;
+  return userhost;
 }
 
 char *Client::GetUIP()
 {
-  return _userip;
+  return userip;
 }
 
 void Client::ClearUser()
 {
-  _u = NULL;
-  _tried_getuser = 0;
+  u = NULL;
+  tried_getuser = 0;
 }
 
 void Client::UpdateUser(bool ip)
 {
-  if (_u || _tried_getuser)
+  if (u || tried_getuser)
     return;
 
   if (ip && _userip[0]) {
-    _u = get_user_by_host(_fuip);
+    u = get_user_by_host(fuip);
 //    if (!_u)
 //      _u = get_user_by_host(_fuhost);
   } else
-    _u = get_user_by_host(_fuhost);
+    u = get_user_by_host(fuhost);
 
-  _tried_getuser = 1;
+  tried_getuser = 1;
 }
 
 struct userrec *Client::GetUser(bool update)
 {
   if (update)
     UpdateUser();
-  return _u;
+  return u;
 }
 
 struct userrec *Client::GetUserByIP()
 {
-  _tried_getuser = 0;
+  tried_getuser = 0;
   UpdateUser(1);
-  return _u;
+  return u;
 }
 
-void Client::SetUser(struct userrec *u)
+void Client::SetUser(struct userrec *us)
 {
-  _u = u;
+  u = us;
 }

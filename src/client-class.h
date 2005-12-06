@@ -11,21 +11,6 @@
 class Client {
   private:
     /* These will increase memory, but decrease load. */
-    char _fuhost[UHOSTLEN + NICKLEN];
-    char _fuip[UHOSTLEN + NICKLEN];
-
-    char _userhost[UHOSTLEN];
-    char _userip[UHOSTLEN];
-    char _user[11];
-
-    struct userrec *_u;
-    int _i_family;
-    int _h_family;
-
-    bool _tried_getuser;
-
-//    char **_chans;
-    int _channels;
 //    struct chanset_t *_chans;
     void _init(const char *);
   public:
@@ -55,12 +40,23 @@ class Client {
     void UpdateUser(bool = 0);
     struct userrec *GetUser(bool = 1);
     struct userrec *GetUserByIP();
-    void SetUser(struct userrec *u);
+    void SetUser(struct userrec *);
 
 
     ptrlist<struct chanset_t> chans;
-    char nick[NICKLEN];
+    struct userrec *u;
     int hops;
+    int i_family;
+    int h_family;
+    int channels;
+    char nick[NICKLEN];
+    char fuhost[UHOSTLEN + NICKLEN];
+    char fuip[UHOSTLEN + NICKLEN];
+    char userhost[UHOSTLEN];
+    char userip[UHOSTLEN];
+    char user[11];
+    bool tried_getuser;
+
 };
 
 
