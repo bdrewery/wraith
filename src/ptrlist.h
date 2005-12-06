@@ -37,6 +37,13 @@ for (\
  _p;\
  _p++, _ptr = _p\
 )
+
+#define PFOR2(_init, _type, _ptr) \
+for (\
+ _p = _init.list.begin(), _ptr = _p;\
+ _p;\
+ _p++, _ptr = _p\
+)
 // ptrlist<_type>::iterator _ptr = _init->list.begin();
 // _ptr = _init->list.begin();
 

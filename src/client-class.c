@@ -219,3 +219,8 @@ struct userrec *Client::GetUser(bool update)
     UpdateUser();
   return _u;
 }
+
+void Client::SetUser(struct userrec *u)
+{
+  _u = u;
+}
