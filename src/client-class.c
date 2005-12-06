@@ -124,11 +124,13 @@ void
 
 void Client::NewNick(const char *newnick)
 {
+  ClearUser();
+
   clients.rename(nick, newnick);
   strlcpy(nick, newnick, NICKLEN);
 
-  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, _userhost);
 
+  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, _userhost);
   UpdateUser();
 
   if (_userip[0])
