@@ -180,7 +180,9 @@ void Client::SetUIP(const char *uip, const char *user)
       _i_family = is_dotted_ip(++host);
     }
   }
+
   simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, _userip);
+  _tried_getuser = 0;
   UpdateUser();
 }
 
