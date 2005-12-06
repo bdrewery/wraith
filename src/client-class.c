@@ -205,9 +205,11 @@ void Client::UpdateUser(bool ip)
   if (_tried_getuser)
     return;
 
-  if (ip && _userip[0])
+  if (ip && _userip[0]) {
     _u = get_user_by_host(_fuip);
-  else
+    if (!_u)
+      _u = get_user_by_host(_fuhost);
+  } else
     _u = get_user_by_host(_fuhost);
 
   _tried_getuser = 1;
