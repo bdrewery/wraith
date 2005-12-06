@@ -207,8 +207,8 @@ void Client::UpdateUser(bool ip)
 
   if (ip && _userip[0]) {
     _u = get_user_by_host(_fuip);
-    if (!_u)
-      _u = get_user_by_host(_fuhost);
+//    if (!_u)
+//      _u = get_user_by_host(_fuhost);
   } else
     _u = get_user_by_host(_fuhost);
 
@@ -219,6 +219,12 @@ struct userrec *Client::GetUser(bool update)
 {
   if (update)
     UpdateUser();
+  return _u;
+}
+
+struct userrec *Client::GetUserByIP()
+{
+  UpdateUser(1);
   return _u;
 }
 
