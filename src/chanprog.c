@@ -154,28 +154,6 @@ void clear_chanlist(void)
 
 }
 
-/* Clear the user pointer of a specific nick in the chanlists.
- *
- * Necessary when a hostmask is added/removed, a nick changes, etc.
- * Does not completely invalidate the channel cache like clear_chanlist().
- */
-void clear_chanlist_member(const char *nick)
-{
-  register Member		*m = NULL;
-  register struct chanset_t	*chan = NULL;
-  ptrlist<Member>::iterator _p;
-
-  for (chan = chanset; chan; chan = chan->next) {
-    PFOR(chan->channel.hmember, Member, m) {
-      if (!rfc_casecmp(m->nick, nick)) {
-	m->user = NULL;
-        m->tried_getuser = 0;
-	break;
-      }
-    }
-  }
-}
-
 /* If this user@host is in a channel, set it (it was null)
  */
 void set_chanlist(const char *host, struct userrec *rec)

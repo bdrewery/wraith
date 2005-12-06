@@ -1554,13 +1554,12 @@ static void cmd_adduser(int idx, char *par)
   }
 
   char *nick = NULL, *hand = NULL;
-  struct chanset_t *chan = NULL;
   struct userrec *u = NULL;
-  Member *m = NULL;
-  char s[UHOSTLEN] = "", s1[UHOSTLEN] = "", s2[MAXPASSLEN + 1] = "", s3[MAXPASSLEN + 1] = "", tmp[50] = "";
+  char s1[UHOSTLEN] = "", s2[MAXPASSLEN + 1] = "", s3[MAXPASSLEN + 1] = "", tmp[50] = "";
   int atr = dcc[idx].user ? dcc[idx].user->flags : 0;
   bool statichost = 0;
   char *p1 = s1;
+  Client *client = NULL;
 
   putlog(LOG_CMDS, "*", "#%s# adduser %s", dcc[idx].nick, par);
 
@@ -1589,22 +1588,19 @@ static void cmd_adduser(int idx, char *par)
     hand = par;
   }
 
-  for (chan = chanset; chan; chan = chan->next) {
-    m = ismember(chan, nick);
-    if (m)
-      break;
-  }
-  if (!m) {
+  if (!(client = Client::Find(nick))) {
     dprintf(idx, "%s is not on any channels I monitor\n", nick);
     return;
   }
+
   if (strlen(hand) > HANDLEN)
     hand[HANDLEN] = 0;
-  simple_snprintf(s, sizeof s, "%s!%s", m->nick, m->client->GetUHost());
-  if ((u = get_user_by_host(s))) {
+
+  if ((u = client->GetUser())) {
     dprintf(idx, "%s is already known as %s.\n", nick, u->handle);
     return;
   }
+
   u = get_user_by_handle(userlist, hand);
   if (u && (u->flags & (USER_OWNER | USER_MASTER)) &&
       !(atr & USER_OWNER) && egg_strcasecmp(dcc[idx].nick, hand)) {
@@ -1612,9 +1608,9 @@ static void cmd_adduser(int idx, char *par)
     return;
   }
   if (!statichost)
-    maskhost(s, s1);
+    maskhost(client->fuhost, s1);
   else {
-    strlcpy(s1, s, sizeof s1);
+    strlcpy(s1, client->fuhost, sizeof s1);
     p1 = strchr(s1, '!');
     if (strchr("~^+=-", p1[1]))
       p1[1] = '?';
@@ -1640,7 +1636,6 @@ static void cmd_adduser(int idx, char *par)
   } else {
     dprintf(idx, "Added hostmask %s to %s.\n", p1, u->handle);
     addhost_by_handle(hand, p1);
-    get_user_flagrec(u, &user, chan->dname);
     check_this_user(hand, 0, NULL);
   }
 

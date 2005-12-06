@@ -2640,25 +2640,18 @@ static int gotnick(char *from, char *msg)
   nick = splitnick(&uhost);
   fixcolon(msg);
   irc_log(NULL, "[%s] Nick change: %s -> %s", samechans(nick, ","), nick, msg);
-  clear_chanlist_member(nick);	/* Cache for nick 'nick' is meaningless now. */
 
-/* FIXME: This should loop the client's channels. */
+  client = Client::Find(nick);
+
   /* We must do this because of capitalization changes */
-  for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
-    if ((m = ismember(chan, nick))) {
-      client = m->client;
+  for (ptrlist<struct chanset_t>::iterator chan = client->chans.begin(); chan; chan++) {
+    if ((m = ismember(chan, nick)))
       m->NewNick(msg);
-    }
   }
 
-  if (!client)
-    client = Client::Find(nick);
-  if (client) {
-    client->NewNick(msg);
-  }
+  client->NewNick(msg);
 
   nick = msg;
-
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     oldchan = chan;
     chname = chan->dname; 
