@@ -202,7 +202,7 @@ void Client::ClearUser()
 
 void Client::UpdateUser(bool ip)
 {
-  if (_tried_getuser)
+  if (_u || _tried_getuser)
     return;
 
   if (ip && _userip[0]) {
@@ -217,7 +217,7 @@ void Client::UpdateUser(bool ip)
 
 struct userrec *Client::GetUser(bool update)
 {
-  if (!_u && update)
+  if (update)
     UpdateUser();
   return _u;
 }
