@@ -52,6 +52,9 @@ class Client {
     void SetUIP(const char *, const char * = NULL);
     char *GetUIP();
 
+    void UpdateUser(bool = 0);
+    struct userrec *GetUser();
+
 
     char _nick[NICKLEN];
     int hops;

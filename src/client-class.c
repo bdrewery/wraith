@@ -110,7 +110,7 @@ void
 
 //  struct chanset_t *chan = NULL;
 
-  simple_snprintf(buf, sizeof(buf), "nick: %s user: %s uhost: %s fuhost: %s chans: ", _nick, _user, _userhost, _fuhost);
+  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", _nick, _u ? _u->handle : "-", _userhost);
 //  for (int i = 0; i < _channels; i++)
 //    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, _chans[i]);
 //  for (chan = _chans; chan; chan = chan->next);
@@ -128,6 +128,8 @@ void Client::NewNick(const char *newnick)
   strlcpy(_nick, newnick, NICKLEN);
 
   simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", _nick, _userhost);
+
+  UpdateUser();
 
   if (_userip[0])
     simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", _nick, _userip);
@@ -159,6 +161,7 @@ void Client::SetUHost(const char *uhost, const char *user)
     }
   }
   simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", _nick, _userhost);
+  UpdateUser();
 }
 
 void Client::SetUIP(const char *uip, const char *user)
@@ -178,6 +181,7 @@ void Client::SetUIP(const char *uip, const char *user)
     }
   }
   simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", _nick, _userip);
+  UpdateUser();
 }
 
 char *Client::GetUHost()
@@ -188,4 +192,23 @@ char *Client::GetUHost()
 char *Client::GetUIP()
 {
   return _userip;
+}
+
+void Client::UpdateUser(bool ip)
+{
+  if (_tried_getuser)
+    return;
+
+  if (ip && _uip[0])
+    _u = get_user_by_host(_fuip);
+  else
+    _u = get_user_by_host(_fuhost);
+
+  _tried_getuser = 1;
+}
+
+struct userrec *Client::GetUser()
+{
+  UpdateUser();
+  return _u;
 }
