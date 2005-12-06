@@ -15,7 +15,7 @@ void Client::_init(const char *nick)
   _h_family = 0;
   _i_family = 0;
   _tried_getuser = 0;
-//  _chans = NULL;
+//  chans = NULL;
   _channels = 0;
 
   _fuhost[0] = 0;
@@ -52,15 +52,15 @@ int
 {
 /*
   for (int i = 0; i < _channels; i++) {
-    if (!strcasecmp(_chans[i], chname)) {
-      free(_chans[i]);
+    if (!strcasecmp(chans[i], chname)) {
+      free(chans[i]);
       _channels--;
       if (i < _channels)
-        memcpy(&_chans[i], &_chans[_channels], sizeof(char *));
-      _chans = (char **) realloc(_chans, sizeof(char *) * _channels);
+        memcpy(&chans[i], &chans[_channels], sizeof(char *));
+      chans = (char **) realloc(chans, sizeof(char *) * _channels);
 
       if (_channels == 0) {
-        free(_chans);
+        free(chans);
         clients.remove(this);
         delete
           this;
@@ -72,14 +72,14 @@ int
   }
 */
   _channels--;
-//  list_delete((struct list_type **) &_chans, (struct list_type *) chan);
-  _chans.remove(chan);
+//  list_delete((struct list_type **) &chans, (struct list_type *) chan);
+  chans.remove(chan);
   
   // All channels removed for this client
   
-//  if (_chans == NULL) {
+//  if (chans == NULL) {
   if (_channels == 0) {
-//    free(_chans);
+//    free(chans);
     clients.remove(this);
     delete this;
     return 1;
@@ -93,11 +93,11 @@ int
  Client::AddChan(struct chanset_t *chan)
 {
   _channels++;
-//  _chans = (char **) realloc(_chans, sizeof(char *) * _channels);
-//  _chans[_channels - 1] = strdup(chname);
+//  chans = (char **) realloc(chans, sizeof(char *) * _channels);
+//  chans[_channels - 1] = strdup(chname);
 
-  _chans.add(chan);
-//  list_append((struct list_type **) &_chans, (struct list_type *) chan);
+  chans.add(chan);
+//  list_append((struct list_type **) &chans, (struct list_type *) chan);
   return _channels;
 }
 
@@ -112,11 +112,11 @@ void
 
   simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", nick, _u ? _u->handle : "-", _userhost);
 //  for (int i = 0; i < _channels; i++)
-//    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, _chans[i]);
-//  for (chan = _chans; chan; chan = chan->next);
+//    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chans[i]);
+//  for (chan = chans; chan; chan = chan->next);
 //    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chan->dname);
 
-  for (chan = _chans.begin(); chan; chan++)
+  for (chan = chans.begin(); chan; chan++)
     simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chan->dname);
 
   dprintf(idx, "%s\n", buf);

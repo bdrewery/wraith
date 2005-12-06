@@ -26,7 +26,6 @@ class Client {
 
 //    char **_chans;
     int _channels;
-    ptrlist<struct chanset_t> _chans;
 //    struct chanset_t *_chans;
     void _init(const char *);
   public:
@@ -59,6 +58,7 @@ class Client {
     void SetUser(struct userrec *u);
 
 
+    ptrlist<struct chanset_t> chans;
     char nick[NICKLEN];
     int hops;
 };
