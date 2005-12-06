@@ -217,13 +217,14 @@ void Client::UpdateUser(bool ip)
 
 struct userrec *Client::GetUser(bool update)
 {
-  if (update)
+  if (!_u && update)
     UpdateUser();
   return _u;
 }
 
 struct userrec *Client::GetUserByIP()
 {
+  _tried_getuser = 0;
   UpdateUser(1);
   return _u;
 }
