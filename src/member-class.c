@@ -22,7 +22,7 @@ Member::Member(struct chanset_t *chan, const char *nick)
   else
     client->AddChan(chan);
 
-  this->nick = client->_nick;
+  this->nick = client->nick;
 
   removed = 0;
   my_chan = chan;

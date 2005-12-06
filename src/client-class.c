@@ -24,7 +24,7 @@ void Client::_init(const char *nick)
   _userhost[0] = 0;
   _userip[0] = 0;
   _user[0] = 0;
-  strlcpy(_nick, nick, sizeof(_nick));
+  strlcpy(this->nick, nick, sizeof(this->nick));
 }
 
 Client::Client(const char *nick)
@@ -110,7 +110,7 @@ void
 
 //  struct chanset_t *chan = NULL;
 
-  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", _nick, _u ? _u->handle : "-", _userhost);
+  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", nick, _u ? _u->handle : "-", _userhost);
 //  for (int i = 0; i < _channels; i++)
 //    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, _chans[i]);
 //  for (chan = _chans; chan; chan = chan->next);
@@ -124,15 +124,15 @@ void
 
 void Client::NewNick(const char *newnick)
 {
-  clients.rename(_nick, newnick);
-  strlcpy(_nick, newnick, NICKLEN);
+  clients.rename(nick, newnick);
+  strlcpy(nick, newnick, NICKLEN);
 
-  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", _nick, _userhost);
+  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, _userhost);
 
   UpdateUser();
 
   if (_userip[0])
-    simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", _nick, _userip);
+    simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, _userip);
 }
 
 Client *Client::Find(const char *nick)
@@ -160,7 +160,7 @@ void Client::SetUHost(const char *uhost, const char *user)
       _h_family = is_dotted_ip(++host);
     }
   }
-  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", _nick, _userhost);
+  simple_snprintf(_fuhost, sizeof(_fuhost), "%s!%s", nick, _userhost);
   UpdateUser();
 }
 
@@ -180,7 +180,7 @@ void Client::SetUIP(const char *uip, const char *user)
       _i_family = is_dotted_ip(++host);
     }
   }
-  simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", _nick, _userip);
+  simple_snprintf(_fuip, sizeof(_fuip), "%s!%s", nick, _userip);
   UpdateUser();
 }
 
@@ -205,7 +205,7 @@ void Client::UpdateUser(bool ip)
   if (_tried_getuser)
     return;
 
-  if (ip && _uip[0])
+  if (ip && _userip[0])
     _u = get_user_by_host(_fuip);
   else
     _u = get_user_by_host(_fuhost);

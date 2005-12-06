@@ -35,7 +35,7 @@ class Client {
     Client(const char *nick);
     ~Client();
 
-    char *GetKey() { return _nick; };
+    char *GetKey() { return nick; };
 
     void NewNick(const char *newnick);
     static Client *Find(const char *nick);
@@ -57,7 +57,7 @@ class Client {
     struct userrec *GetUser();
 
 
-    char _nick[NICKLEN];
+    char nick[NICKLEN];
     int hops;
 };
 
