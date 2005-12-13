@@ -69,6 +69,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed returning from 'su' not returning user to correct channel. (ie, partyline)
 * cmd_swhois is now -|- and hides all restricted information, channels; see 'help swhois'.
 * Fixed cmds showing failed cmdpass. (#188)
+* Fixed segfault in cmd_slowpart (#191)
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
