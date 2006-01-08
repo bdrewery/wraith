@@ -70,6 +70,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * cmd_swhois is now -|- and hides all restricted information, channels; see 'help swhois'.
 * Fixed cmds showing failed cmdpass. (#188)
 * Fixed segfault in cmd_slowpart (#191)
+* The respository is now stored in subversion; binaries now hold a revision number.
 
 1.2.8
 * Fixed [bot]* cmds depending on case of botnicks.
