@@ -580,8 +580,10 @@ free_conf_bots(conf_bot *list)
 int
 parseconf(bool error)
 {
+#ifndef CYGWIN_HACKS
   if (error && conf.uid == -1 && !conf.uname)
     werr(ERR_NOTINIT);
+#endif
 
   if (conf.username) {
     str_redup(&conf.username, my_username());
