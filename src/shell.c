@@ -752,11 +752,11 @@ int email(char *subject, char *msg, int who)
 void baduname(char *confhas, char *myuname) {
   char *tmpFile = NULL;
   int tosend = 0, make = 0;
-  size_t siz = strlen(tempdir) + 3 + 1;
+  size_t siz = strlen(conf.datadir) + 3 + 1;
 
   tmpFile = (char *) my_calloc(1, siz);
 
-  simple_snprintf(tmpFile, siz, "%s.un", tempdir);
+  simple_snprintf(tmpFile, siz, "%s/.un", conf.datadir);
   sdprintf("CHECKING %s", tmpFile);
   if (is_file(tmpFile)) {
     struct stat ss;
