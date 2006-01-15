@@ -83,6 +83,7 @@ int set_noshare = 0;
 int fork_interval;
 int hijack;
 int in_bots;
+int ison_time;
 int kill_threshold;
 int lag_threshold;
 int login;
@@ -121,6 +122,7 @@ static variable_t vars[] = {
  VAR("hijack",		&hijack,		VAR_INT|VAR_DETECTED|VAR_PERM,			0, 0, "die"),
  VAR("homechan",	homechan,		VAR_STRING|VAR_NOLOC|VAR_HIDE,			0, 0, NULL),
  VAR("in-bots",		&in_bots,		VAR_INT|VAR_NOLOC,				0, 0, "2"),
+ VAR("notify-time",	&ison_time,		VAR_INT|VAR_NOLHUB,				1, 30, "10"),
  VAR("kill-threshold",	&kill_threshold,	VAR_INT|VAR_NOLOC,				0, 0, "0"),
  VAR("lag-threshold",	&lag_threshold,		VAR_INT|VAR_NOLHUB,				0, 0, "15"),
  VAR("login",		&login,			VAR_INT|VAR_DETECTED,				0, 0, "warn"),
