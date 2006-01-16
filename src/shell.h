@@ -64,7 +64,11 @@ void crontab_create(int);
 void detected(int, char *);
 #endif /* !CYGWIN_HACKS */
 void suicide(const char *);
-void werr(int) __attribute__((noreturn));
+#ifdef __GNUC__
+ void werr(int) __attribute__((noreturn));
+#else
+ void werr(int);
+#endif
 char *werr_tostr(int);
 int det_translate(const char *);
 const char *det_translate_num(int);

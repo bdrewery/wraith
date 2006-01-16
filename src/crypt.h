@@ -28,7 +28,11 @@ char *encrypt_pass(struct userrec *, char *);
 char *decrypt_pass(struct userrec *);
 char *cryptit (char *);
 char *decryptit (char *);
-int lfprintf (FILE *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#ifdef __GNUC__
+ int lfprintf (FILE *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#else
+ int lfprintf (FILE *, const char *, ...);
+#endif
 void Encrypt_File(char *, char *);
 void Decrypt_File(char *, char *);
 char *btoh(const unsigned char *, size_t);

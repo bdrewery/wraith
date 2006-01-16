@@ -57,7 +57,11 @@ enum {
 void spawnbot(const char *);
 void spawnbots(bool rehashed = 0);
 int conf_killbot(const char *, conf_bot *, int);
-void confedit() __attribute__((noreturn));
+#ifdef __GNUC__
+ void confedit() __attribute__((noreturn));
+#else
+ void confedit();
+#endif
 void conf_addbot(char *, char *, char *, char *);
 int conf_delbot(char *);
 pid_t checkpid(const char *, conf_bot *);

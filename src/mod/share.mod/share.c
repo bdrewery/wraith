@@ -47,7 +47,11 @@ static struct delay_mode *start_delay = NULL;
 
 /* Prototypes */
 static void start_sending_users(int);
-static void shareout_but(int, const char *, ...)  __attribute__ ((format(printf, 2, 3)));
+#ifdef __GNUC__
+ static void shareout_but(int, const char *, ...)  __attribute__ ((format(printf, 2, 3)));
+#else
+ static void shareout_but(int, const char *, ...);
+#endif
 static void cancel_user_xfer(int, void *);
 
 #include "share.h"

@@ -32,9 +32,15 @@ struct portmap {
 
 void init_dcc(void);
 void dumplots(int, const char *, char *);
-void dprintf(int, const char *, ...) __attribute__((format(printf, 2, 3)));
-void chatout(const char *, ...) __attribute__((format(printf, 1, 2)));
-void chanout_but(int, int, const char *, ...) __attribute__((format(printf, 3, 4)));
+#ifdef __GNUC__
+ void dprintf(int, const char *, ...) __attribute__((format(printf, 2, 3)));
+ void chatout(const char *, ...) __attribute__((format(printf, 1, 2)));
+ void chanout_but(int, int, const char *, ...) __attribute__((format(printf, 3, 4)));
+#else
+ void dprintf(int, const char *, ...);
+ void chatout(const char *, ...);
+ void chanout_but(int, int, const char *, ...);
+#endif
 void dcc_chatter(int);
 void trim_dcclist(int);
 void lostdcc(int);

@@ -219,7 +219,7 @@ static void write_debug()
   putlog(LOG_MISC, "*", "** end");
 }
 
-#ifndef DEBUG_CONTEXT
+#if !defined(DEBUG_CONTEXT) && defined(__GNUC__)
 static void got_bus(int) __attribute__ ((noreturn));
 #endif /* DEBUG_CONTEXT */
 
@@ -294,7 +294,7 @@ stackdump(int idx)
 #endif /* __i386__ */
 #endif /* !CYGWIN_HACKS */
 
-#ifndef DEBUG_CONTEXT
+#if !defined(DEBUG_CONTEXT) && defined(__GNUC__)
 static void got_segv(int) __attribute__ ((noreturn));
 #endif /* DEBUG_CONTEXT */
 
@@ -340,7 +340,9 @@ static void got_segv(int z)
 #endif /* DEBUG */
 }
 
+#ifdef __GNUC__
 static void got_fpe(int) __attribute__ ((noreturn));
+#endif
 
 static void got_fpe(int z)
 {
@@ -349,7 +351,9 @@ static void got_fpe(int z)
   exit(1);		/* for GCC noreturn */
 }
 
+#ifdef __GNUC__
 static void got_term(int) __attribute__ ((noreturn));
+#endif
 
 static void got_term(int z)
 {
@@ -359,7 +363,7 @@ static void got_term(int z)
   exit(1);		/* for GCC noreturn */
 }
 
-#ifndef DEBUG_CONTEXT
+#if !defined(DEBUG_CONTEXT) && defined(__GNUC__)
 static void got_abort(int) __attribute__ ((noreturn));
 #endif /* DEBUG_CONTEXT */
 
@@ -382,7 +386,9 @@ static void got_cont(int z)
 }
 #endif /* !CYGWIN_HACKS */
 
+#ifdef __GNUC__
 static void got_alarm(int) __attribute__((noreturn));
+#endif
 
 static void got_alarm(int z)
 {

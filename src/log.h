@@ -28,12 +28,18 @@
 #define LOG_BOTSHARE BIT22   /* h   share traffic                    */
 #define LOG_ALL      0xfffffff   /* (dump to all logfiles)               */
 
-void logidx(int, const char *, ...) __attribute__((format(printf, 2, 3)));
-void putlog (int, const char *, const char *, ...) __attribute__((format(printf, 3, 4)));
+#ifdef __GNUC__
+ void logidx(int, const char *, ...) __attribute__((format(printf, 2, 3)));
+ void putlog (int, const char *, const char *, ...) __attribute__((format(printf, 3, 4)));
+ void irc_log(struct chanset_t *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#else
+ void logidx(int, const char *, ...);
+ void putlog (int, const char *, const char *, ...);
+ void irc_log(struct chanset_t *, const char *, ...);
+#endif
 int logmodes(const char *);
 char *masktype(int);
 char *maskname(int);
-void irc_log(struct chanset_t *, const char *, ...) __attribute__((format(printf, 2, 3)));
 
 extern int		conmask;
 extern bool		debug_output;

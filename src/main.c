@@ -225,7 +225,9 @@ static void checkpass()
   }
 }
 
+#ifdef __GNUC__
 static void got_ed(char *, char *, char*) __attribute__((noreturn));
+#endif
 
 static void got_ed(char *which, char *in, char *out)
 {
@@ -244,7 +246,9 @@ static void got_ed(char *which, char *in, char *out)
   exit(0);
 }
 
+#ifdef __GNUC__
 static void show_help() __attribute__((noreturn));
+#endif
 
 static void show_help()
 {

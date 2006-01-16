@@ -24,7 +24,11 @@
  * use our own.
  */
 #ifndef HAVE_VSNPRINTF
-int egg_vsnprintf(char *, size_t, const char *, va_list) __attribute__((format(printf, 3, 0)));
+#ifdef __GNUC__
+ int egg_vsnprintf(char *, size_t, const char *, va_list) __attribute__((format(printf, 3, 0)));
+#else
+ int egg_vsnprintf(char *, size_t, const char *, va_list);
+#endif
 #else
 #  define egg_vsnprintf	vsnprintf
 #endif
@@ -34,7 +38,11 @@ int egg_vsnprintf(char *, size_t, const char *, va_list) __attribute__((format(p
  */
 #ifndef HAVE_SNPRINTF
 #  ifdef __STDC__
-int egg_snprintf(char *, size_t, const char *, ...) __attribute__((format(printf, 3, 4)));
+#ifdef __GNUC__
+ int egg_snprintf(char *, size_t, const char *, ...) __attribute__((format(printf, 3, 4)));
+#else
+ int egg_snprintf(char *, size_t, const char *, ...);
+#endif
 #  else
 int egg_snprintf();
 #  endif

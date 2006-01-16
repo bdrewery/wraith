@@ -259,7 +259,9 @@ static int msg_invite(char *nick, char *host, struct userrec *u, char *par)
   return BIND_RET_BREAK;
 }
 
-static void reply(char *, struct chanset_t *, const char *, ...) __attribute__((format(printf, 3, 4)));
+#ifdef __GNUC__
+ static void reply(char *, struct chanset_t *, const char *, ...) __attribute__((format(printf, 3, 4)));
+#endif
 
 static void reply(char *nick, struct chanset_t *chan, const char *format, ...)
 {

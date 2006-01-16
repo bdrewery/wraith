@@ -13,8 +13,13 @@
 #include "src/users.h"
 
 void sharein(int, char *);
-void shareout(const char *, ...) __attribute__((format(printf, 1, 2)));
-void shareout_prot(struct userrec *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#ifdef __GNUC__
+ void shareout(const char *, ...) __attribute__((format(printf, 1, 2)));
+ void shareout_prot(struct userrec *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#else
+ void shareout(const char *, ...);
+ void shareout_prot(struct userrec *, const char *, ...);
+#endif
 void finish_share(int);
 void dump_resync(int);
 void share_report(int, int);

@@ -34,7 +34,11 @@ extern bool		sdebug, segfaulted;
 
 void stackdump(int);
 void setlimits();
-void sdprintf (const char *, ...) __attribute__((format(printf, 1, 2)));
+#ifdef __GNUC__
+ void sdprintf (const char *, ...) __attribute__((format(printf, 1, 2)));
+#else
+ void sdprintf (const char *, ...);
+#endif
 void init_signals();
 void init_debug();
 void eggContext(const char *, int);

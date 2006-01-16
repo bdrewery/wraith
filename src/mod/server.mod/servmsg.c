@@ -1124,7 +1124,11 @@ static int whoispenalty(char *from, char *msg)
   return 0;
 }
 
-static void irc_whois(char *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#ifdef __GNUC__
+ static void irc_whois(char *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#else
+ static void irc_whois(char *, const char *, ...);
+#endif
 
 static void
 irc_whois(char *nick, const char *format, ...)
