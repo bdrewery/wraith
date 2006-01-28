@@ -20,7 +20,6 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Cmds (op, deop, voice, devoice) now recognize console '*' and take '*'.
   -Cmds will also attempt to find your irc nickname if not provided.
   -ie, .op -> Ops you on your console chan. .op * -> Ops you in all chans. .op nick * -> ops nick in all chans.
-* Changed botnet link behaivor to collide duped bots instead of claiming there is a 'loop' (#163)
 * Added build os/architechture to output for ./binary -v
 * Added ARCH entry for bots in .whois
 * Added a new error code (23) which displays if attempting to run binary before using -C.
