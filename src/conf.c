@@ -41,11 +41,11 @@ tellconf()
 {
   conf_bot *bot = NULL;
   int i = 0;
-
   sdprintf("tempdir: %s\n", replace(tempdir, conf.homedir, "~"));
   sdprintf("uid: %d\n", conf.uid);
   sdprintf("uname: %s\n", conf.uname);
   sdprintf("homedir: %s\n", conf.homedir);
+  sdprintf("username: %s\n", conf.username);
   sdprintf("binpath: %s\n", replace(conf.binpath, conf.homedir, "~"));
   sdprintf("binname: %s\n", conf.binname);
   sdprintf("datadir: %s\n", replace(conf.datadir, conf.homedir, "~"));
@@ -347,7 +347,8 @@ init_conf()
 #endif /* !CYGWIN_HACKS */
   conf.autouname = 0;
 #ifdef CYGWIN_HACKS
-  conf.binpath = strdup(homedir());
+  if (homedir())
+    conf.binpath = strdup(homedir());
 #else /* !CYGWIN_HACKS */
   conf.binpath = strdup(dirname(binname));
 #endif /* CYGWIN_HACKS */
@@ -633,6 +634,15 @@ free_conf_bots(conf_bot *list)
   }
 }
 
+void prep_homedir(bool error)
+{
+  if (!conf.homedir)
+    str_redup(&conf.homedir, homedir());
+
+  if (error && (!conf.homedir || !conf.homedir[0]))
+    werr(ERR_NOHOMEDIR);
+}
+
 int
 parseconf(bool error)
 {
@@ -641,11 +651,11 @@ parseconf(bool error)
     werr(ERR_NOTINIT);
 #endif
 
-  if (conf.username) {
+  if (!conf.username)
     str_redup(&conf.username, my_username());
-  } else {
-    conf.username = strdup(my_username());
-  }
+
+  if (error && (!conf.username || !conf.username[0]))
+    werr(ERR_NOUSERNAME);
 
 #ifndef CYGWIN_HACKS
   if (error && conf.uid != (signed) myuid) {
@@ -663,12 +673,6 @@ parseconf(bool error)
     str_redup(&conf.uname, my_uname());
   } else if (!conf.uname) { /* if not set, then just set it, wont happen again next time... */
     conf.uname = strdup(my_uname());
-  }
-
-  if (conf.homedir) {
-    str_redup(&conf.homedir, homedir());
-  } else {
-    conf.homedir = strdup(homedir());
   }
   
 #endif /* !CYGWIN_HACKS */
@@ -734,7 +738,7 @@ readconf(const char *fname, int bits)
         if (line[0])
           option = newsplit(&line);
 
-        if (!option)
+        if (!option || !line[0])
           continue;
 
         if (!strcmp(option, "autocron")) {      /* automatically check/create crontab? */
@@ -888,23 +892,23 @@ writeconf(char *filename, FILE * stream, int bits)
 
   comment("");
 
-  if (conf.username && strcmp(conf.username, my_username())) {
+  if (conf.username && my_username() && strcmp(conf.username, my_username())) {
     conf_com();
     my_write(f, "%s! username %s\n", do_confedit == CONF_AUTO ? "" : "#", my_username());
     my_write(f, "%s! username %s\n", do_confedit == CONF_STATIC ? "" : "#", conf.username);
   } else
-    my_write(f, "! username %s\n", conf.username ? conf.username : my_username());
+    my_write(f, "! username %s\n", conf.username ? conf.username : my_username() ? my_username() : "");
 
-  if (conf.homedir && strcmp(conf.homedir, homedir(0))) {
+  if (conf.homedir && homedir(0) && strcmp(conf.homedir, homedir(0))) {
     conf_com();
     my_write(f, "%s! homedir %s\n", do_confedit == CONF_AUTO ? "" : "#", homedir(0));
     my_write(f, "%s! homedir %s\n", do_confedit == CONF_STATIC ? "" : "#", conf.homedir);
   } else 
-    my_write(f, "! homedir %s\n", conf.homedir ? conf.homedir : homedir(0));
+    my_write(f, "! homedir %s\n", conf.homedir ? conf.homedir : homedir(0) ? homedir(0) : "");
 
   comment("\n# binpath needs to be full path unless it begins with '~', which uses 'homedir', ie, '~/'");
 
-  if (strstr(conf.binpath, homedir())) {
+  if (homedir() && strstr(conf.binpath, homedir())) {
     p = replace(conf.binpath, homedir(), "~");
     my_write(f, "! binpath %s\n", p);
   } else
@@ -916,7 +920,7 @@ writeconf(char *filename, FILE * stream, int bits)
   comment("");
 
   comment("# datadir should be set to a static directory that is writable");
-  if (strstr(conf.datadir, homedir())) {
+  if (homedir() && strstr(conf.datadir, homedir())) {
     p = replace(conf.datadir, homedir(), "~");
     my_write(f, "! datadir %s\n", p);
   } else
@@ -1072,17 +1076,17 @@ fill_conf_bot()
 }
 
 void
-bin_to_conf(void)
+bin_to_conf(bool error)
 {
 /* printf("Converting binary data to conf struct\n"); */
   conf.uid = atol(settings.uid);
-  str_redup(&conf.username, settings.username);
+  if (settings.username[0])
+    str_redup(&conf.username, settings.username);
   str_redup(&conf.uname, settings.uname); 
   str_redup(&conf.datadir, settings.datadir);
-  expand_tilde(&conf.datadir);
-  str_redup(&conf.homedir, settings.homedir);
+  if (settings.homedir[0])
+    str_redup(&conf.homedir, settings.homedir);
   str_redup(&conf.binpath, settings.binpath);
-  expand_tilde(&conf.binpath);
   str_redup(&conf.binname, settings.binname);
   conf.portmin = atol(settings.portmin);
   conf.portmax = atol(settings.portmax);
@@ -1091,7 +1095,12 @@ bin_to_conf(void)
   conf.watcher = atoi(settings.watcher);
   conf.pscloak = atoi(settings.pscloak);
 
-  /* BOTS */
+
+  prep_homedir(error);
+  expand_tilde(&conf.datadir);
+  expand_tilde(&conf.binpath);
+
+  /* PARSE/ADD BOTS */
   {
     char *p = NULL, *tmp = NULL, *tmpp = NULL;
  
@@ -1125,7 +1134,6 @@ bin_to_conf(void)
 
   if (clear_tmpdir)
     clear_tmp();	/* clear out the tmp dir, no matter if we are localhub or not */
-
   conf_compat_pids();
   conf_checkpids();
 
