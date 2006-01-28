@@ -314,6 +314,7 @@ confedit()
     localhub_pid = conf.bots->pid;
 
   tmpconf.my_close();
+  free_conf();
   readconf((const char *) tmpconf.file, 0);               /* read cleartext conf tmp into &settings */
   expand_tilde(&conf.binpath);
   expand_tilde(&conf.datadir);
@@ -601,14 +602,21 @@ free_conf()
   free_conf_bots(conf.bots);
   free_bot(conf.bot);
   conf.bot = NULL;
-  free(conf.localhub);
-  free(conf.uname);
-  free(conf.username);
+  if (conf.localhub)
+    free(conf.localhub);
+  if (conf.uname)
+    free(conf.uname);
+  if (conf.username)
+    free(conf.username);
   if (conf.datadir)
     free(conf.datadir);
-  free(conf.homedir);
-  free(conf.binname);
-  free(conf.binpath);
+  if (conf.homedir)
+    free(conf.homedir);
+  if (conf.binname)
+   free(conf.binname);
+  if (conf.binpath)
+    free(conf.binpath);
+  init_conf();
 }
 
 void
