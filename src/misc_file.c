@@ -223,6 +223,9 @@ static bool check_tempdir(bool do_mod)
   Tempfile *testdir = new Tempfile("test");
   int result;
 
+  if (!testdir || testdir->error)
+    return 0;
+
   fprintf(testdir->f, "\n");
   result = fflush(testdir->f);
   delete testdir;
