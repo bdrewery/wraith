@@ -279,17 +279,17 @@ void Tempfile::FindDir()
   };
   int i = 0;
   bool found = 0;
-  char *pack_hash = NULL;
+//  char *pack_hash = NULL;
 
-  if (settings_crypt == PACK_DEC) {
-    pack_hash = MD5(settings.packname);
-    pack_hash[5] = 0;
-  }
+//  if (settings_crypt == PACK_DEC) {
+//    pack_hash = MD5(settings.packname);
+//    pack_hash[5] = 0;
+//  }
 
   for (i = 0; dirs[i]; i++) {
-    if (pack_hash)
-      simple_snprintf(tempdir, DIRMAX, "%s.%s/", dirs[i], pack_hash);
-    else
+//    if (pack_hash)
+//      simple_snprintf(tempdir, DIRMAX, "%s.%s/", dirs[i], pack_hash);
+//    else
       strlcpy(tempdir, dirs[i], DIRMAX);
     if (check_tempdir(0)) {
       found = 1;
