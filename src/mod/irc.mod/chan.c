@@ -1581,9 +1581,9 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
     m->flags = 0;		/* No flags for now */
     m->last = now;		/* Last time I saw him */
     m->user = NULL;
-    m->client->hops = hops;
   }
 
+  m->client->hops = hops;
 
   waschanop = me_op(chan);      /* Am I opped here? */
   if (strchr(flags, '@') != NULL)	/* Flags say he's opped? */
