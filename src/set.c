@@ -18,54 +18,7 @@
 #include "userent.h"
 #include "rfc1459.h"
 
-#define DEFAULT_SERVERS "\
-irc.umich.edu,\
-irc.kagmir.ca,\
-irc.dataphone.se,\
-irc.easynews.com,\
-efnet.cs.hut.fi,\
-irc.umn.edu,\
-irc.blackened.com,\
-irc.homelien.no,\
-irc.blessed.net,\
-irc.he.net,\
-irc.inter.net.il,\
-irc.du.se,\
-irc.csbnet.se,\
-efnet.xs4all.nl,\
-irc.efnet.nl,\
-irc.banetele.no,\
-irc.daxnet.no,\
-irc.inet.tele.dk,\
-irc.dks.ca,\
-irc.scnet.net,\
-irc.arcti.ca,\
-irc.avalonworks.ca,\
-irc.foxlink.net,\
-irc2.choopa.net,\
-irc.dkom.at,\
-efnet.demon.co.uk,\
-irc.efnet.pl,\
-irc.nac.net,\
-irc.concentric.net,\
-irc.choopa.net,\
-irc.wh.verio.net,\
-irc.mindspring.com,\
-irc.desync.com,\
-irc.mzima.net,\
-irc.ptptech.com,\
-efnet.port80.se,\
-irc.pte.hu,\
-irc.efnet.fr"
-
-#define DEFAULT_SERVERS6 "\
-efnet.port80.se,\
-irc.efnet.nl,\
-irc.ipv6.homelien.no,\
-efnet.ipv6.xs4all.nl,\
-irc.ipv6.inter.net.il,\
-irc.choopa.net,\
-irc.ptptech.com"
+#include "set_default.h"
 
 char alias[1024] = "";
 bool auth_chan;
@@ -103,7 +56,7 @@ char homechan[51] = "";
 char relay_to[101] = "";
 
 static variable_t vars[] = {
- VAR("alias", 		alias,			VAR_STRING|VAR_LIST|VAR_NOLOC|VAR_PERM,		0, 0, "bc botcmd,bl botcmd ?,+list set +,-list set -,list set list"),
+ VAR("alias", 		alias,			VAR_STRING|VAR_LIST|VAR_NOLOC|VAR_PERM,		0, 0, DEFAULT_ALIAS),
  VAR("auth-chan",	&auth_chan,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "1"),
  VAR("auth-key",	auth_key,		VAR_STRING|VAR_PERM,				0, 0, NULL),
  VAR("auth-prefix",	auth_prefix,		VAR_STRING|VAR_NOLHUB|VAR_PERM,			0, 0, "+"),
