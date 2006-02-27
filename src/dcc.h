@@ -238,5 +238,10 @@ void failed_link(int);
 void dupwait_notify(const char *);
 void send_sysinfo();
 int ansi_len(char *);
+void create_terminal_dcc();
+
+void check_expired_dcc();
+void check_expired_simuls();
+void check_autoaway();
 
 #endif /* !_DCC_H */

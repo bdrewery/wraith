@@ -1078,6 +1078,10 @@ fill_conf_bot()
     werr(ERR_BADBOT);
 
   free(mynick);
+
+  if (!me->hub && me->localhub)
+    sdprintf("I am localhub!");
+
   /* for future, we may just want to make this a pointer to ->bots if we do an emech style currentbot-> */
   conf.bot = (conf_bot *) my_calloc(1, sizeof(conf_bot));
   conf_bot_dup(conf.bot, me);

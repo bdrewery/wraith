@@ -1956,3 +1956,65 @@ dcc_telnet_got_ident(int i, char *host)
   else
     dprintf(i, "%s\n", response(RES_USERNAME));
 }
+
+void create_terminal_dcc() {
+  int n = new_dcc(&DCC_CHAT, sizeof(struct chat_info));
+
+  dcc[n].addr = iptolong(getmyip());
+  dcc[n].sock = STDOUT;
+  dcc[n].timeval = now;
+  dcc[n].u.chat->con_flags = conmask | LOG_ALL;
+  dcc[n].u.chat->strip_flags = STRIP_ALL;
+  dcc[n].status = STAT_ECHO;
+  strcpy(dcc[n].nick, "HQ");
+  strcpy(dcc[n].host, "llama@console");
+  dcc[n].user = get_user_by_handle(userlist, dcc[n].nick);
+  /* Make sure there's an innocuous HQ user if needed */
+  if (!dcc[n].user) {
+    userlist = adduser(userlist, dcc[n].nick, "none", "-", USER_ADMIN | USER_OWNER | USER_MASTER | USER_VOICE | USER_OP | USER_PARTY | USER_CHUBA | USER_HUBA, 0);
+    dcc[n].user = get_user_by_handle(userlist, dcc[n].nick);
+  }
+  setsock(STDOUT, 0);          /* Entry in net table */
+  dprintf(n, "\n### ENTERING DCC CHAT SIMULATION ###\n\n");
+  dcc_chatter(n);
+}
+
+void check_expired_dcc()
+{
+  for (int idx = 0; idx < dcc_total; ++idx) {
+    if (dcc[idx].type && dcc[idx].type->timeout_val &&
+        ((now - dcc[idx].timeval) > *(dcc[idx].type->timeout_val))) {
+      if (dcc[idx].type->timeout)
+        dcc[idx].type->timeout(idx);
+      else if (dcc[idx].type->eof)
+        dcc[idx].type->eof(idx);
+      else
+        continue;
+      /* Only timeout 1 socket per cycle, too risky for more */
+      return;
+    }
+  }
+}
+
+void check_expired_simuls() {
+  for (int idx = 0; idx < dcc_total; idx++) {
+    if (dcc[idx].type && dcc[idx].simul >= 0) {
+      if ((now - dcc[idx].simultime) >= 100) { /* expire simuls after 100 seconds (re-uses idx, so it wont fill up) */
+        dcc[idx].simul = -1;
+        lostdcc(idx);
+      }
+    }
+  }
+}
+
+void check_autoaway() {
+  char autoaway[51] = "";
+
+  simple_snprintf(autoaway, sizeof(autoaway), "Auto away after %d minutes.", dcc_autoaway / 60);
+
+  for (int idx = 0; idx < dcc_total; ++idx)
+    if (dcc[idx].type && dcc[idx].type == &DCC_CHAT &&
+        !(dcc[idx].u.chat->away) && ((now - dcc[idx].timeval) >= dcc_autoaway))
+      set_away(idx, autoaway);
+}
+

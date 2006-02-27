@@ -15,5 +15,8 @@ extern pid_t 		watcher;
 pid_t do_fork();
 int close_tty();
 void writepid(const char *, pid_t);
+void cloak_process(int, char **);
+void go_background_and_write_pid();
+void check_if_already_running();
 
 #endif /* !_BG_H */

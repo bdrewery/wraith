@@ -14,4 +14,9 @@ typedef struct {
 	} in_total, in_today, out_total, out_today;
 } egg_traffic_t;
 
+extern egg_traffic_t traffic;
+
+extern void event_resettraffic();
+extern void traffic_update(int, size_t);
+
 #endif /* _TRAFFIC_H_ */

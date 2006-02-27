@@ -150,6 +150,7 @@ int sockoptions(int sock, int operation, int sock_options);
 void init_net(void);
 int sock_read(FILE *);
 void sock_write(FILE *, int);
+bool socket_run();
 
 extern union sockaddr_union 		cached_myip4_so;
 #ifdef USE_IPV6

@@ -47,8 +47,6 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 
-extern egg_traffic_t 	traffic;
-
 mycmds 			 cmdlist[300]; /* the list of dcc cmds for help system */
 int    			 cmdi = 0;
 

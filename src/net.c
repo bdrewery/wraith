@@ -65,7 +65,6 @@ port_t firewallport = 1080;    /* Default port of Sock4/5 firewalls        */
 #define PROXY_SUN     2
 #define PROXY_HTTP    3
 
-
 /* I need an UNSIGNED long for dcc type stuff
  */
 unsigned long my_atoul(char *s)
@@ -1428,21 +1427,8 @@ void tputs(register int z, char *s, size_t len)
   for (register int i = 0; i < MAXSOCKS; i++) {
     if (!(socklist[i].flags & SOCK_UNUSED) && (socklist[i].sock == z)) {
       for (idx = 0; idx < dcc_total; idx++) {
-        if (dcc[idx].type && (dcc[idx].sock == z) && dcc[idx].type->name) {
-          if (!strncmp(dcc[idx].type->name, "BOT", 3))
-                traffic.out_today.bn += len;
-          else if (!strcmp(dcc[idx].type->name, "SERVER"))
-                traffic.out_today.irc += len;
-          else if (!strncmp(dcc[idx].type->name, "CHAT", 4))
-                traffic.out_today.dcc += len;
-          else if (!strncmp(dcc[idx].type->name, "FILES", 5))
-                traffic.out_today.filesys += len;
-          else if (!strcmp(dcc[idx].type->name, "SEND"))
-                traffic.out_today.trans += len;
-          else if (!strncmp(dcc[idx].type->name, "GET", 3))
-                traffic.out_today.trans += len;
-          else
-                traffic.out_today.unknown += len;
+        if (dcc[idx].type && (dcc[idx].sock == z)) {
+          traffic_update(idx, len);
           break;
         }
       }
@@ -1709,3 +1695,88 @@ bool sock_has_data(int type, int sock)
   return ret;
 }
 
+bool socket_run() {
+  static int socket_cleanup = 0;
+  char buf[SGRAB + 10] = "";
+  int i = 0, idx = 0;
+  
+  /* Only do this every so often. */
+  if (socket_cleanup == 0) {
+    socket_cleanup = 5;
+
+    /* Check for server or dcc activity. */
+    dequeue_sockets();
+  } else
+    socket_cleanup--;
+
+  int xx = sockgets(buf, &i);
+ 
+  get_buf[current_get_buf][0] = 0;
+  
+  if (xx >= 0) {		/* Non-error */
+    /* This shouldnt need to be REcopied, but out functions mangle with newsplit :\ */
+    if (buf[0])
+      strlcpy(get_buf[current_get_buf], buf, i+1);
+
+    if (++current_get_buf == GET_BUFS)
+      current_get_buf = 0;
+
+    for (idx = 0; idx < dcc_total; idx++) {
+      if (dcc[idx].type && dcc[idx].sock == xx) {
+	if (dcc[idx].type && dcc[idx].type->activity) {
+	  /* Traffic stats */
+          traffic_update(idx, strlen(buf) + 1);
+
+	  dcc[idx].type->activity(idx, buf, i);
+        } else {
+	  putlog(LOG_MISC, "*",
+		   "!!! untrapped dcc activity: type %s, sock %d",
+		   dcc[idx].type->name, dcc[idx].sock);
+        }
+	break;
+      }
+    }
+  } else if (xx == -1) {	/* EOF from someone */
+    if (i == STDOUT && !backgrd)
+      fatal("END OF FILE ON TERMINAL", 0);
+    for (idx = 0; idx < dcc_total; idx++) {
+      if (dcc[idx].type && dcc[idx].sock == i) {
+        sdprintf("EOF on '%s' idx: %d", dcc[idx].type ? dcc[idx].type->name : "unknown", idx);
+        if (dcc[idx].type->eof)
+          dcc[idx].type->eof(idx);
+        else {
+          putlog(LOG_MISC, "*",
+		   "*** ATTENTION: DEAD SOCKET (%d) OF TYPE %s UNTRAPPED",
+		   i, dcc[idx].type ? dcc[idx].type->name : "*UNKNOWN*");
+          killsock(i);
+          lostdcc(idx);
+        }
+        idx = dcc_total + 1;
+      }
+    }
+    if (idx == dcc_total) {
+      putlog(LOG_MISC, "*", "(@) EOF socket %d, not a dcc socket, not anything.", i);
+      close(i);
+      killsock(i);
+    }
+  } else if (xx == -2 && errno != EINTR) {	/* select() error */
+    putlog(LOG_MISC, "*", "* Socket error #%d; recovering.", errno);
+    for (i = 0; i < dcc_total; i++) {
+      if (dcc[i].type &&
+          dcc[i].sock != -1 &&
+          (fcntl(dcc[i].sock, F_GETFD, 0) == -1) &&
+          (errno = EBADF)) {
+        putlog(LOG_MISC, "*",
+		 "DCC socket %d (type %s, name '%s') expired -- pfft",
+		 dcc[i].sock, dcc[i].type->name, dcc[i].nick);
+        killsock(dcc[i].sock);
+        lostdcc(i);
+        i--;
+      }
+    }
+  } else if (xx == -3) {                      /* Idle */
+    socket_cleanup = 0;	/* If we've been idle, cleanup & flush */
+    return 1;
+  }
+  return 0;
+}

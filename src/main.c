@@ -183,35 +183,7 @@ void fatal(const char *s, int recoverable)
   }
 }
 
-static void check_expired_dcc()
-{
-  for (int i = 0; i < dcc_total; i++)
-    if (dcc[i].type && dcc[i].type->timeout_val &&
-	((now - dcc[i].timeval) > *(dcc[i].type->timeout_val))) {
-      if (dcc[i].type->timeout)
-	dcc[i].type->timeout(i);
-      else if (dcc[i].type->eof)
-	dcc[i].type->eof(i);
-      else
-	continue;
-      /* Only timeout 1 socket per cycle, too risky for more */
-      return;
-    }
-}
-
-/* this also expires irc dcc_cmd auths */
-static void expire_simuls() {
-  for (int idx = 0; idx < dcc_total; idx++) {
-    if (dcc[idx].type && dcc[idx].simul >= 0) {
-      if ((now - dcc[idx].simultime) >= 100) { /* expire simuls after 100 seconds (re-uses idx, so it wont fill up) */
-        dcc[idx].simul = -1;
-        lostdcc(idx);
-      }
-    }
-  }
-}
-
-static void checkpass() 
+static void checkpass()
 {
   static int checkedpass = 0;
 
@@ -433,30 +405,6 @@ void core_10secondly()
 #endif /* !CYGWIN_HACKS */
 }
 
-/* Traffic stats
- */
-egg_traffic_t traffic;
-
-static void event_resettraffic()
-{
-	traffic.out_total.irc += traffic.out_today.irc;
-	traffic.out_total.bn += traffic.out_today.bn;
-	traffic.out_total.dcc += traffic.out_today.dcc;
-	traffic.out_total.filesys += traffic.out_today.filesys;
-	traffic.out_total.trans += traffic.out_today.trans;
-	traffic.out_total.unknown += traffic.out_today.unknown;
-
-	traffic.in_total.irc += traffic.in_today.irc;
-	traffic.in_total.bn += traffic.in_today.bn;
-	traffic.in_total.dcc += traffic.in_today.dcc;
-	traffic.in_total.filesys += traffic.in_today.filesys;
-	traffic.in_total.trans += traffic.in_today.trans;
-	traffic.in_total.unknown += traffic.in_today.unknown;
-
-	egg_memset(&traffic.out_today, 0, sizeof(traffic.out_today));
-	egg_memset(&traffic.in_today, 0, sizeof(traffic.in_today));
-}
-
 static void core_secondly()
 {
   static int cnt = 0, ison_cnt = 0;
@@ -518,17 +466,6 @@ static void core_secondly()
   }
 }
 
-static void check_autoaway()
-{
-  char autoaway[51] = "";
-
-  simple_snprintf(autoaway, sizeof(autoaway), "Auto away after %d minutes.", dcc_autoaway / 60);
-
-  for (int i = 0; i < dcc_total; i++)
-    if (dcc[i].type && dcc[i].type == &DCC_CHAT && !(dcc[i].u.chat->away) && ((now - dcc[i].timeval) >= dcc_autoaway))
-      set_away(i, autoaway);
-}
-
 static int washub = -1;
 
 static void core_minutely()
@@ -554,10 +491,6 @@ static void core_minutely()
 /*     flushlogs(); */
 }
 
-static void core_hourly()
-{
-}
-
 static void core_halfhourly()
 {
   if (conf.bot->hub)
@@ -565,11 +498,6 @@ static void core_halfhourly()
 }
 
 static void startup_checks(int hack) {
-  /* for compatability with old conf files 
-   * only check/use conf file if it exists and settings.uname is empty.
-   * if settings.uname is NOT empty, just erase the conf file if it exists
-   * otherwise, assume we're working only with the struct */
-
 #ifdef CYGWIN_HACKS
   simple_snprintf(cfile, sizeof cfile, STR("./conf.txt"));
 
@@ -644,7 +572,14 @@ static void startup_checks(int hack) {
     free_conf_bots(conf.bots);			/* not a localhub, so no need to store all bot info */
 }
 
-static char *fake_md5 = "596a96cc7bf9108cd896f33c44aedc8a";
+void check_for_changed_decoy_md5() {
+  static char fake_md5[] = "596a96cc7bf9108cd896f33c44aedc8a";
+
+  if (strcmp(fake_md5, STR("596a96cc7bf9108cd896f33c44aedc8a"))) {
+    unlink(binname);
+    fatal("!! Invalid binary", 0);
+  }
+}
 
 void console_init();
 void ctcp_init();
@@ -676,12 +611,6 @@ int main(int argc, char **argv)
 
   srandom(now % (mypid + getppid()) * randint(1000));
 
-/*
-  char *out = NULL;
-printf("ret: %d\n", system("c:/wraith/leaf.exe"));
-  shell_exec("c:\\windows\\notepad.exe", NULL, &out, &out);
-printf("out: %s\n", out);
-*/
   setlimits();
   init_debug();
   init_signals();
@@ -691,15 +620,11 @@ printf("out: %s\n", out);
     profile(argc, argv);
 #endif /* DEBUG */
 
-
-  if (strcmp(fake_md5, STR("596a96cc7bf9108cd896f33c44aedc8a"))) {
-    unlink(argv[0]);
-    fatal("!! Invalid binary", 0);
-  }
-
   binname = getfullbinname(argv[0]);
   chdir(dirname(binname));
 
+  check_for_changed_decoy_md5();
+  
   /* Find a temporary tempdir until we load binary data */
   /* setup initial tempdir as /tmp until we read in tmpdir from conf */
   Tempfile::FindDir();
@@ -707,11 +632,7 @@ printf("out: %s\n", out);
   /* This allows -2/-0 to be used without an initialized binary */
 //  if (!(argc == 2 && (!strcmp(argv[1], "-2") || !strcmp(argv[1], "0")))) {
 //  doesn't work correctly yet, if we don't go in here, our settings stay encrypted
-  if (argc == 2 && !strcmp(argv[1], "-q")) {
-    if (settings.hash[0]) exit(4);	/* initialized */
-    exit(5);				/* not initialized */
-  }
-  if (argc == 2 && !strcmp(argv[1], "-p")) {
+  if (argc == 2 && (!strcmp(argv[1], "-q") || !strcmp(argv[1], "-p"))) {
     if (settings.hash[0]) exit(4);	/* initialized */
     exit(5);				/* not initialized */
   }
@@ -738,22 +659,14 @@ printf("out: %s\n", out);
   egg_memcpy(&nowtm, gmtime(&now), sizeof(struct tm));
   lastmin = nowtm.tm_min;
 
-  if (argc) {
-    sdprintf("Calling dtx_arg with %d params.", argc);
-    dtx_arg(argc, argv);
-  }
+  dtx_arg(argc, argv);
 
   sdprintf("my euid: %d my uuid: %d, my ppid: %d my pid: %d", myuid, getuid(), getppid(), mypid);
 
   /* Check and load conf file */
   startup_checks(0);
 
-  if (!socksfile && ((conf.bot->localhub && !updating) || !conf.bot->localhub)) {
-    if ((conf.bot->pid > 0) && conf.bot->pid_file) {
-      sdprintf("%s is already running, pid: %d", conf.bot->nick, conf.bot->pid);
-      exit(1);
-    }
-  }
+  check_if_already_running();
 
   if (!strcmp(settings.packname, "beta")) {
     have_take = 0;
@@ -787,101 +700,33 @@ printf("out: %s\n", out);
 
   strcpy(botuser, origbotname);
 
-  if (!conf.bot->hub && conf.bot->localhub)
-    sdprintf("I am localhub (%s)", conf.bot->nick);
-
 #ifndef CYGWIN_HACKS
   if (conf.autocron && (conf.bot->hub || conf.bot->localhub))
     check_crontab();
 #endif /* !CYGWIN_HACKS */
 
-#ifdef __linux__
-  if (conf.pscloak) {
-    const char *p = response(RES_PSCLOAK);
 
-    for (int argi = 0; argi < argc; argi++)
-      egg_memset(argv[argi], 0, strlen(argv[argi]));
+  cloak_process(argc, argv);
 
-    strcpy(argv[0], p);
-  }
-#endif /* __linux_ */
-
-  /* Move into background? */
-  /* we don't split cygwin because to run as a service the bot shouldn't exit.
-     confuses windows ;)
-   */
   use_stderr = 0;		/* stop writing to stderr now! */
 
-  if (backgrd) {
-#ifndef CYGWIN_HACKS
-    if (!socksfile) {
-      mypid = do_fork();
-
-/*
-    printf("  |- %-10s (%d)\n", conf.bot->nick, pid);
-    if (conf.bot->localhub) {
-      if (bots_ran)
-        printf("  `- %d bots launched\n", bots_ran + 1);
-      else
-        printf("  `- 1 bot launched\n");
-    }
-*/
-    printf("%s[%s%s%s]%s -%s- initiated %s(%s%d%s)%s\n",
-           BOLD(-1), BOLD_END(-1), settings.packname, BOLD(-1), BOLD_END(-1), conf.bot->nick,
-           BOLD(-1), BOLD_END(-1), mypid, BOLD(-1), BOLD_END(-1));
-
-#ifdef lame	/* keeping for god knows why */
-    printf("%s%s%c%s%s%s l%sA%su%sN%sc%sH%se%sD%s %s(%s%d%s)%s\n",
-            RED(-1), BOLD(-1), conf.bot->nick[0], BOLD_END(-1), &conf.bot->nick[1],
-            COLOR_END(-1), BOLD(-1), BOLD_END(-1), BOLD(-1), BOLD_END(-1), BOLD(-1), BOLD_END(-1),
-            BOLD(-1), BOLD_END(-1), YELLOW(-1), COLOR_END(-1), mypid, YELLOW(-1), COLOR_END(-1));
-#endif
-    } else
-      writepid(conf.bot->pid_file, mypid);
-    close_tty();
-  } else {
-#endif /* !CYGWIN_HACKS */
-#ifdef CYGWIN_HACKS
-    FreeConsole();
-#endif /* CYGWIN_HACKS */
-    if (!socksfile)
-      printf("%s[%s%s%s]%s -%s- initiated\n", BOLD(-1), BOLD_END(-1), settings.packname, BOLD(-1), BOLD_END(-1), conf.bot->nick);
-    writepid(conf.bot->pid_file, mypid);
-  }
+  go_background_and_write_pid();
 
   /* Terminal emulating dcc chat */
-  if (!backgrd && term_z) {
-    int n = new_dcc(&DCC_CHAT, sizeof(struct chat_info));
-
-    dcc[n].addr = iptolong(getmyip());
-    dcc[n].sock = STDOUT;
-    dcc[n].timeval = now;
-    dcc[n].u.chat->con_flags = conmask | LOG_ALL;
-    dcc[n].u.chat->strip_flags = STRIP_ALL;
-    dcc[n].status = STAT_ECHO;
-    strcpy(dcc[n].nick, "HQ");
-    strcpy(dcc[n].host, "llama@console");
-    dcc[n].user = get_user_by_handle(userlist, dcc[n].nick);
-    /* Make sure there's an innocuous HQ user if needed */
-    if (!dcc[n].user) {
-      userlist = adduser(userlist, dcc[n].nick, "none", "-", USER_ADMIN | USER_OWNER | USER_MASTER | USER_VOICE | USER_OP | USER_PARTY | USER_CHUBA | USER_HUBA, 0);
-      dcc[n].user = get_user_by_handle(userlist, dcc[n].nick);
-    }
-    setsock(STDOUT, 0);          /* Entry in net table */
-    dprintf(n, "\n### ENTERING DCC CHAT SIMULATION ###\n\n");
-    dcc_chatter(n);
-  }
+  if (!backgrd && term_z)
+    create_terminal_dcc();
 
   online_since = now;
-  autolink_cycle(NULL);		/* Hurry and connect to tandem bots */
+  
+  autolink_cycle(NULL);		/* Try linking to a hub */
+  
   timer_create_secs(1, "core_secondly", (Function) core_secondly);
   timer_create_secs(10, "check_expired_dcc", (Function) check_expired_dcc);
   timer_create_secs(10, "core_10secondly", (Function) core_10secondly);
-  timer_create_secs(30, "expire_simuls", (Function) expire_simuls);
+  timer_create_secs(30, "check_expired_simuls", (Function) check_expired_simuls);
   timer_create_secs(60, "core_minutely", (Function) core_minutely);
   timer_create_secs(60, "check_botnet_pings", (Function) check_botnet_pings);
   timer_create_secs(60, "check_expired_ignores", (Function) check_expired_ignores);
-  timer_create_secs(3600, "core_hourly", (Function) core_hourly);
   timer_create_secs(1800, "core_halfhourly", (Function) core_halfhourly);
 
   if (socksfile)
@@ -889,12 +734,13 @@ printf("out: %s\n", out);
 
   debug0("main: entering loop");
 
-  int socket_cleanup = 0, xx, i = 0, idx = 0;
+
 #if !defined(CYGWIN_HACKS) && !defined(__sun__)
   int status = 0;
 #endif /* !CYGWIN_HACKS */
-  char buf[SGRAB + 10] = "";
 
+
+  /* Main loop */
   while (1) {
 #if !defined(CYGWIN_HACKS) && !defined(__sun__)
     if (conf.watcher && waitpid(watcher, &status, WNOHANG))
@@ -909,98 +755,16 @@ printf("out: %s\n", out);
     random();			/* jumble things up o_O */
     timer_run();
 
-    /* Only do this every so often. */
-    if (!socket_cleanup) {
-      socket_cleanup = 5;
-
-      /* Check for server or dcc activity. */
-      dequeue_sockets();		
-    } else
-      socket_cleanup--;
-
-    xx = sockgets(buf, &i);
- 
-    get_buf[current_get_buf][0] = 0;
-    if (xx >= 0) {		/* Non-error */
-
-      /* This shouldnt need to be REcopied, but out functions mangle with newsplit :\ */
-      if (buf[0])
-        strlcpy(get_buf[current_get_buf], buf, i+1);
-
-      if (++current_get_buf == GET_BUFS)
-        current_get_buf = 0;
-
-      for (idx = 0; idx < dcc_total; idx++) {
-	if (dcc[idx].type && dcc[idx].sock == xx) {
-	  if (dcc[idx].type && dcc[idx].type->activity) {
-	    /* Traffic stats */
-	    if (dcc[idx].type->name) {
-	      if (!strncmp(dcc[idx].type->name, "BOT", 3))
-		traffic.in_today.bn += strlen(buf) + 1;
-	      else if (!strcmp(dcc[idx].type->name, "SERVER"))
-		traffic.in_today.irc += strlen(buf) + 1;
-	      else if (!strncmp(dcc[idx].type->name, "CHAT", 4))
-		traffic.in_today.dcc += strlen(buf) + 1;
-	      else if (!strncmp(dcc[idx].type->name, "FILES", 5))
-		traffic.in_today.dcc += strlen(buf) + 1;
-	      else if (!strcmp(dcc[idx].type->name, "SEND"))
-		traffic.in_today.trans += strlen(buf) + 1;
-	      else if (!strncmp(dcc[idx].type->name, "GET", 3))
-		traffic.in_today.trans += strlen(buf) + 1;
-	      else
-		traffic.in_today.unknown += strlen(buf) + 1;
-	    }
-	    dcc[idx].type->activity(idx, buf, i);
-	  } else
-	    putlog(LOG_MISC, "*",
-		   "!!! untrapped dcc activity: type %s, sock %d",
-		   dcc[idx].type->name, dcc[idx].sock);
-	  break;
-	}
-      }
-    } else if (xx == -1) {	/* EOF from someone */
-      if (i == STDOUT && !backgrd)
-	fatal("END OF FILE ON TERMINAL", 0);
-      for (idx = 0; idx < dcc_total; idx++) {
-	if (dcc[idx].type && dcc[idx].sock == i) {
-          sdprintf("EOF on '%s' idx: %d", dcc[idx].type ? dcc[idx].type->name : "unknown", idx);
-	  if (dcc[idx].type->eof)
-	    dcc[idx].type->eof(idx);
-	  else {
-	    putlog(LOG_MISC, "*",
-		   "*** ATTENTION: DEAD SOCKET (%d) OF TYPE %s UNTRAPPED",
-		   i, dcc[idx].type ? dcc[idx].type->name : "*UNKNOWN*");
-	    killsock(i);
-	    lostdcc(idx);
-	  }
-	  idx = dcc_total + 1;
-	}
-      }
-      if (idx == dcc_total) {
-	putlog(LOG_MISC, "*", "(@) EOF socket %d, not a dcc socket, not anything.", i);
-	close(i);
-	killsock(i);
-      }
-    } else if (xx == -2 && errno != EINTR) {	/* select() error */
-      putlog(LOG_MISC, "*", "* Socket error #%d; recovering.", errno);
-      for (i = 0; i < dcc_total; i++) {
-	if (dcc[i].type && dcc[i].sock != -1 && (fcntl(dcc[i].sock, F_GETFD, 0) == -1) && (errno = EBADF)) {
-	  putlog(LOG_MISC, "*",
-		 "DCC socket %d (type %s, name '%s') expired -- pfft",
-		 dcc[i].sock, dcc[i].type->name, dcc[i].nick);
-	  killsock(dcc[i].sock);
-	  lostdcc(i);
-	  i--;
-	}
-      }
-    } else if (xx == -3) {
-      if (!conf.bot->hub)
+    if (socket_run() == 1) {
+       /* Idle calls */
+      if (!conf.bot->hub) {
         flush_modes();
-      socket_cleanup = 0;	/* If we've been idle, cleanup & flush */
+      }
     }
+
     if (do_restart) {
       if (do_restart == 1)
-        restart(-1);
+        restart(-1); //exits
       else
         reload_bin_data();
       do_restart = 0;

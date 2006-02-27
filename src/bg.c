@@ -10,6 +10,8 @@
 #include "bg.h"
 #include "thread.h"
 #include "main.h"
+#include "response.h"
+#include "color.h"
 #include <signal.h>
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
@@ -153,3 +155,68 @@ init_watcher(pid_t parent)
   }
 }
 #endif /* !CYGWIN_HACKS */
+
+void cloak_process(int argc, char *argv[]) {
+#ifdef __linux__
+  if (conf.pscloak) {
+    const char *p = response(RES_PSCLOAK);
+
+    for (int i = 0; i < argc; ++i)
+      egg_memset(argv[i], 0, strlen(argv[i]));
+
+    strcpy(argv[0], p);
+  }
+#endif /* __linux__ */
+}
+
+/* Move into background? */
+/* we don't split cygwin because to run as a service the bot shouldn't exit.
+   confuses windows ;)
+*/
+void go_background_and_write_pid() {
+  if (backgrd) {
+#ifndef CYGWIN_HACKS
+    if (!socksfile) {
+  mypid = do_fork();
+
+/*
+  printf("  |- %-10s (%d)\n", conf.bot->nick, pid);
+  if (conf.bot->localhub) {
+  if (bots_ran)
+  printf("  `- %d bots launched\n", bots_ran + 1);
+  else
+  printf("  `- 1 bot launched\n");
+    }
+*/
+  printf("%s[%s%s%s]%s -%s- initiated %s(%s%d%s)%s\n",
+         BOLD(-1), BOLD_END(-1), settings.packname, BOLD(-1), BOLD_END(-1), conf.bot->nick,
+         BOLD(-1), BOLD_END(-1), mypid, BOLD(-1), BOLD_END(-1));
+
+#ifdef lame	/* keeping for god knows why */
+    printf("%s%s%c%s%s%s l%sA%su%sN%sc%sH%se%sD%s %s(%s%d%s)%s\n",
+           RED(-1), BOLD(-1), conf.bot->nick[0], BOLD_END(-1), &conf.bot->nick[1],
+           COLOR_END(-1), BOLD(-1), BOLD_END(-1), BOLD(-1), BOLD_END(-1), BOLD(-1), BOLD_END(-1),
+           BOLD(-1), BOLD_END(-1), YELLOW(-1), COLOR_END(-1), mypid, YELLOW(-1), COLOR_END(-1));
+#endif
+    } else
+      writepid(conf.bot->pid_file, mypid);
+      close_tty();
+  } else {
+#endif /* !CYGWIN_HACKS */
+#ifdef CYGWIN_HACKS
+    FreeConsole();
+#endif /* CYGWIN_HACKS */
+    if (!socksfile)
+      printf("%s[%s%s%s]%s -%s- initiated\n", BOLD(-1), BOLD_END(-1), settings.packname, BOLD(-1), BOLD_END(-1), conf.bot->nick);
+    writepid(conf.bot->pid_file, mypid);
+  }
+}
+
+void check_if_already_running() {
+  if (!socksfile && ((conf.bot->localhub && !updating) || !conf.bot->localhub)) {
+    if ((conf.bot->pid > 0) && conf.bot->pid_file) {
+      sdprintf("%s is already running, pid: %d", conf.bot->nick, conf.bot->pid);
+      exit(1);
+    }
+  }
+}
