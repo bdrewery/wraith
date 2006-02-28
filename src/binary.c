@@ -552,7 +552,7 @@ void reload_bin_data() {
     fill_conf_bot();
 
     /* If we don't have conf.bot, then all bots were removed or just our own record */
-    if ((!conf.bot && oldbots->localhub) || (conf.bot && !conf.bot->localhub && oldbots->localhub)) {
+    if (oldbots && ((!conf.bot && oldbots->localhub) || (conf.bot && !conf.bot->localhub && oldbots->localhub))) {
       /* no longer the localhub (or removed), need to alert the new one to rehash */
       if (conf.bots->pid)
         conf_killbot(NULL, conf.bots, SIGHUP);		//restart the new localhub
@@ -561,7 +561,8 @@ void reload_bin_data() {
     }
     if (conf.bot && conf.bot->localhub) {
       /* kill and remove bots removed from conf */
-      kill_removed_bots(oldbots, conf.bots);
+      if (oldbots)
+        kill_removed_bots(oldbots, conf.bots);
       /* add any bots not in userfile */
       conf_add_userlist_bots();
       /* start/disable new bots as necesary */
@@ -570,7 +571,8 @@ void reload_bin_data() {
     } else
       free_conf_bots(conf.bots);
 
-    free_conf_bots(oldbots);
+    if (oldbots)
+      free_conf_bots(oldbots);
   }
 }
 
