@@ -615,7 +615,11 @@ static char *var_rem_list(const char *botnick, variable_t *var, const char *elem
         simple_snprintf(data, tsiz, "%s", word);
     } else
       simple_snprintf(ret, sizeof(ret), "%s", word);
-    i++;
+
+    ++i;
+
+    if (i > num)
+      break;
   }
   var_set(var, botnick, data);
   if (botnick)
