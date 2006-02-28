@@ -582,6 +582,8 @@ static char *var_rem_list(const char *botnick, variable_t *var, const char *elem
 {
   static char ret[101] = "";
 
+  ret[0] = 0;
+
   if (!element)
     return ret;
 
@@ -597,33 +599,36 @@ static char *var_rem_list(const char *botnick, variable_t *var, const char *elem
     return 0;
 
   const char *delim = ",";
-  int num = 0, i = 1;
+  int num = 0, i = 0;
 
   if (str_isdigit(element))
     num = atoi(element);
 
   olddata = olddatap = strdup(olddatacp);
-  size_t osiz = strlen(olddata), esiz = strlen(element) + 1, tsiz = osiz - esiz + 1;          // element + ,
+  size_t tsiz = strlen(olddata) + 1;
 
   data = (char *) my_calloc(1, tsiz);
 
   while ((word = strsep(&olddata, delim))) {
+    ++i;
+
     if ((num && num != i) || (!num && egg_strcasecmp(word, element))) {
-      if (data && data[0])
+      /* Reconstruct the left and right part of the list...*/
+      if (data && data[0] && word && word[0])
         simple_snprintf(data, tsiz, "%s,%s", data, word);
       else
         simple_snprintf(data, tsiz, "%s", word);
-    } else
+    } else  /* minus the part we are removing ... */
       simple_snprintf(ret, sizeof(ret), "%s", word);
-
-    ++i;
-
-    if (i > num)
-      break;
   }
-  var_set(var, botnick, data);
-  if (botnick)
-    var_set_userentry(botnick, var->name, data);
+
+  if (num <= i && ret[0]) {
+    var_set(var, botnick, data);
+    if (botnick)
+      var_set_userentry(botnick, var->name, data);
+  } else
+    ret[0] = 0;
+ 
   free(data);
   free(olddatap);
   return ret;
