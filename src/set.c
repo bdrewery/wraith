@@ -650,7 +650,7 @@ bool write_vars_and_cmdpass(FILE *f, int idx)
 #define LIST_ADD  1
 #define LIST_RM   2
 #define LIST_SHOW 3
-void cmd_set_real(const char *botnick, int idx, char *par)
+int cmd_set_real(const char *botnick, int idx, char *par)
 {
   variable_t *var = NULL;
   char *name = NULL;
@@ -686,7 +686,7 @@ void cmd_set_real(const char *botnick, int idx, char *par)
     else {
       if (!par[0]) {
         dprintf(idx, "A variable must be specified!\n");
-        return;
+        return 0;
       }
       name = newsplit(&par);
     }
@@ -697,7 +697,7 @@ void cmd_set_real(const char *botnick, int idx, char *par)
       data = (const char *) par;
     else if (!par[0] && list) {
       dprintf(idx, "A value must be specified!\n");
-      return;
+      return 0;
     }
   } else if (par[0] && list && list == LIST_SHOW) {
     dprintf(idx, "Data value ignored for listing.\n");
@@ -705,12 +705,12 @@ void cmd_set_real(const char *botnick, int idx, char *par)
 
   if (name && !(var = var_get_var_by_name(name))) {
     dprintf(idx, "No such variable: %s\n", name);
-    return;
+    return 0;
   }
 
   if (list && !(var->flags & VAR_LIST)) {
     dprintf(idx, "That variable is not a list!\n");
-    return;
+    return 0;
   }
   
   struct userrec *botu = NULL;
@@ -764,24 +764,24 @@ void cmd_set_real(const char *botnick, int idx, char *par)
           dprintf(idx, "%sbotset %s -YES %s ...\n", settings.dcc_prefix, botnick, var->name);
         else
           dprintf(idx, "%sset -YES %s ...\n", settings.dcc_prefix, var->name);
-        return;
+        return 0;
       }
     }
     if (botnick) {
       if (var->flags & VAR_NOLOC) {
         dprintf(idx, "Sorry, cannot set '%s' locally.\n", var->name);
-        return;
+        return 0;
       }
 
       if (ishub && (var->flags & VAR_NOLHUB)) {
         dprintf(idx, "Sorry, cannot set '%s' locally for hubs.\n", var->name);
-        return;
+        return 0;
       }
     }
 
     if ((var->flags & VAR_PERM) && !isowner(dcc[idx].nick)) {
       dprintf(idx, "Sorry, only permanent owners may set '%s'.\n", var->name);
-      return;
+      return 0;
     }
 
     if (!strcmp(data, "-"))
@@ -802,18 +802,18 @@ void cmd_set_real(const char *botnick, int idx, char *par)
       if (list == LIST_ADD) {
         if (var_add_list(botnick, var, data)) {
           dprintf(idx, "Added '%s' to %s list.\n", data, var->name);
-          return;
+          return 1;
         }
       } else if (list == LIST_RM) {
         char *expanded_data = NULL;
 
         if ((expanded_data = var_rem_list(botnick, var, data)) && expanded_data[0]) {
           dprintf(idx, "Removed '%s' from %s list.\n", expanded_data, var->name);
-          return;
+          return 1;
         }
       }
-        dprintf(idx, "Failed to modify %s list.\n", var->name);
-
+      dprintf(idx, "Failed to modify %s list.\n", var->name);
+      return 0;
     } else {
       var_set(var, botnick, data);
       if (botnick)
@@ -821,7 +821,7 @@ void cmd_set_real(const char *botnick, int idx, char *par)
 
       dprintf(idx, "%s: %s\n", name, botnick ? (!data || (data[0] == '-') ? "(not set)" : data) : (var->gdata ? var->gdata : "(not set)"));
     }
-    if (conf.bot->hub)
-      write_userfile(idx);
+    return 1;
   }
+  return 0;
 }
