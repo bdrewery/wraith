@@ -28,8 +28,8 @@ for mf in $files; do
 #  echo "dirpart: $dirpart mf: $mf"
 #  rm -rf "$dirpart/.deps/"
   rm -f "$dirpart/.deps/includes"
-  touch "$dirpart/.deps/includes"
   test -d "$dirpart/.deps" || mkdir "$dirpart/.deps"
+  touch "$dirpart/.deps/includes"
   for file in `sed -n -e '
     /^OBJS = .*\\\\$/ {
       s/^OBJS = //
