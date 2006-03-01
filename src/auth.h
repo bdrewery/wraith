@@ -2,7 +2,7 @@
 #  define _AUTH_H
 
 #  include "crypt.h"
-#  include "hash_table.h"
+#  include "structures/hash_table.h"
 
 #define AUTHED	    1
 #define AUTHING     2

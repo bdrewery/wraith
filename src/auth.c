@@ -17,7 +17,7 @@
 #include "egg_timer.h"
 #include "users.h"
 #include "crypt.h"
-#include "hash_table.h"
+#include "structures/hash_table.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>

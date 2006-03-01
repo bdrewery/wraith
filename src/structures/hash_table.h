@@ -1,7 +1,7 @@
 #ifndef _HASH_TABLE_H_
 #define _HASH_TABLE_H_
 
-#include "bits.h"
+#include "../bits.h"
 #include "ptrlist.h"
 
 #ifdef HAVE_CONFIG_H

@@ -5,7 +5,7 @@
 #include "config.h"
 #endif
 
-#include "hash_table.h"
+#include "structures/hash_table.h"
 #include "client-class.h"
 
 class Member {

@@ -23,7 +23,7 @@
 #include "dccutil.h"
 #include "chan.h"
 #include "compat/compat.h"
-#include "ptrlist.h"
+#include "structures/ptrlist.h"
 
 #ifdef CYGWIN_HACKS
 #  include <windows.h>

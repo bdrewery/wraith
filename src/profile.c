@@ -6,7 +6,7 @@
 
 #ifdef DEBUG
 #include "common.h"
-#include "hash_table.h"
+#include "structures/hash_table.h"
 #include <sys/times.h>
 #include <signal.h>
 

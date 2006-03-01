@@ -6,7 +6,7 @@
 #endif
 
 #include "chan.h"
-#include "hash_table.h"
+#include "structures/hash_table.h"
 
 class Client {
   private:
