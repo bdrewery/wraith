@@ -5,6 +5,7 @@ top_srcdir = @top_srcdir@
 srcdir = @srcdir@
 VPATH = @srcdir@
 depcomp = /bin/sh $(top_srcdir)/autotools/depcomp
+CCDEPMODE = @CCDEPMODE@
 
 @SET_MAKE@
 
@@ -25,6 +26,12 @@ doofus:
 
 clean:
 	@rm -f .depend *.o *~
+	@rm -f *_test
+
+test: test_binary_tree
+
+test_binary_tree: binary_tree.h binary_tree_test.o
+	$(LD) binary_tree_test.o -o binary_tree_test
 
 structures: $(OBJS)
 
