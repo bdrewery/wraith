@@ -97,7 +97,7 @@ stringfix: stringfix.c common.h ../config.h eggdrop.h
 	@$(CXX) $(CXXFLAGS) -I$(top_srcdir) -I$(top_srcdir)/pack $(CPPFLAGS) stringfix.c -o stringfix
 	@$(STRIP) stringfix@EXEEXT@
 
-../$(EGGEXEC): build_msg $(OBJS) mycrypto compatability mystructures
+../$(EGGEXEC): build_msg $(OBJS) mycrypto mystructures compatability
 	@echo ""
 	@echo "Linking wraith... $(EGGBUILD)"
 	@echo ""
@@ -123,7 +123,6 @@ compatability:
 mystructures:
 	@echo "[*] Compiling data structures"
 	+@cd structures && $(MAKE_GENERIC) structures
-	@echo "[*] Linking"
 
 mycrypto:
 	@echo "[*] Compiling crypto"
