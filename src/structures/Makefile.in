@@ -26,12 +26,12 @@ doofus:
 
 clean:
 	@rm -f .depend *.o *~
-	@rm -f *_test
+	@rm -f *_test test/*.o
 
 test: test_binary_tree
 
-test_binary_tree: binary_tree.h binary_tree_test.o
-	$(LD) binary_tree_test.o -o binary_tree_test
+test_binary_tree: binary_tree.h test/binary_tree_test.o
+	$(LD) test/binary_tree_test.o -o binary_tree_test
 
 structures: $(OBJS)
 
@@ -42,8 +42,8 @@ include ./.deps/includes
 
 .c.o:
 	@echo -e "Compiling: \033[1m`basename $< .c`\033[0m"
-	source='$<' object='$@' depfile='.deps/$*.Po' tmpdepfile='.deps/$*.TPo' depmode=$(CCDEPMODE) $(depcomp) \
-	$(CXX) $(CXXFLAGS) -I../.. -I$(top_srcdir) -I$(top_srcdir)/src $(CPPFLAGS) -c $< 
+	source='$<' object='$@' depfile=".deps/`basename $*`.Po" tmpdepfile=".deps/`basename $*`.TPo" depmode=$(CCDEPMODE) $(depcomp) \
+	$(CXX) $(CXXFLAGS) -I../.. -I$(top_srcdir) -I$(top_srcdir)/src $(CPPFLAGS) -c $< -o $*.o
 
 
 #safety hash
