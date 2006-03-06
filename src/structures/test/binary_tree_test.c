@@ -33,5 +33,7 @@ int main(int argc, char *argv[])
   tree.insert(key3, value3);
 
 //  cout << tree << endl;
-  tree.print();
+  tree.print_pre_order();
+
+  tree.print_in_order();
 }
