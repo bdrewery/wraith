@@ -21,7 +21,7 @@
 #include "src/egg_timer.h"
 
 #include "src/tandem.h"
-#include "src/tclhash.h"
+#include "src/binds.h"
 #include "src/botmsg.h" /* NOTE DEFINES */
 
 #include <fcntl.h>

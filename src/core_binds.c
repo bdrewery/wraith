@@ -16,7 +16,7 @@
 #include "set.h"
 #include "users.h"
 #include "misc.h"
-#include "tclhash.h"
+#include "binds.h"
 #include "dcc.h"
 #include "src/mod/notes.mod/notes.h"
 #include "src/mod/channels.mod/channels.h"

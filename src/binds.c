@@ -1,5 +1,5 @@
 /*
- * tclhash.c -- handles:
+ * binds.c -- handles:
  *   bind and unbind
  *   checking and triggering the various in-bot bindings
  *   listing current bindings
@@ -11,7 +11,7 @@
 
 
 #include "common.h"
-#include "tclhash.h"
+#include "binds.h"
 #include "cmds.h"
 #include "debug.h"
 #include "chan.h"
