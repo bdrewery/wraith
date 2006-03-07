@@ -2,7 +2,9 @@
 #define _BINARY_TREE 1
 
 #include <cstdlib>
-#include <iostream>
+#ifdef TESTING
+# include <iostream>
+#endif /* TESTING */
 
 template <class Key, class Value>
 class binary_tree {
@@ -80,6 +82,7 @@ class binary_tree {
       }
     }
 
+#ifdef TESTING
     void print_pre_order(int i, Node *current) {
       if (current == NULL) {
         std::cout << "NULL";
@@ -122,6 +125,7 @@ class binary_tree {
       std::cout << std::endl;
 
     }
+#endif /* TESTING */
   public:
     binary_tree() : root(NULL) {};
     virtual ~binary_tree() {};
@@ -145,6 +149,7 @@ class binary_tree {
       return NULL;
     }
 
+#ifdef TESTING
     void print_pre_order() {
       print_pre_order(0, root);
     }
@@ -152,6 +157,7 @@ class binary_tree {
     void print_in_order() {
       print_in_order(0, root);
     }
+#endif /* TESTING */
 
 };
 

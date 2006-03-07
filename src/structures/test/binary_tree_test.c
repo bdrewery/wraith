@@ -1,4 +1,5 @@
 
+#define TESTING 1
 #include "binary_tree.h"
 #include <string>
 using namespace std;
