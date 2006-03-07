@@ -32,8 +32,17 @@ int main(int argc, char *argv[])
   tree.insert(key10, value10);
   tree.insert(key3, value3);
 
-//  cout << tree << endl;
-  tree.print_pre_order();
 
-  tree.print_in_order();
+  string val = tree.find("Key05");
+  cout << val << endl;
+//  cout << tree << endl;
+
+  tree.print_pre_order();
+//  tree.print_in_order();
+
+  tree.remove(key5);
+
+//  tree.print_in_order();
+
+  tree.print_pre_order();
 }

@@ -19,17 +19,66 @@ class binary_tree {
         value = v;
         left = right = NULL;
       }
-     };
+    };
 
-     void insertNode(Node *&search, Node *node) {
-       if (search == NULL)
-         search = node;
-       else if (node->key < search->key)
-         insertNode(search->left, node);
-       else if (node->key > search->key)
-         insertNode(search->right, node);
-     }
-     Node *root;
+    Node *root;
+
+    void insertNode(Node*& search, Node* node) {
+      if (search == NULL)
+        search = node;
+      else if (node->key < search->key)
+        insertNode(search->left, node);
+      else if (node->key > search->key)
+        insertNode(search->right, node);
+    }
+
+    void deleteNode(Node*& node) {
+      if (node->left == NULL) {
+        Node* temp = node->right;
+        delete node;
+        node = temp;
+      } else if (node->right == NULL) {
+        Node* temp = node->left;
+        delete node;
+        node = temp;
+      } else {
+        //Two children, find max of left subtree and swap
+        Node*& temp = node->left;
+
+        while (temp->right != NULL)
+         temp = temp->right;
+
+        node->key = temp->key;
+        node->value = temp->value;
+ 
+        deleteNode(temp);
+      }
+    }
+
+    Node*& findNode(Node*& search, Key key) {
+/*
+      Node*& temp = search;
+      
+      while (temp != NULL) {
+        if (key < temp->key)
+          temp = temp->left;
+        else if (key > temp->key)
+          temp = temp->right;
+        else {
+          std::cout << "Found key: " << search->key << std::endl;
+          return temp;
+        }
+      }
+      return temp;
+*/
+      if (key < search->key)
+        return findNode(search->left, key);
+      else if (key > search->key)
+        return findNode(search->right, key);
+      else {
+        return search;
+      }
+    }
 
     void print_pre_order(int i, Node *current) {
       if (current == NULL) {
@@ -78,12 +127,22 @@ class binary_tree {
     virtual ~binary_tree() {};
 
     void insert(Key key, Value value) {
-        Node *node = new Node(key, value);
-        insertNode(root, node);
+      Node *node = new Node(key, value);
+      insertNode(root, node);
     }
 
-    void remove(Key key, Value value) {
-      
+    void remove(Key key) {
+      Node*& node = findNode(root, key);
+
+      if (node != NULL)
+        deleteNode(node);
+    }
+
+    Value find(Key key) {
+      Node*& node = findNode(root, key);
+      if (node)
+        return node->value;
+      return NULL;
     }
 
     void print_pre_order() {
