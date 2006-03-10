@@ -1273,7 +1273,9 @@ finish_share(int idx)
     userlist = ou;              /* Revert to old user list.             */
     lastuser = NULL;            /* Reset last accessed user ptr.        */
 
-    Auth::FillUsers();
+    if (!conf.bot->hub) {
+      Auth::FillUsers();
+    }
 
     cmdpass = old_cmdpass;
 
@@ -1312,12 +1314,13 @@ finish_share(int idx)
   /* The userfile we received may just be bogus or missing important users */
   load_internal_users();
   add_myself_to_userlist();
-  
-  /* Our hostmask may have been updated on connect, but the new userfile may not have it. */
-  check_hostmask();
 
-  /* copy over any auth users */
-  Auth::FillUsers();
+  if (!conf.bot->hub) {  
+    /* Our hostmask may have been updated on connect, but the new userfile may not have it. */
+    check_hostmask();
+    /* copy over any auth users */
+    Auth::FillUsers();
+  }
 
   cmdpass_free(old_cmdpass);
 
