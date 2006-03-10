@@ -1315,6 +1315,9 @@ finish_share(int idx)
   load_internal_users();
   add_myself_to_userlist();
 
+  /* Make sure no removed users/bots are still connected. */
+  check_stale_dcc_users();
+
   if (!conf.bot->hub) {  
     /* Our hostmask may have been updated on connect, but the new userfile may not have it. */
     check_hostmask();
