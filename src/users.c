@@ -1182,7 +1182,7 @@ void check_stale_dcc_users()
     if (dcc[i].user == NULL) { /* Removed user */
       if (dcc[i].type == &DCC_BOT || dcc[i].type == &DCC_FORK_BOT || dcc[i].type == &DCC_BOT_NEW)
         botunlink(i, dcc[i].nick, "No longer a valid bot.");
-      else
+      else if (dcc[i].type == &DCC_CHAT)
         do_boot(i, "internal", "No longer a valid user.");
     }
   }
