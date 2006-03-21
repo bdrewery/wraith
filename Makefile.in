@@ -186,6 +186,8 @@ crypto:
 
 general: help res set
 
+test:
+
 wraith:	general
 	@echo ""
 	@echo "Making binary"
