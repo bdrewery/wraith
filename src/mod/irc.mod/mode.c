@@ -1064,7 +1064,7 @@ gotmode(char *from, char *msg)
         if (me_op(chan)) {
           char tmp[1024] = "";
 
-          if (role && (!u || (u && !u->bot))) {
+          if (role && u && !u->bot) {
             if (m && !chan_sentkick(m) && deops >= 3 && chan->mdop) {
               if (role < 5) {
                 m->flags |= SENTKICK;
@@ -1168,7 +1168,7 @@ gotmode(char *from, char *msg)
             }
 
             /* manop */
-            if (chan->manop && (!u || (u && !u->bot))) {
+            if (chan->manop && u && !u->bot) {
               n = i = 0;
 
               switch (role) {
