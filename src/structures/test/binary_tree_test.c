@@ -33,17 +33,20 @@ int main(int argc, char *argv[])
   tree.insert(key10, value10);
   tree.insert(key3, value3);
 
+  binary_tree<string, string>::iterator iter = tree.begin();
+  while (iter.hasNext())
+    cout << (string) iter.next() << endl;
 
-  string val = tree.find("Key05");
-  cout << val << endl;
+//  string val = tree.find("Key05");
+//  cout << val << endl;
 //  cout << tree << endl;
 
-  tree.print_pre_order();
+//  tree.print_pre_order();
 //  tree.print_in_order();
 
-  tree.remove(key5);
+//  tree.remove(key5);
 
 //  tree.print_in_order();
 
-  tree.print_pre_order();
+//  tree.print_pre_order();
 }

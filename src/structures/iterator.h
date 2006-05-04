@@ -60,7 +60,15 @@ class iterator_type
     link *lnk() { return _lnk; };
 };
 
+template <typename T>
+class Iterator {
+  public:
+    virtual T next() = 0;
+    virtual bool hasNext() = 0;
+//    virtual const &T operator ++(); //prefix
+//    virtual const T operator ++(int); //postfix
+//    virtual void remove() = 0;
+};
+
 
 #endif
-
-

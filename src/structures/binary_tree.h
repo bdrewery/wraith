@@ -5,6 +5,7 @@
 #ifdef TESTING
 # include <iostream>
 #endif /* TESTING */
+#include "iterator.h"
 
 template <class Key, class Value>
 class binary_tree {
@@ -23,11 +24,14 @@ class binary_tree {
       }
     };
 
+    int size;
     Node *root;
 
     void insertNode(Node*& search, Node* node) {
-      if (search == NULL)
+      if (search == NULL) {
         search = node;
+        ++size;
+      }
       else if (node->key < search->key)
         insertNode(search->left, node);
       else if (node->key > search->key)
@@ -39,10 +43,12 @@ class binary_tree {
         Node* temp = node->right;
         delete node;
         node = temp;
+        --size;
       } else if (node->right == NULL) {
         Node* temp = node->left;
         delete node;
         node = temp;
+        --size;
       } else {
         //Two children, find max of left subtree and swap
         Node*& temp = node->left;
@@ -126,8 +132,62 @@ class binary_tree {
 
     }
 #endif /* TESTING */
+
   public:
-    binary_tree() : root(NULL) {};
+    class IteratorHelper : public Iterator<Value> {
+      private:
+        int index;
+        int size;
+        Value *storage;
+
+        void fillArray(const Node *node) {
+          static int i = 0;
+
+          if (node == NULL) return;
+          fillArray(node->left);
+          storage[i++] = node->value;
+          fillArray(node->right);
+        }
+      public:
+        IteratorHelper(Node *node, int _size) {
+          index = 0;
+          size = _size;
+          storage = new Value[size];
+          fillArray(node);
+        }
+
+        virtual ~IteratorHelper() {
+          delete[] storage;
+        }
+
+        virtual bool hasNext() {
+          return (index < size);
+        }
+
+        virtual Value next() {
+          return storage[index++];
+        }
+/* not done
+        virtual const Value& operator ++() { //prefix 
+          Value v = Q.front();
+          Q.pop();
+          return v;
+        }
+
+        virtual const Value operator ++(int) { //postfix 
+          
+        }
+*/
+    };
+
+    typedef IteratorHelper iterator;
+
+    iterator begin() {
+      return IteratorHelper(root, size);
+    }
+
+  public:
+    binary_tree() : size(0), root(NULL) {};
     virtual ~binary_tree() {};
 
     void insert(Key key, Value value) {
