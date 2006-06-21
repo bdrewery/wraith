@@ -30,6 +30,10 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * cmd_swhois is now -|- and hides all restricted information, channels; see 'help swhois'.
 * Fixed countless buffer overflows. (fixes #226)
 
+1.2.11
+* Fixed typo in help for .set
+* Fixed a bug in cmd_chattr with |m users. (fixes #267)
+
 1.2.10
 * Removed old references to '+/-manop' and '+/-nomop' for chaninfo in help file.
 * Fixed auth cmds not working in privmsg. (fixes #228)
