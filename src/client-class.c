@@ -202,3 +202,26 @@ void Client::SetUser(struct userrec *us)
 {
   u = us;
 }
+
+static int client_null_users_walk(Client *client, void *data)
+{
+  client->ClearUser();
+  return 0;
+}
+
+
+void Client::ClearUsers() {
+  clients.walk(client_null_users_walk);
+}
+
+static int client_fill_users_walk(Client *client, void *data)
+{
+  client->UpdateUser();
+  return 0;
+}
+
+void Client::FillUsers()
+{
+  clients.walk(client_fill_users_walk);
+}
+

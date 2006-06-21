@@ -595,12 +595,6 @@ void reload()
   /* Make sure no removed users/bots are still connected. */
   check_stale_dcc_users();
   
-  /* I don't think these will ever be called anyway. */
-  if (!conf.bot->hub) {
-    Auth::FillUsers();
-    check_hostmask();
-  }
-
   checkchans(1);
   loading = 0;
   var_parse_my_botset();

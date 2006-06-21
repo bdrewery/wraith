@@ -23,7 +23,8 @@ class Client {
 
     void NewNick(const char *newnick);
     static Client *Find(const char *nick);
-
+    static void FillUsers();
+    static void ClearUsers();
 
 //    int RemoveChan(const char *chname);
 //    int AddChan(const char *chname);

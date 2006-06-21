@@ -1239,7 +1239,10 @@ finish_share(int idx)
   for (i = 0; i < dcc_total; i++)
     if (dcc[i].type)
       dcc[i].user = NULL;
-  Auth::NullUsers();
+  if (!conf.bot->hub) {
+    Auth::NullUsers();
+    Client::ClearUsers();
+  }
 
   if (conf.bot->u)
     conf.bot->u = NULL;
@@ -1275,6 +1278,7 @@ finish_share(int idx)
 
     if (!conf.bot->hub) {
       Auth::FillUsers();
+      Client::FillUsers();
     }
 
     cmdpass = old_cmdpass;
@@ -1323,6 +1327,7 @@ finish_share(int idx)
     check_hostmask();
     /* copy over any auth users */
     Auth::FillUsers();
+    Client::FillUsers();
   }
 
   cmdpass_free(old_cmdpass);
