@@ -52,6 +52,7 @@ bool ismodeline(masklist *, const char *);
 void channels_report(int, int);
 void channels_writeuserfile(FILE *);
 int channels_chon(const char *, int);
+void rcmd_chans(char *, char *, char *);
 
 extern char		glob_chanset[512];
 
