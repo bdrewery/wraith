@@ -736,15 +736,19 @@ int main(int argc, char **argv)
 
 
 #if !defined(CYGWIN_HACKS) && !defined(__sun__)
+#ifdef NO
   int status = 0;
+#endif
 #endif /* !CYGWIN_HACKS */
 
 
   /* Main loop */
   while (1) {
 #if !defined(CYGWIN_HACKS) && !defined(__sun__)
+#ifdef NO
     if (conf.watcher && waitpid(watcher, &status, WNOHANG))
       fatal("watcher PID died/stopped", 0);
+#endif
 #endif /* !CYGWIN_HACKS */
 
     /* Lets move some of this here, reducing the numer of actual
