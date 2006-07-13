@@ -49,6 +49,7 @@ OBJS = auth.o \
 	shell.o \
 	socket.o \
 	sprintf.o \
+	String.o \
 	traffic.o \
 	userent.o \
 	userrec.o \
