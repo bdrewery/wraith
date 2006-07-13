@@ -8,7 +8,7 @@ depcomp = /bin/sh $(top_srcdir)/autotools/depcomp
 
 @SET_MAKE@
 
-CXXFLAGS = @CXXFLAGS@ -I.. -I$(top_srcdir) -I$(top_srcdir)/pack @DEFS@ $(CFLGS) '-DREVISION="$(REVISION)"' -DBUILDTS=$(BUILDTS)
+CXXFLAGS = @CXXFLAGS@ -I$(srcdir) -I$(top_srcdir) -I$(top_srcdir)/pack @DEFS@ $(CFLGS) '-DREVISION="$(REVISION)"' -DBUILDTS=$(BUILDTS)
 CPPFLAGS = @CPPFLAGS@
 
 OBJCOPY = @OBJCOPY@
@@ -64,7 +64,6 @@ MODOBJS = mod/channels.o \
         mod/transfer.o \
         mod/update.o
 
-
 MAKE_GENERIC = $(MAKE) 'MAKE=$(MAKE)' 'CXX=$(CXX)' 'LD=$(LD)' 'STRIP=$(STRIP)' 'CFLGS=$(CFLGS)' 'CCDEPMODE=$(CCDEPMODE)'
 
 blah:
@@ -108,6 +107,14 @@ stringfix: stringfix.c common.h ../config.h eggdrop.h
 	@echo ""
 
 $(EGGEXEC): stringfix ../$(EGGEXEC)
+
+TESTOBJS = @TESTOBJS@
+
+TESTUNITOBJS = @TESTUNITOBJS@
+
+check: UnitRunner.o $(TESTOBJS)
+	+@cd tests && $(MAKE_GENERIC) units
+	$(LD) -lcppunit -o UnitRunner@EXEEXT@ UnitRunner.o $(TESTOBJS) $(TESTUNITOBJS)
 
 clean:
 	@rm -f .depend *.o *~ _*.c

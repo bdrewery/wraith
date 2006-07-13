@@ -670,6 +670,8 @@ LIBOBJS
 VERSION
 NUMVER
 MOD_UPDIR
+TESTOBJS
+TESTUNITOBJS
 LTLIBOBJS'
 ac_subst_files=''
       ac_precious_vars='build_alias
@@ -13186,7 +13188,7 @@ case "$srcdir" in
 esac
 
 
-files="src/Makefile.in src/compat/Makefile.in src/crypto/Makefile.in src/mod/channels.mod/Makefile src/mod/compress.mod/Makefile src/mod/console.mod/Makefile src/mod/ctcp.mod/Makefile src/mod/irc.mod/Makefile src/mod/notes.mod/Makefile src/mod/server.mod/Makefile src/mod/share.mod/Makefile src/mod/transfer.mod/Makefile src/mod/update.mod/Makefile src/structures/Makefile.in"
+files="src/Makefile.in src/compat/Makefile.in src/crypto/Makefile.in src/mod/channels.mod/Makefile src/mod/compress.mod/Makefile src/mod/console.mod/Makefile src/mod/ctcp.mod/Makefile src/mod/irc.mod/Makefile src/mod/notes.mod/Makefile src/mod/server.mod/Makefile src/mod/share.mod/Makefile src/mod/transfer.mod/Makefile src/mod/update.mod/Makefile src/structures/Makefile.in src/tests/Makefile.in"
 for mf in $files; do
   # Strip MF so we end up with the name of the file.
 #  echo "MF: $mf"
@@ -13246,7 +13248,65 @@ echo X"$mf" |
 done
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/compat/Makefile src/crypto/Makefile src/mod/Makefile src/structures/Makefile src/buildinfo.h"
+dirs="src/tests/"
+for dir in "`find src -type d -name tests`"; do
+  dirpart=`$as_dirname -- "$dir" ||
+$as_expr X"$dir" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$dir" : 'X\(//\)[^/]' \| \
+	 X"$dir" : 'X\(//\)$' \| \
+	 X"$dir" : 'X\(/\)' \| . 2>/dev/null ||
+echo X"$dir" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)[^/].*/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\).*/{
+	    s//\1/
+	    q
+	  }
+	  s/.*/./; q'`
+  dirNoSrc="`echo $dir | sed -e 's/src\///'`"
+
+  if test -f "$dir/Makefile.in"; then
+    mf="$dir/Makefile.in"
+  elif test -f "$dir/Makefile"; then
+    mf="$dir/Makefile"
+  else
+    return
+  fi
+
+  for file in `sed -n -e '
+    /^OBJS = .*\\\\$/ {
+      s/^OBJS = //
+      :loop
+        s/\\\\$//
+        p
+        n
+        /\\\\$/ b loop
+      p
+    }
+    /^OBJS = / s/^OBJS = //p' < "$mf"`;
+  do
+    base=`basename $file .o`
+    sourceName="`basename $base Test`"
+    sourceFile="$dirpart/$sourceName"
+    if test -f "$sourceFile.c"; then
+      TESTOBJS="$TESTOBJS $sourceName.o"
+      TESTUNITOBJS="$TESTUNITOBJS $dirNoSrc/$base.o"
+    fi
+  done
+done
+
+
+ac_config_files="$ac_config_files Makefile src/Makefile src/compat/Makefile src/crypto/Makefile src/mod/Makefile src/structures/Makefile src/buildinfo.h src/tests/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -13795,6 +13855,7 @@ do
     "src/mod/Makefile") CONFIG_FILES="$CONFIG_FILES src/mod/Makefile" ;;
     "src/structures/Makefile") CONFIG_FILES="$CONFIG_FILES src/structures/Makefile" ;;
     "src/buildinfo.h") CONFIG_FILES="$CONFIG_FILES src/buildinfo.h" ;;
+    "src/tests/Makefile") CONFIG_FILES="$CONFIG_FILES src/tests/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -13924,10 +13985,12 @@ LIBOBJS!$LIBOBJS$ac_delim
 VERSION!$VERSION$ac_delim
 NUMVER!$NUMVER$ac_delim
 MOD_UPDIR!$MOD_UPDIR$ac_delim
+TESTOBJS!$TESTOBJS$ac_delim
+TESTUNITOBJS!$TESTUNITOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 69; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 71; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

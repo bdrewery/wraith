@@ -1,0 +1,29 @@
+# Makefile for src/
+
+SHELL = @SHELL@
+top_srcdir = @top_srcdir@
+srcdir = @srcdir@
+VPATH = @srcdir@
+depcomp = /bin/sh $(top_srcdir)/autotools/depcomp
+
+@SET_MAKE@
+
+CXXFLAGS = @CXXFLAGS@ -I.. -I$(top_srcdir) -I$(top_srcdir)/pack @DEFS@ $(CFLGS) '-DREVISION="$(REVISION)"' -DBUILDTS=$(BUILDTS)
+CPPFLAGS = @CPPFLAGS@
+
+OBJS = StringTest.o
+
+units: $(OBJS)
+
+clean:
+	@rm -f *.o
+
+include ./.deps/includes
+
+.SUFFIXES:
+.SUFFIXES: .c .h .o
+
+.c.o:
+	@echo -e "Compiling: \033[1m`basename $< .c`\033[0m"
+	@source='$<' object='$@' depfile='.deps/$*.Po' tmpdepfile='.deps/$*.TPo' depmode=$(CCDEPMODE) $(depcomp) \
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<  -o `basename $< .c`.o
