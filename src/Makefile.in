@@ -115,7 +115,7 @@ TESTUNITOBJS = @TESTUNITOBJS@
 
 check: UnitRunner.o $(TESTOBJS)
 	+@cd tests && $(MAKE_GENERIC) units
-	$(LD) -lcppunit -o UnitRunner@EXEEXT@ UnitRunner.o $(TESTOBJS) $(TESTUNITOBJS)
+	$(LD) @CPPUNIT_LIBS@ -o UnitRunner@EXEEXT@ UnitRunner.o $(TESTOBJS) $(TESTUNITOBJS)
 
 clean:
 	@rm -f .depend *.o *~ _*.c

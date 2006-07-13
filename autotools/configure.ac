@@ -19,6 +19,8 @@ AC_PROG_CXX([g++-3.3 g++33 g++-3 g++3 g++ c++ gpp aCC CC cxx cc++ cl FCC KCC RCC
 dnl AC_PROG_CC([gcc34 gcc-3.4 gcc33 gcc3 gcc-3.3 gcc cc c1])
 EGG_CHECK_CC
 
+AM_PATH_CPPUNIT(1.9.10)
+
 # Crazy machines
 AC_AIX
 AC_ISC_POSIX
