@@ -9,8 +9,6 @@ for dir in "`find src -type d -name tests`"; do
     mf="$dir/Makefile.in"
   elif test -f "$dir/Makefile"; then
     mf="$dir/Makefile"
-  else
-    return
   fi
 
   for file in `sed -n -e '
