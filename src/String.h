@@ -124,16 +124,26 @@ class String {
 	*/
         virtual ~String() { CheckDeallocRef(); };
         
-        const char* begin() const;
-        const char* end() const;
+        const char* begin() const { return Ref->buf; };
+        const char* end() const { return Ref->buf + length(); };
+
 
         //void assign(const String&);
         //void assign(const char *);
         //void assign(const char);
         
         /* Accessors */
-        const size_t length() const;
-        const size_t capacity() const;
+        /**
+         * @brief Returns length of the string.
+         * @return Length of the string.
+        */
+        const size_t length() const { return Ref->len; };
+
+        /**
+         * @brief Returns capacity of the String object.
+         * @return Capacity of the String object.
+        */
+        const size_t capacity() const { return Ref->size; };
 
 	/**
 	 * @brief Cstring accessor
@@ -148,8 +158,22 @@ class String {
           return Ref->buf;
         }
 
-        const char charAt(unsigned int) const;
-        bool hasIndex(unsigned int) const;
+        /**
+         * @brief Returns the character at the given index.
+         * @return The character at the given index.
+         * @param i Index to return.
+         * @pre The index must exist.
+         * @todo Perhaps this should throw an exception if out of range?
+         */
+        const char charAt(unsigned int i) const { return hasIndex(i) ? Ref->buf[i] : 0; };
+
+        /**
+         * @brief Checks if the buffer has the given index or not.
+         * @return Boolean true/false as to whether or not index exists.
+         * @param i Index to check.
+        */
+        bool hasIndex(unsigned int i) const { return (i < length()); };
+
         String substring(int, size_t) const;
 
 	/**
@@ -162,9 +186,30 @@ class String {
 //        const StringList split(const char);
 
         /* Setters */
-        void append(const char);
-        void append(const char *, int = -1, int = 0);
-        void append(const String&, int = -1);
+        /**
+         * @brief Appends one character to end of buffer.
+         * @param ch The character to be appended.
+         * @post The buffer is allocated.
+         * @post The character is appended at the end of the buffer.
+         */
+        void append(const char ch) { insert(length(), ch); };
+
+        /**
+         * @brief Appends given string to end of buffer.
+         * @param string The string to be appended.
+         * @param n How many characters to copy from the string.
+         * @param slen The length of the string to be appended.
+         * @post The buffer is allocated.
+         */
+        void append(const char *string, int n = -1, int slen = 0) { insert(length(), string, n, slen); };
+
+        /**
+         * @brief Appends given string to the end of buffer
+         * @param string The string to be appended.
+         * @param n How many characters to copy from the String object.
+         * @post The buffer is allocated.
+         */
+        void append(const String& string, int n = -1) { insert(length(), string, n); };
 
         void insert(int, const char);
         void insert(int, const char *, int = -1, int = 0);
@@ -177,8 +222,17 @@ class String {
         void Reserve(const size_t);
 
         /* Operators */
-        const char* operator * ();
-        const char operator [] (int) const;
+
+        /**
+         * @sa c_str()
+         */
+        const char* operator * () { return c_str(); };
+
+        /**
+         * @sa charAt()
+         * Unlinke charAt() this is unchecked.
+         */
+        const char operator [] (int i) const { return Ref->buf[i]; };
 
         String& operator += (const char);
         String& operator += (const char *);
@@ -272,97 +326,7 @@ inline void String::Detach() {
     Ref->len = 0;
 }
 
-inline const char* String::begin() const {
-  return Ref->buf;
-}
-
-inline const char* String::end() const {
-  return Ref->buf + length();
-}
-
-/**
- * @brief Returns length of the string.
- * @return Length of the string.
- */
-inline const size_t String::length() const {
-  return Ref->len;
-}
-
-/**
- * @brief Returns capacity of the String object.
- * @return Capacity of the String object.
- */
-inline const size_t String::capacity() const {
-  return Ref->size;
-}
-
-/**
- * @brief Checks if the buffer has the given index or not.
- * @return Boolean true/false as to whether or not index exists.
- * @param i Index to check.
- */
-inline bool String::hasIndex(unsigned int i) const {
-  return (i < length());
-}
-
-/**
- * @brief Returns the character at the given index.
- * @return The character at the given index.
- * @param i Index to return.
- * @pre The index must exist.
- * @todo Perhaps this should throw an exception if out of range?
- */
-inline const char String::charAt(unsigned int i) const {
-  return hasIndex(i) ? Ref->buf[i] : 0;
-}
-
-/**
- * \sa charAt()
- * Unlinke charAt() this is unchecked.
- */
-inline const char String::operator [] (int i) const {
-  return Ref->buf[i];
-}
-
-inline const char* String::operator * () {
-  return c_str();
-}
-
 // Setters
-
-/**
- * @brief Appends one character to end of buffer.
- * @param ch The character to be appended.
- * @post The buffer is allocated.
- * @post The character is appended at the end of the buffer.
- */
-inline void String::append(const char ch)
-{
-  insert(length(), ch);
-}
-
-/**
- * @brief Appends given string to end of buffer.
- * @param string The string to be appended.
- * @param n How many characters to copy from the string.
- * @param slen The length of the string to be appended.
- * @post The buffer is allocated.
- */
-inline void String::append(const char *string, int n, int slen)
-{
-  insert(length(), string, n, slen);
-}
-
-/**
- * @brief Appends given string to the end of buffer
- * @param string The string to be appended.
- * @param n How many characters to copy from the String object.
- * @post The buffer is allocated.
- */
- 
-inline void String::append(const String& string, int n) {
-  insert(length(), string, n);
-}
 
 /**
  * \sa StringBuf::Reserve()
