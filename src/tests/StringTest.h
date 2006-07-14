@@ -1,3 +1,6 @@
+/* StringTest.h
+ *
+ */
 #ifndef STRINGTEST_H
 #define STRINGTEST_H 1
 

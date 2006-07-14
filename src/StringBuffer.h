@@ -1,3 +1,6 @@
+/* StringBuffer.h
+ *
+ */
 #ifndef _STRINGBUFFER_H
 #define _STRINGBUFFER_H 1
 

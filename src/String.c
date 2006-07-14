@@ -1,3 +1,6 @@
+/* String.c
+ *
+ */
 #include "String.h"
 #include <memory>
 //#include <iostream>
