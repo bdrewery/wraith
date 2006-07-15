@@ -2,7 +2,11 @@
  *
  */
 #include <iostream>
-#include <vector>
+//#include <vector>
+#include <sys/types.h>
+#include <cstring>
+#include <algorithm> // min() / max()
+
 
 class String;
 class StringBuf;

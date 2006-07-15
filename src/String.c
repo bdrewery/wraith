@@ -2,9 +2,9 @@
  *
  */
 #include "String.h"
-#include <memory>
+//#include <memory>
 //#include <iostream>
-using namespace std;
+//using namespace std;
 
 
 
@@ -19,12 +19,12 @@ void StringBuf::Reserve(const size_t newSize)
 {
   /* Don't new if we already have enough room! */
   if (size < newSize) { 
-    size = max(size_t(size * 1.5), newSize);
+    size = std::max(size_t(size * 1.5), newSize);
 
     char *newbuf = AllocBuf(size);
-    
+
     if (newbuf != buf) {
-      copy(buf, buf + len, newbuf);
+      std::copy(buf, buf + len, newbuf);
       FreeBuf(buf);
       buf = newbuf;
     }
@@ -45,14 +45,22 @@ void StringBuf::Reserve(const size_t newSize)
  */
 void String::AboutToModify(size_t n) {
   if (Ref->isShared()) {
+    const char *p = Ref->buf;
+    size_t oldLength = length();
+    size_t oldCapacity = capacity();
+    --Ref->n;
+    Ref = new StringBuf();
+    Reserve( std::max(oldCapacity, n) ); //Will set capacity()/size
+    std::copy(p, p + oldLength, Ref->buf);
+    Ref->len = oldLength;    
+/*    
     auto_ptr<StringBuf> newdata(new StringBuf);
-    newdata->Reserve( max(capacity(), n) ); //Will set capacity()
-    copy(Ref->buf, Ref->buf + length(), newdata->buf);
-    //strncpy(newdata->buf, Ref->buf, length());
-    //newdata->buf[length()] = '\0';
+    newdata->Reserve( std::max(capacity(), n) ); //Will set capacity()
+    std::copy(Ref->buf, Ref->buf + length(), newdata->buf);
     newdata->len = length();
     --Ref->n;     //decrement the reference pointer's count
     Ref = newdata.release();
+*/
   } else {
     Reserve(n);
   }
@@ -68,8 +76,8 @@ void String::AboutToModify(size_t n) {
 int String::compare(const String& str, size_t n) const
 {
   size_t my_len = length();
-  size_t slen = min(str.length(), n);
-  size_t len = min(my_len, slen);
+  size_t slen = std::min(str.length(), n);
+  size_t len = std::min(my_len, slen);
   
 
   for (size_t i = 0; i < len; ++i) {
@@ -139,7 +147,7 @@ void String::insert(int k, const char *string, int n, int slen)
   
   AboutToModify(length() + slen);
   memmove(Ref->buf + k + slen, Ref->buf + k, length() - k);
-  copy(string, string + slen, Ref->buf + k);
+  std::copy(string, string + slen, Ref->buf + k);
   Ref->len += slen;
 }
 
@@ -169,7 +177,7 @@ void String::replace(int k, const char *string, int n, int slen)
     newlen = length();
     AboutToModify(length());
   }
-  copy(string, string + slen, Ref->buf + k);
+  std::copy(string, string + slen, Ref->buf + k);
   Ref->len = newlen;
 }
 
@@ -191,7 +199,7 @@ void String::insert(int k, const String& string, int n) {
   slen -= slen - n;
   AboutToModify(length() + slen);
   memmove(Ref->buf + k + slen, Ref->buf + k, length() - k);
-  copy(string.begin(), string.begin() + slen, Ref->buf + k);
+  std::copy(string.begin(), string.begin() + slen, Ref->buf + k);
   Ref->len += slen;
 }
 
@@ -219,7 +227,7 @@ void String::replace(int k, const String& string, int n) {
     newlen = length();
     AboutToModify(length());
   }
-  copy(string.begin(), string.begin() + slen, Ref->buf + k);
+  std::copy(string.begin(), string.begin() + slen, Ref->buf + k);
   Ref->len = newlen;
 }
 
@@ -264,7 +272,7 @@ const String& String::operator = (const String &string) {
   return *this;
 }
 
-istream& operator >> (istream& is, String& string) {
+std::istream& operator >> (std::istream& is, String& string) {
   char ch;
   string = "";    // empty string, will build one char at-a-time
   is >> ch;    // whitespace skipped, first non-white char in ch
@@ -285,7 +293,7 @@ istream& operator >> (istream& is, String& string) {
   return is;
 }
 
-istream& getline(istream& is, String& string) {   
+std::istream& getline(std::istream& is, String& string) {   
  
   char ch;
   string = "";     // empty string, will build one char at-a-time
