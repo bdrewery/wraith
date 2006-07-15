@@ -54,7 +54,7 @@ void String::AboutToModify(size_t n) {
     --Ref->n;     //decrement the reference pointer's count
     Ref = newdata.release();
   } else {
-    Ref->Reserve(n);
+    Reserve(n);
   }
 }
 
@@ -116,8 +116,9 @@ void String::replace(int k, const char ch) {
 }
 
 /**
- * @brief Insert a string at the given index.
- * @param string The string to be inserted.
+ * @brief Insert a cstring at the given index.
+ * @param string The cstring to be inserted.
+ * @param k The index to insert at.
  * @param n Up to this many characters will be used from the string.
  * @param slen The length of the string to be inserted.
  * @post A buffer is allocated.
@@ -143,9 +144,9 @@ void String::insert(int k, const char *string, int n, int slen)
 }
 
 /**
- * @brief Replaces the given index with the given string up to the given amount of characters.
+ * @brief Replaces the given index with the given cstring up to the given amount of characters.
  * @param k The index to replace at.
- * @param string The string to replace with.
+ * @param string The cstring to replace with.
  * @param n How many characters to use from string.
  * @param slen The length of the string.
  */

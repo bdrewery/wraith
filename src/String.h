@@ -26,6 +26,7 @@ class StringBuf {
     
         friend class String;
         friend class StringBuffer;
+        friend class Stream;
         
         StringBuf() : len(0), size(0), buf(NULL), n(1) {};
         void Reserve(size_t);
@@ -117,7 +118,7 @@ class String {
 	*/
         String(const int newSize) : Ref(new StringBuf()) {
           if (newSize <= 0) return;
-          Ref->Reserve(newSize);
+          Reserve(newSize);
         };
 
 	/**
@@ -198,8 +199,8 @@ class String {
         void append(const char ch) { insert(length(), ch); };
 
         /**
-         * @brief Appends given string to end of buffer.
-         * @param string The string to be appended.
+         * @brief Appends given cstring to end of buffer.
+         * @param string The cstring to be appended.
          * @param n How many characters to copy from the string.
          * @param slen The length of the string to be appended.
          * @post The buffer is allocated.
@@ -222,7 +223,15 @@ class String {
         void replace(int, const char *, int = -1, int = 0);
         void replace(int, const String&, int = -1);
 
-        void Reserve(const size_t);
+        /**
+         * \sa StringBuf::Reserve()
+         * @post The String will also never shrink after this.
+        */
+        virtual void Reserve(const size_t newSize) {
+          if (newSize > 0)
+            Ref->Reserve(newSize);
+        };
+
 
         /* Operators */
 
@@ -330,15 +339,6 @@ inline void String::Detach() {
 }
 
 // Setters
-
-/**
- * \sa StringBuf::Reserve()
- * @post The String will also never shrink after this.
- */
-inline void String::Reserve(const size_t siz) {
-  if (siz > 0)
-    Ref->Reserve(siz);
-}
 
 /* Operators */
 
