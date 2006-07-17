@@ -27,7 +27,7 @@ for dir in "`find src -type d -name tests`"; do
     sourceName="`basename $base Test`"
     sourceFile="$dirpart/$sourceName"
     if test -f "$sourceFile.c"; then
-      TESTOBJS="$TESTOBJS $sourceName.o"
+      TESTOBJS="$TESTOBJS $sourceName.lo"
       TESTUNITOBJS="$TESTUNITOBJS $dirNoSrc/$base.o"
     fi
   done
