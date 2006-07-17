@@ -191,6 +191,12 @@ check:
 	+@cd src && ${MAKE_UTILS} check
 	@src/UnitRunner@EXEEXT@
 
+.PHONY: doc
+doc:
+	@rm -rf doc/html/
+	@doxygen Doxyfile
+
+
 wraith:	general
 	@echo ""
 	@echo "Making binary"
