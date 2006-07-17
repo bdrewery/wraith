@@ -94,7 +94,7 @@ class String {
 	/**
 	 * @brief Create a String from a given cstring with the given strlen.
 	 * @param cstring The null-terminated character array to create the object from.
-	 * @param slen The length of the given string.
+	 * @param slen The length of the given string to use.
 	 * @pre len > 0
 	 * @post A StringBuf has been initialized.
 	 * @post The buffer has been filled with the string (up to len characters).
@@ -214,10 +214,9 @@ class String {
          * @brief Appends given cstring to end of buffer.
          * @param string The cstring to be appended.
          * @param n How many characters to copy from the string.
-         * @param slen The length of the string to be appended.
          * @post The buffer is allocated.
          */
-        void append(const char *string, int n = -1, int slen = 0) { insert(length(), string, n, slen); };
+        void append(const char *string, int n = -1) { insert(length(), string, n); };
 
         /**
          * @brief Appends given string to the end of buffer
@@ -228,11 +227,11 @@ class String {
         void append(const String& string, int n = -1) { insert(length(), string, n); };
 
         void insert(int, const char);
-        void insert(int, const char *, int = -1, int = 0);
+        void insert(int, const char *, int = -1);
         void insert(int, const String &, int = -1);
 
         void replace(int, const char);
-        void replace(int, const char *, int = -1, int = 0);
+        void replace(int, const char *, int = -1);
         void replace(int, const String&, int = -1);
 
         /**
@@ -381,7 +380,7 @@ inline String& String::operator += (const String& string) {
 
 inline String& String::operator += (const int n) {
   int len = length() - n;
-  replace(0, &Ref->buf[n], len, len);
+  replace(0, &Ref->buf[n], len);
   Ref->len = len;
   return *this;
 }

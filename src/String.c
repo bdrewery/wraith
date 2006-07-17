@@ -128,23 +128,17 @@ void String::replace(int k, const char ch) {
  * @param string The cstring to be inserted.
  * @param k The index to insert at.
  * @param n Up to this many characters will be used from the string.
- * @param slen The length of the string to be inserted.
  * @post A buffer is allocated.
  * @post If the old buffer was too small, it is enlarged.
  * @post The string is inserted at the given index.
  */
-void String::insert(int k, const char *string, int n, int slen)
+void String::insert(int k, const char *string, int n)
 {
   if (n == 0) return;
   if (k && !hasIndex(k-1)) return;
   
-  if (slen == 0)
-    slen = strlen(string);
+  size_t slen = (n == -1) ? strlen(string) : (size_t) n;
 
-  if (n == -1 || n > slen)
-    n = slen;
-  slen -= slen - n;
-  
   AboutToModify(length() + slen);
   memmove(Ref->buf + k + slen, Ref->buf + k, length() - k);
   std::copy(string, string + slen, Ref->buf + k);
@@ -156,19 +150,13 @@ void String::insert(int k, const char *string, int n, int slen)
  * @param k The index to replace at.
  * @param string The cstring to replace with.
  * @param n How many characters to use from string.
- * @param slen The length of the string.
  */
-void String::replace(int k, const char *string, int n, int slen)
+void String::replace(int k, const char *string, int n)
 {
   if (n == 0) return;
   if (k && !hasIndex(k-1)) return;
 
-  if (slen == 0)
-    slen = strlen(string);
-  if (n == -1 || n > slen)
-    n = slen;
-  slen -= slen - n;
-
+  size_t slen = (n == -1) ? strlen(string) : (size_t) n;
   size_t newlen = k + slen;
   
   if (newlen >= length()) {
