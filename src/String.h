@@ -166,6 +166,14 @@ class String {
           return Ref->buf;
         }
 
+	/**
+	 * @brief Data accessor
+	 * @return Pointer to array of characters (not null-terminated).
+	*/
+        const char *data() {
+          return Ref->buf;
+        }
+
         /**
          * @brief Returns the character at the given index.
          * @return The character at the given index.
