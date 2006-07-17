@@ -90,6 +90,9 @@ void StringTest :: setTest (void)
   *b = *c;
   CPPUNIT_ASSERT(*b == *c);
   CPPUNIT_ASSERT(*b == "blah");
+  *b = *b;
+  CPPUNIT_ASSERT(*b == *c);
+  CPPUNIT_ASSERT(*b == "blah");
 }
 
 void StringTest :: c_strTest(void)
@@ -233,6 +236,13 @@ void StringTest :: incDecEqualTest(void)
   strcat(check, cstring); 
   strcat(check, cstring);
   CPPUNIT_ASSERT(*d == check);
+
+  *b += *a;
+  *c = *c + *a;
+
+  CPPUNIT_ASSERT(*b == "blahtblah");
+  CPPUNIT_ASSERT(*c == "blahtblah");
+  CPPUNIT_ASSERT(*b == *c);
 }
 
 /*
