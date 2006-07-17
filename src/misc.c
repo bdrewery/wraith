@@ -1281,4 +1281,3 @@ bool check_master_hash(const char *rand, const char *hash)
   }
   return 0;
 }
-
