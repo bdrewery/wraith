@@ -245,6 +245,15 @@ void StringTest :: incDecEqualTest(void)
   CPPUNIT_ASSERT(*b == *c);
 }
 
+void StringTest :: printfTest(void)
+{
+  int n = 506;
+  const char* s = "something";
+
+  a->printf("%s %d", s, n);
+  CPPUNIT_ASSERT(*a == "something 506");
+}
+
 /*
     a = new String();
     b = new String("blah");
@@ -255,3 +264,77 @@ void StringTest :: incDecEqualTest(void)
     g = new String('x');
     h = new String(35);
 */
+
+void StringTest :: encryptTest(void)
+{
+  b->encrypt(NULL);
+  CPPUNIT_ASSERT(*b == *c);
+  CPPUNIT_ASSERT(*b == "blah");
+  b->encrypt("");
+  CPPUNIT_ASSERT(*b == *c);
+  CPPUNIT_ASSERT(*b == "blah");
+
+  b->encrypt("doggie");
+  CPPUNIT_ASSERT(*b != *c);
+  CPPUNIT_ASSERT(*b != "blah");
+  String tmp = *b;
+  tmp.decrypt("horse");
+  CPPUNIT_ASSERT(tmp != *c);
+  CPPUNIT_ASSERT(tmp != "blah");
+  tmp.encrypt("horse");
+  CPPUNIT_ASSERT(tmp == *b);
+  tmp.decrypt("doggie");
+  CPPUNIT_ASSERT(tmp == "blah");
+  CPPUNIT_ASSERT(tmp == *c);
+  b->decrypt("doggie");
+  CPPUNIT_ASSERT(*b == *c);
+  CPPUNIT_ASSERT(*b == "blah");
+}
+
+void StringTest :: base64Test(void)
+{
+  b->base64Encode();
+  CPPUNIT_ASSERT(*b != *c);
+  CPPUNIT_ASSERT(*b != "blah");
+  CPPUNIT_ASSERT(*b == "MalVO...");
+  b->base64Decode();
+  CPPUNIT_ASSERT(*b == *c);
+  CPPUNIT_ASSERT(*b == "blah");
+
+  d->base64Encode();
+  d->base64Decode();
+  CPPUNIT_ASSERT(*d == cstring);
+
+  String eff = String(*f);
+  f->base64Encode();
+  f->base64Decode();
+  CPPUNIT_ASSERT(eff == *f);
+
+  const char *cs = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+  String tmp = String(cs);
+  tmp.base64Encode();
+  tmp.base64Decode();
+  CPPUNIT_ASSERT(tmp == cs);
+}
+
+void StringTest :: encryptBase64Test(void)
+{
+  b->encrypt("doggie");
+  b->base64Encode();
+  b->base64Decode();
+  b->decrypt("doggie");
+  CPPUNIT_ASSERT(*b == *c);
+
+  *a = "kGiq0kPEuB7A.3nAGG1D3E..";
+  a->decrypt("OeG3yxvQXHq0iw0olaG9mZE8QlmH6vn2");
+  a->base64Decode();
+
+  *b = "! uid 1000";
+  b->encrypt("OeG3yxvQXHq0iw0olaG9mZE8QlmH6vn2");
+  b->base64Encode();
+  CPPUNIT_ASSERT(*b == "kGiq0kPEuB7A.3nAGG1D3E..");
+  b->base64Decode();
+  b->decrypt("OeG3yxvQXHq0iw0olaG9mZE8QlmH6vn2");
+  CPPUNIT_ASSERT(*b == "! uid 1000");
+}

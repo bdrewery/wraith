@@ -1,6 +1,9 @@
 /* String.h
  *
  */
+//#ifndef _STRING_H
+//#define _STRING_H 1
+
 #include <iostream>
 //#include <vector>
 #include <sys/types.h>
@@ -70,10 +73,32 @@ class StringBuf {
  * @todo an updating hash as the copy is done.
  */
 class String {
+  private:
+	void doDetach() {
+          --Ref->n;
+          Ref = new StringBuf();
+        }
   protected:
         StringBuf *Ref;
-        void CheckDeallocRef();
-        void Detach();
+
+        /**
+         * @brief Free up our reference if we had the last one.
+         * @post The reference counter is decremented.
+         * @post If this was the last Reference, it is free'd
+         */
+        void CheckDeallocRef() {
+          /* Only deallocate the reference if we have the last pointer to it */
+          if (--Ref->n < 1) {
+            delete Ref;
+          }
+        }
+
+        void Detach() {
+          if (Ref->isShared()) {
+            doDetach();
+          } else
+            Ref->len = 0;
+        }
         void AboutToModify(size_t);
         ///This is set if the constructor was given a size.
   public:
@@ -243,6 +268,12 @@ class String {
             Ref->Reserve(newSize);
         };
 
+	void printf(const char*, ...);
+	const String encrypt(const char*);
+	const String decrypt(const char*);
+        const String base64Encode(void);
+        const String base64Decode(void);
+
 
         /* Operators */
 
@@ -327,26 +358,6 @@ inline const String String::operator -- (int) //Postfix
   String tmp(*this);
   --(*this);
   return tmp;
-}
-
-/**
- * @brief Free up our reference if we had the last one.
- * @post The reference counter is decremented.
- * @post If this was the last Reference, it is free'd
- */
-inline void String::CheckDeallocRef() {
-  /* Only deallocate the reference if we have the last pointer to it */
-  if (--Ref->n < 1) {
-    delete Ref;
-  }
-}
-
-inline void String::Detach() {
-  if (Ref->n > 1) {
-    --Ref->n;
-    Ref = new StringBuf();
-  } else
-    Ref->len = 0;
 }
 
 // Setters
@@ -454,7 +465,6 @@ inline std::ostream& operator << (std::ostream& os, const String& string) {
   for (const char *c = string.begin(); c != string.end(); ++c)
     os << *c;
   return os;
-  
   //return os << string.c_str();
 }
 
@@ -462,3 +472,4 @@ std::istream& operator >> (std::istream&, String&);
 std::istream& getline(std::istream&, String&);
 
 //std::ostream& operator << (std::ostream&, const std::vector<String>);
+//#endif /* !_STRING_H */

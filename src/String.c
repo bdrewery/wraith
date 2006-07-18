@@ -2,9 +2,12 @@
  *
  */
 #include "String.h"
+#include <stdarg.h>
 //#include <memory>
 //#include <iostream>
 //using namespace std;
+#include "crypto/aes_util.h"
+#include "base64.h"
 
 
 
@@ -48,8 +51,7 @@ void String::AboutToModify(size_t n) {
     const char *p = Ref->buf;
     size_t oldLength = length();
     size_t oldCapacity = capacity();
-    --Ref->n;
-    Ref = new StringBuf();
+    doDetach();
     Reserve( std::max(oldCapacity, n) ); //Will set capacity()/size
     std::copy(p, p + oldLength, Ref->buf);
     Ref->len = oldLength;    
@@ -332,3 +334,62 @@ ostream& operator << (ostream& os, const vector<String> list) {
   return os;
 }
 #endif /* experimental */
+
+void String::printf(const char* format, ...) {
+  char va_out[1024] = "";
+  va_list va;
+
+  va_start(va, format);
+  vsnprintf(va_out, sizeof(va_out), format, va);
+  va_end(va);
+
+  *this = va_out;
+}
+
+
+const String String::encrypt(const char* key) {
+  String old(*this);
+  if (!key || !key[0])
+    return old;
+
+  size_t len = length();
+
+  char *bdata = (char*) encrypt_binary(key, (unsigned char*) data(), &len);
+  Detach();
+  append(bdata, len);
+  free(bdata);
+  return old;
+}
+
+const String String::decrypt(const char* key) {
+  String old(*this);
+  if (!key || !key[0])
+    return old;
+
+  size_t len = length();
+  char *bdata = (char*) decrypt_binary(key, (unsigned char*) data(), &len);
+  Detach();
+  append(bdata, len);
+  free(bdata);
+  return old;
+}
+
+const String String::base64Encode(void) {
+  String old(*this);
+  size_t len = length();
+  char *p = b64enc((unsigned char*) data(), &len);
+  Detach();
+  append(p, len);
+  free(p);
+  return old;
+}
+
+const String String::base64Decode(void) {
+  String old(*this);
+  size_t len = length();
+  char *p = b64dec((unsigned char*) data(), &len);
+  Detach();
+  append(p, len);
+  free(p);
+  return old;
+}
