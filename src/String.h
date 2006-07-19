@@ -190,7 +190,7 @@ class String {
 	 * @brief Data accessor
 	 * @return Pointer to array of characters (not null-terminated).
 	*/
-        const char *data() {
+        const char *data() const {
           return Ref->buf;
         }
 
