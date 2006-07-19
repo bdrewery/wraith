@@ -347,27 +347,27 @@ void String::printf(const char* format, ...) {
 }
 
 
-const String String::encrypt(const char* key) {
+const String String::encrypt(String key) {
   String old(*this);
-  if (!key || !key[0])
+  if (!key)
     return old;
 
   size_t len = length();
 
-  char *bdata = (char*) encrypt_binary(key, (unsigned char*) data(), &len);
+  char *bdata = (char*) encrypt_binary(key.c_str(), (unsigned char*) data(), &len);
   Detach();
   append(bdata, len);
   free(bdata);
   return old;
 }
 
-const String String::decrypt(const char* key) {
+const String String::decrypt(String key) {
   String old(*this);
-  if (!key || !key[0])
+  if (!key)
     return old;
 
   size_t len = length();
-  char *bdata = (char*) decrypt_binary(key, (unsigned char*) data(), &len);
+  char *bdata = (char*) decrypt_binary(key.c_str(), (unsigned char*) data(), &len);
   Detach();
   append(bdata, len);
   free(bdata);

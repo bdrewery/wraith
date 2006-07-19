@@ -40,7 +40,6 @@ void StringTest :: lengthTest (void)
 
 void StringTest :: capacityTest (void)
 {
-  CPPUNIT_ASSERT(a->capacity() >= 0);
   CPPUNIT_ASSERT(b->capacity() >= 4);
   CPPUNIT_ASSERT_EQUAL(b->capacity(), c->capacity());
   CPPUNIT_ASSERT(d->capacity() >= strlen(cstring));
@@ -73,6 +72,9 @@ void StringTest :: equalTest (void)
   CPPUNIT_ASSERT (*g == 'x');
   CPPUNIT_ASSERT_EQUAL (*g, String("x"));
   CPPUNIT_ASSERT (*g == "x");
+  CPPUNIT_ASSERT(!(*b != *c));
+  CPPUNIT_ASSERT_EQUAL(true, !(*a));
+  CPPUNIT_ASSERT_EQUAL(false, !(*b));
 }
 
 void StringTest :: setTest (void)

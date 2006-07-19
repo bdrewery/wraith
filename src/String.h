@@ -24,17 +24,12 @@ class StringBuf {
   public:
         ~StringBuf() { FreeBuf(buf); };
         //static const size_t block_size() { return 16; };
-  private:
-        size_t len;
-        size_t size;
+        size_t len; //Length of string
+        size_t size; //Capacity of buffer
         char *buf;//start
-        unsigned short n;
+        unsigned short n; //References
         char sbuf[16];
     
-        friend class String;
-        friend class StringBuffer;
-        friend class Stream;
-        
         StringBuf() : len(0), size(0), buf(NULL), n(1) {};
         void Reserve(size_t);
         /**
@@ -60,7 +55,7 @@ class StringBuf {
 
         ///Return if the buffer is shared
         bool isShared() const { return n > 1; };
-
+private:
         // No copying allowed
         StringBuf(const StringBuf&); ///<Block implicit copy constructor
         StringBuf& operator=(const StringBuf&); ///<Block implicit copy constructor
@@ -106,7 +101,7 @@ class String {
         /* Constructors */
         String() : Ref(new StringBuf()) {};
 
-	String(const String &string) : Ref(string.Ref) { ++Ref->n; };
+	String(const String& string) : Ref(string.Ref) { ++Ref->n; };
 	/**
 	 * @brief Create a String from a given cstring.
 	 * @param cstring The null-terminated character array to create the object from.
@@ -114,7 +109,7 @@ class String {
 	 * @post The buffer has been filled with the string.
 	 * @test String test("Some string");
 	*/
-	String(const char *cstring) : Ref(new StringBuf()) { append(cstring); };
+	String(const char *cstring) : Ref(new StringBuf()) { if (cstring) append(cstring); };
 
 	/**
 	 * @brief Create a String from a given cstring with the given strlen.
@@ -253,7 +248,7 @@ class String {
 
         void insert(int, const char);
         void insert(int, const char *, int = -1);
-        void insert(int, const String &, int = -1);
+        void insert(int, const String&, int = -1);
 
         void replace(int, const char);
         void replace(int, const char *, int = -1);
@@ -268,9 +263,9 @@ class String {
             Ref->Reserve(newSize);
         };
 
-	void printf(const char*, ...);
-	const String encrypt(const char*);
-	const String decrypt(const char*);
+	virtual void printf(const char*, ...);
+	const String encrypt(String);
+	const String decrypt(String);
         const String base64Encode(void);
         const String base64Decode(void);
 
@@ -281,6 +276,8 @@ class String {
          * @sa c_str()
          */
         const char* operator * () { return c_str(); };
+
+        bool operator ! () const { return length() == 0; };
 
         /**
          * @sa charAt()
