@@ -27,6 +27,7 @@
 #include "crypt.h"
 #include "core_binds.h"
 #include "socket.h"
+#include "EncryptedStream.h"
 
 bool             noshare = 1;		/* don't send out to sharebots	    */
 struct userrec	*userlist = NULL;	/* user records are stored here	    */
@@ -331,14 +332,13 @@ int u_pass_match(struct userrec *u, char *in)
   return 0;
 }
 
-bool write_user(struct userrec *u, FILE * f, int idx)
+static void write_user(const struct userrec *u, Stream& stream, int idx)
 {
   char s[181] = "";
   struct flag_record fr = {FR_GLOBAL, u->flags, 0, 0 };
 
   build_flags(s, &fr, NULL);
-  if (lfprintf(f, "%s%-10s - %-24s\n", u->bot ? "-" : "", u->handle, s) == EOF)
-    return 0;
+  stream.printf("%s%-10s - %-24s\n", u->bot ? "-" : "", u->handle, s);
 
   struct chanset_t *cst = NULL;
 
@@ -352,8 +352,7 @@ bool write_user(struct userrec *u, FILE * f, int idx)
       fr.match = FR_CHAN;
       fr.chan = ch->flags;
       build_flags(s, &fr, NULL);
-      if (lfprintf(f, "! %-20s %lu %-10s %s\n", ch->channel, ch->laston, s, ch->info ? ch->info : "") == EOF)
-        return 0;
+      stream.printf("! %-20s %lu %-10s %s\n", ch->channel, ch->laston, s, ch->info ? ch->info : "");
     }
   }
   for (struct user_entry *ue = u->entries; ue; ue = ue->next) {
@@ -367,10 +366,9 @@ bool write_user(struct userrec *u, FILE * f, int idx)
     } else
 #endif
     if (ue->type)
-      if (conf.bot->hub && !ue->type->write_userfile(f, u, ue, idx))
-	return 0;
+      if (conf.bot->hub)
+        ue->type->write_userfile(stream, u, ue, idx);
   }
-  return 1;
 }
 
 static int sort_compare(struct userrec *a, struct userrec *b)
@@ -440,6 +438,19 @@ static void sort_userlist()
   }
 }
 
+void stream_writeuserfile(Stream& stream, const struct userrec *bu, int idx) {
+  time_t tt = now;
+  char s1[81] = "";
+
+  strcpy(s1, ctime(&tt));
+
+  stream.printf("#4v: %s -- %s -- written %s", ver, conf.bot->nick, s1);
+  channels_writeuserfile(stream);
+
+  for (const struct userrec *u = bu; u; u = u->next)
+    write_user(u, stream, -1);
+}
+
 /* Rewrite the entire user file. Call USERFILE hook as well, probably
  * causing the channel file to be rewritten as well.
  */
@@ -463,23 +474,20 @@ int write_userfile(int idx)
     return 2;
   }
 
-  char s1[81] = "", backup[DIRMAX] = "";
-  bool ok = 1;
+  char backup[DIRMAX] = "";
 
   if (idx >= 0)
     dprintf(idx, "Saving userfile...\n");
+
   if (sort_users)
     sort_userlist();
 
-  time_t tt = now;
 
-  strcpy(s1, ctime(&tt));
-  lfprintf(f, "#4v: %s -- %s -- written %s", ver, conf.bot->nick, s1);
-  channels_writeuserfile(f);
   putlog(LOG_DEBUG, "@", "Writing user entries.");
-  for (struct userrec *u = userlist; u && ok; u = u->next)
-    ok = write_user(u, f, -1);
-  if (!ok || fflush(f)) {
+
+  EncryptedStream stream(settings.salt1);
+  stream_writeuserfile(stream, userlist, idx);
+  if ((fwrite(stream.data(), 1, stream.length(), f) != stream.length()) || fflush(f)) {
     putlog(LOG_MISC, "*", "ERROR writing user file. (%s)", strerror(ferror(f)));
     fclose(f);
     free(new_userfile);

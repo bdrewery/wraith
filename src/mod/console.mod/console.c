@@ -19,6 +19,7 @@
 #include "src/users.h"
 #include "src/misc.h"
 #include "src/core_binds.h"
+#include "src/Stream.h"
 
 static int console_autosave = 1;
 static int info_party = 1;
@@ -82,20 +83,18 @@ console_kill(struct user_entry *e)
   return 1;
 }
 
-static bool
-console_write_userfile(FILE * f, struct userrec *u, struct user_entry *e, int idx)
+static void
+console_write_userfile(Stream& stream, const struct userrec *u, const struct user_entry *e, int idx)
 {
   if (u->bot)
-    return 1;
+    return;
 
   struct console_info *i = (struct console_info *) e->u.extra;
 
-  if (lfprintf(f, "--CONSOLE %s %s %s %d %d %d %d %d %d %d %d\n",
+  stream.printf("--CONSOLE %s %s %s %d %d %d %d %d %d %d %d\n",
                i->channel, masktype(i->conflags),
                stripmasktype(i->stripflags), i->echoflags,
-               i->page, i->conchan, i->color, i->banner, i->channels, i->bots, i->whom) == EOF)
-    return 0;
-  return 1;
+               i->page, i->conchan, i->color, i->banner, i->channels, i->bots, i->whom);
 }
 
 static bool
