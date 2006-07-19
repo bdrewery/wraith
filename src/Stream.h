@@ -38,7 +38,9 @@ class Stream : public String {
         void truncate() { Ref->len = pos; };
 
         int seek(int, int);
-        void puts(String);
+        void puts(const String);
+        void puts(const char*, size_t);
         virtual int gets(char *, size_t);
+        int loadFile(const char*);
 };
 #endif

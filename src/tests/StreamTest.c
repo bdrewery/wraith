@@ -157,3 +157,31 @@ void StreamTest :: printfTest (void)
   }
   CPPUNIT_ASSERT_EQUAL(13, x);
 }
+
+void StreamTest :: loadFileTest (void)
+{
+  const char *file = "Makefile.in";
+
+  FILE *f = NULL;
+  f = fopen(file, "rb");
+  if (f == NULL)
+    return;
+
+  fseek(f, 0, SEEK_END);
+  size_t size = ftell(f);
+  fseek(f, 0, SEEK_SET);
+
+  char *buffer = (char*) malloc(size + 1);
+  fread(buffer, 1, size, f);
+  buffer[size] = 0;
+
+  a->loadFile(file);
+
+  CPPUNIT_ASSERT_EQUAL(size, a->length());
+  CPPUNIT_ASSERT(*a == buffer);
+
+//  char buf[1024];
+//  while (a->tell() < a->length()) {
+//    a->gets(buf, sizeof(buf));
+//  }
+}

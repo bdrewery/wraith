@@ -37,10 +37,14 @@ int Stream::seek (int offset, int whence) {
   return newpos;
 }
 
-void Stream::puts (String string) {
-  Reserve(tell() + string.length());
-  replace(tell(), string);
-  pos += string.length();
+void Stream::puts (const String string) {
+  puts(string.data(), string.length());
+}
+
+void Stream::puts (const char* string, size_t len) {
+  replace(tell(), string, len);
+  pos += len;
+  /* WTF **/
   Ref->size = (capacity() < tell()) ? tell() : capacity();
 }
 
@@ -68,8 +72,31 @@ void Stream::printf (const char* format, ...)
   va_list va;
 
   va_start(va, format);
-  vsnprintf(va_out, sizeof(va_out), format, va);
+  size_t len = vsnprintf(va_out, sizeof(va_out), format, va);
   va_end(va);
 
-  puts(va_out);
+  puts(va_out, len);
+}
+
+int Stream::loadFile(const char* file)
+{
+  FILE *f = NULL;
+  f = fopen(file, "rb");
+  if (f == NULL)
+    return 0;
+
+  fseek(f, 0, SEEK_END);
+  size_t size = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  Reserve(size);
+
+  size_t len = 0;
+  char buf[STREAM_BLOCKSIZE + 1];
+
+  while ((len = fread(buf, 1, sizeof(buf) - 1, f)))
+    puts(buf, len);
+
+  fclose(f);
+  seek(0, SEEK_SET);
+  return 1;
 }
