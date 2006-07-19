@@ -9,7 +9,6 @@ class EncryptedStream : public Stream {
         String key;
 
   protected:
-        virtual void _puts(String);
 
   public:
         EncryptedStream(const char* keyStr) : Stream(), key(String(keyStr)) {};
@@ -17,5 +16,7 @@ class EncryptedStream : public Stream {
         EncryptedStream(EncryptedStream& stream) : Stream(stream), key(stream.key) {};
 
         virtual int gets(char *, size_t);
+	virtual void printf(const char*, ...);
+
 };
 #endif

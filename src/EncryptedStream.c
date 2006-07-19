@@ -21,8 +21,18 @@ int EncryptedStream::gets (char *data, size_t maxSize) {
   return size;
 }
 
-void EncryptedStream::_puts (String string)
+void EncryptedStream::printf (const char* format, ...)
 {
+  char va_out[1024] = "";
+  va_list va;
+  size_t len = 0;
+
+  va_start(va, format);
+  len = vsnprintf(va_out, sizeof(va_out), format, va);
+  va_end(va);
+
+  String string(va_out, len);
+
   if (key.length()) {
     if (string[string.length() - 1] == '\n')
       --string;
@@ -30,6 +40,7 @@ void EncryptedStream::_puts (String string)
     string.base64Encode();
     string += '\n';
   }
-  Stream::_puts(string);
+
+  Stream::puts(string);
 }
 

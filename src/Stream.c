@@ -37,7 +37,7 @@ int Stream::seek (int offset, int whence) {
   return newpos;
 }
 
-void Stream::_puts (String string) {
+void Stream::puts (String string) {
   Reserve(tell() + string.length());
   replace(tell(), string);
   pos += string.length();

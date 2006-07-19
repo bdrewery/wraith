@@ -14,7 +14,6 @@
 class Stream : public String {
   protected:
         unsigned int pos;
-        virtual void _puts(String);
 
   public:
         Stream() : String(), pos(0) {};
@@ -24,7 +23,7 @@ class Stream : public String {
         Stream(const char ch) : String(ch), pos(0) {};
         Stream(const int newSize) : String(), pos(0) { if (newSize > 0) Reserve(newSize); };
 
-        void printf(const char*, ...);
+        virtual void printf(const char*, ...);
         virtual void Reserve(size_t);
 
         /**
@@ -39,7 +38,7 @@ class Stream : public String {
         void truncate() { Ref->len = pos; };
 
         int seek(int, int);
-        void puts(String string) { _puts(string); };
+        void puts(String);
         virtual int gets(char *, size_t);
 };
 #endif
