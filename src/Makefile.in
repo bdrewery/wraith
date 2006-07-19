@@ -49,6 +49,8 @@ OBJS = auth.o \
 	shell.o \
 	socket.o \
 	sprintf.o \
+	Stream.o \
+	EncryptedStream.o \
 	String.o \
 	traffic.o \
 	userent.o \
@@ -109,13 +111,13 @@ stringfix: stringfix.c common.h ../config.h eggdrop.h
 
 $(EGGEXEC): stringfix ../$(EGGEXEC)
 
-TESTOBJS = @TESTOBJS@
+TESTOBJS = @TESTOBJS@ base64.lo
 
 TESTUNITOBJS = @TESTUNITOBJS@
 
-check: UnitRunner.lo $(TESTOBJS)
+check: UnitRunner.lo $(TESTOBJS) mycrypto compatability
 	+@cd tests && $(MAKE_GENERIC) units
-	$(LD) @CPPUNIT_LIBS@ -o UnitRunner@EXEEXT@ UnitRunner.lo $(TESTOBJS) $(TESTUNITOBJS)
+	$(LD) @CPPUNIT_LIBS@ -o UnitRunner@EXEEXT@ UnitRunner.lo $(TESTOBJS) $(TESTUNITOBJS) crypto/*.o compat/*.o
 
 clean:
 	@rm -f .depend *.o *~ _*.c *.lo
