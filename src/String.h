@@ -1,8 +1,8 @@
 /* String.h
  *
  */
-//#ifndef _STRING_H
-//#define _STRING_H 1
+#ifndef _mSTRING_H
+#define _mSTRING_H 1
 
 #include <iostream>
 //#include <vector>
@@ -469,4 +469,4 @@ std::istream& operator >> (std::istream&, String&);
 std::istream& getline(std::istream&, String&);
 
 //std::ostream& operator << (std::ostream&, const std::vector<String>);
-//#endif /* !_STRING_H */
+#endif /* !_mSTRING_H */
