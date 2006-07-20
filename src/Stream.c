@@ -83,7 +83,7 @@ int Stream::loadFile(const char* file)
   FILE *f = NULL;
   f = fopen(file, "rb");
   if (f == NULL)
-    return 0;
+    return 1;
 
   fseek(f, 0, SEEK_END);
   size_t size = ftell(f);
@@ -98,5 +98,5 @@ int Stream::loadFile(const char* file)
 
   fclose(f);
   seek(0, SEEK_SET);
-  return 1;
+  return 0;
 }

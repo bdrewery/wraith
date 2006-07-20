@@ -566,13 +566,16 @@ void backup_userfile()
 int readuserfile(const char *file, struct userrec **ret)
 {
   EncryptedStream stream(settings.salt1);
-  stream.loadFile(file);
+  if (stream.loadFile(file))
+    return 0;
   int res = stream_readuserfile(stream, ret);
   return res;
 }
 
 int stream_readuserfile(Stream& stream, struct userrec **ret)
 {
+  if (!stream)
+    return 0;
   char *p = NULL, buf[1024] = "", lasthand[512] = "", *attr = NULL, *pass = NULL;
   char *code = NULL, s1[1024] = "", *s = buf, ignored[512] = "";
   struct userrec *bu = NULL, *u = NULL;
