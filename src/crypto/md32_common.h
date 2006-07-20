@@ -24,7 +24,7 @@
  *			...
  *			HASH_LONG	Nl,Nh;
  *			HASH_LONG	data[HASH_LBLOCK];
- *			int		num;
+ *			unsigned		num;
  *			...
  *			} HASH_CTX;
  * HASH_UPDATE
@@ -159,7 +159,7 @@
 				: "cc");		\
 			   ret;				\
 			})
-#  elif defined(__powerpc) || defined(__ppc)
+#  elif defined(__powerpc) || defined(__ppc__) || defined(__powerpc64__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"rlwinm %0,%1,%2,0,31"	\
@@ -170,38 +170,6 @@
 #  endif
 # endif
 
-/*
- * Engage compiler specific "fetch in reverse byte order"
- * intrinsic function if available.
- */
-# if defined(__GNUC__) && __GNUC__>=2
-  /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
-#  if (defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)) && !defined(I386_ONLY)
-#   define BE_FETCH32(a)	({ register unsigned int l=(a);\
-				asm (			\
-				"bswapl %0"		\
-				: "=r"(l) : "0"(l));	\
-			  l;				\
-			})
-#  elif defined(__powerpc)
-#   define LE_FETCH32(a)	({ register unsigned int l;	\
-				asm (			\
-				"lwbrx %0,0,%1"		\
-				: "=r"(l)		\
-				: "r"(a));		\
-			   l;				\
-			})
-
-#  elif defined(__sparc)
-#  define LE_FETCH32(a)	({ register unsigned int l;		\
-				asm (				\
-				"lda [%1]#ASI_PRIMARY_LITTLE,%0"\
-				: "=r"(l)			\
-				: "r"(a));			\
-			   l;					\
-			})
-#  endif
-# endif
 #endif /* PEDANTIC */
 
 #if HASH_LONG_LOG2==2	/* Engage only if sizeof(HASH_LONG)== 4 */
@@ -253,27 +221,11 @@
 #    if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED) && HASH_LONG_LOG2==2
 #      define HASH_BLOCK_DATA_ORDER_ALIGNED	HASH_BLOCK_HOST_ORDER
 #    endif
-#  elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-#    ifndef HOST_FETCH32
-#      ifdef LE_FETCH32
-#        define HOST_FETCH32(p,l)	LE_FETCH32(p)
-#      elif defined(REVERSE_FETCH32)
-#        define HOST_FETCH32(p,l)	REVERSE_FETCH32(p,l)
-#      endif
-#    endif
 #  endif
 #elif defined(L_ENDIAN)
 #  if defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 #    if !defined(HASH_BLOCK_DATA_ORDER_ALIGNED) && HASH_LONG_LOG2==2
 #      define HASH_BLOCK_DATA_ORDER_ALIGNED	HASH_BLOCK_HOST_ORDER
-#    endif
-#  elif defined(DATA_ORDER_IS_BIG_ENDIAN)
-#    ifndef HOST_FETCH32
-#      ifdef BE_FETCH32
-#        define HOST_FETCH32(p,l)	BE_FETCH32(p)
-#      elif defined(REVERSE_FETCH32)
-#        define HOST_FETCH32(p,l)	REVERSE_FETCH32(p,l)
-#      endif
 #    endif
 #  endif
 #endif
@@ -286,11 +238,33 @@
 
 #if defined(DATA_ORDER_IS_BIG_ENDIAN)
 
+#ifndef PEDANTIC
+# if defined(__GNUC__) && __GNUC__>=2
+#  if ((defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)) || \
+      (defined(__x86_64) || defined(__x86_64__))
+    /*
+     * This gives ~30-40% performance improvement in SHA-256 compiled
+     * with gcc [on P4]. Well, first macro to be frank. We can pull
+     * this trick on x86* platforms only, because these CPUs can fetch
+     * unaligned data without raising an exception.
+     */
+#   define HOST_c2l(c,l)       ({ unsigned int r=*((const unsigned int *)(c)); \
+                                  asm ("bswapl %0":"=r"(r):"0"(r));    \
+                                  (c)+=4; (l)=r;                       })
+#   define HOST_l2c(l,c)       ({ unsigned int r=(l);                  \
+                                  asm ("bswapl %0":"=r"(r):"0"(r));    \
+                                  *((unsigned int *)(c))=r; (c)+=4; r; })
+#  endif
+# endif
+#endif
+
+#ifndef HOST_c2l
 #define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))<<24),		\
 			 l|=(((unsigned long)(*((c)++)))<<16),		\
 			 l|=(((unsigned long)(*((c)++)))<< 8),		\
 			 l|=(((unsigned long)(*((c)++)))    ),		\
 			 l)
+#endif
 #define HOST_p_c2l(c,l,n)	{					\
 			switch (n) {					\
 			case 0: l =((unsigned long)(*((c)++)))<<24;	\
@@ -314,19 +288,31 @@
 			case 2: l|=((unsigned long)(*(--(c))))<<16;	\
 			case 1: l|=((unsigned long)(*(--(c))))<<24;	\
 				} }
+#ifndef HOST_l2c
 #define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>>16)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)    )&0xff),	\
 			 l)
+#endif
 
 #elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 
+#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+# ifndef B_ENDIAN
+   /* See comment in DATA_ORDER_IS_BIG_ENDIAN section. */
+#  define HOST_c2l(c,l)        ((l)=*((const unsigned int *)(c)), (c)+=4, l)
+#  define HOST_l2c(l,c)        (*((unsigned int *)(c))=(l), (c)+=4, l)
+# endif
+#endif
+
+#ifndef HOST_c2l
 #define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ),		\
 			 l|=(((unsigned long)(*((c)++)))<< 8),		\
 			 l|=(((unsigned long)(*((c)++)))<<16),		\
 			 l|=(((unsigned long)(*((c)++)))<<24),		\
 			 l)
+#endif
 #define HOST_p_c2l(c,l,n)	{					\
 			switch (n) {					\
 			case 0: l =((unsigned long)(*((c)++)));		\
@@ -350,11 +336,13 @@
 			case 2: l|=((unsigned long)(*(--(c))))<< 8;	\
 			case 1: l|=((unsigned long)(*(--(c))));		\
 				} }
+#ifndef HOST_l2c
 #define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>>16)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>>24)&0xff),	\
 			 l)
+#endif
 
 #endif
 
@@ -362,21 +350,21 @@
  * Time for some action:-)
  */
 
-int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
+int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	{
 	const unsigned char *data = (const unsigned char *) data_;
 	register HASH_LONG * p;
-	register unsigned long l;
-	int sw,sc,ew,ec;
+	register HASH_LONG l;
+	size_t sw,sc,ew,ec;
 
 	if (len==0) return 1;
 
-	l=(c->Nl+(len<<3))&0xffffffffL;
+        l=(c->Nl+(((HASH_LONG)len)<<3))&0xffffffffUL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(len>>29);
+        c->Nh+=(len>>29);       /* might cause compiler warning on 16-bit */
 	c->Nl=l;
 
 	if (c->num != 0)
@@ -399,7 +387,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 			}
 		else
 			{
-			c->num+=len;
+			c->num+=(unsigned int)len;
 			if ((sc+len) < 4) /* ugly, add char's to a word */
 				{
 				l=p[sw]; HOST_p_c2l_p(data,l,sc,len); p[sw]=l;
@@ -433,10 +421,10 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 		 * Note that HASH_BLOCK_DATA_ORDER_ALIGNED gets defined
 		 * only if sizeof(HASH_LONG)==4.
 		 */
-		if ((((unsigned long)data)%4) == 0)
+                if ((((size_t)data)%4) == 0)
 			{
 			/* data is properly aligned so that we can cast it: */
-			HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,sw);
+                        HASH_BLOCK_DATA_ORDER_ALIGNED (c,(const HASH_LONG *)data,sw);
 			sw*=HASH_CBLOCK;
 			data+=sw;
 			len-=sw;
@@ -482,9 +470,9 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 	{
 #if defined(HASH_BLOCK_DATA_ORDER_ALIGNED)
-	if ((((unsigned long)data)%4) == 0)
+        if ((((size_t)data)%4) == 0)
 		/* data is properly aligned so that we can cast it: */
-		HASH_BLOCK_DATA_ORDER_ALIGNED (c,(HASH_LONG *)data,1);
+                HASH_BLOCK_DATA_ORDER_ALIGNED (c,(const HASH_LONG *)data,1);
 	else
 #if !defined(HASH_BLOCK_DATA_ORDER)
 		{

@@ -9,6 +9,17 @@
 #ifndef _MD5_H
 #define _MD5_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+/*
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! MD5_LONG has to be at least 32 bits wide. If it's wider, then !
+ * ! MD5_LONG_LOG2 has to be defined along.                       !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+
 #if defined(OPENSSL_SYS_WIN16) || defined(__LP32__)
 #define MD5_LONG unsigned long
 #elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
@@ -34,11 +45,11 @@ typedef struct MD5state_st
         MD5_LONG A,B,C,D;
         MD5_LONG Nl,Nh;
         MD5_LONG data[MD5_LBLOCK];
-        int num;
+        unsigned int num;
         } MD5_CTX;
 
 int MD5_Init(MD5_CTX *c);
-int MD5_Update(MD5_CTX *c, const void *data, unsigned long len);
+int MD5_Update(MD5_CTX *c, const void *data, size_t len);
 int MD5_Final(unsigned char *md, MD5_CTX *c);
 //unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md);
 void MD5_Transform(MD5_CTX *c, const unsigned char *b);

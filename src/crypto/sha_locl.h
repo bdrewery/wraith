@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "sha.h"
 
 #ifndef SHA_LONG_LOG2
@@ -46,15 +50,22 @@
 
 # ifdef SHA1_ASM
 #  if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#   if !defined(B_ENDIAN)
 #   define sha1_block_host_order		sha1_block_asm_host_order
 #   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
 #   define sha1_block_data_order		sha1_block_asm_data_order
 #   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
 #   define HASH_BLOCK_DATA_ORDER_ALIGNED	sha1_block_asm_data_order
 #  endif
+#  elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#   define sha1_block_host_order               sha1_block_asm_host_order
+#   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
+#   define sha1_block_data_order               sha1_block_asm_data_order
+#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
+#  endif
 # endif
-  void sha1_block_host_order (SHA_CTX *c, const void *p,int num);
-  void sha1_block_data_order (SHA_CTX *c, const void *p,int num);
+  void sha1_block_host_order (SHA_CTX *c, const void *p, size_t num);
+  void sha1_block_data_order (SHA_CTX *c, const void *p, size_t num);
 
 #else
 # error "Either SHA_0 or SHA_1 must be defined."
@@ -151,7 +162,7 @@ int HASH_INIT (SHA_CTX *c)
 #endif
 
 #ifndef DONT_IMPLEMENT_BLOCK_HOST_ORDER
-void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
+void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, size_t num)
 	{
 	const SHA_LONG *W = (SHA_LONG *) d;
 	register unsigned MD32_REG_T A,B,C,D,E,T;
@@ -262,7 +273,7 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 	c->h3=(c->h3+B)&0xffffffffL;
 	c->h4=(c->h4+C)&0xffffffffL;
 
-	if (--num <= 0) break;
+	if (--num == 0) break;
 
 	A=c->h0;
 	B=c->h1;
@@ -276,7 +287,7 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 #endif
 
 #ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
-void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
+void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data = (const unsigned char *) p;
 	register unsigned MD32_REG_T A,B,C,D,E,T,l;
@@ -389,7 +400,7 @@ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
 	c->h3=(c->h3+B)&0xffffffffL;
 	c->h4=(c->h4+C)&0xffffffffL;
 
-	if (--num <= 0) break;
+	if (--num == 0) break;
 
 	A=c->h0;
 	B=c->h1;
