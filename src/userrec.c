@@ -445,11 +445,11 @@ void stream_writeuserfile(Stream& stream, const struct userrec *bu, int idx) {
 
   strcpy(s1, ctime(&tt));
 
-  stream.printf("#4v: %s -- %s -- written %s", ver, conf.bot->nick, s1);
+  stream.printf("#4v: %s -- %s -- written %s\n", ver, conf.bot->nick, s1);
   channels_writeuserfile(stream);
 
   for (const struct userrec *u = bu; u; u = u->next)
-    write_user(u, stream, -1);
+    write_user(u, stream, idx);
 }
 
 /* Rewrite the entire user file. Call USERFILE hook as well, probably
