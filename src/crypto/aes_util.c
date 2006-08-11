@@ -36,7 +36,7 @@ encrypt_binary(const char *keydata, unsigned char *in, size_t *inlen)
     AES_set_encrypt_key((const unsigned char *) key, CRYPT_KEYBITS, &e_key);
     /* Now loop through the blocks and crypt them */
     blocks = len / CRYPT_BLOCKSIZE;
-    for (block = blocks - 1; block >= 0; block--)
+    for (block = blocks - 1; block >= 0; --block)
       AES_encrypt(&out[block * CRYPT_BLOCKSIZE], &out[block * CRYPT_BLOCKSIZE], &e_key);
   }
   out[len] = 0;
@@ -50,7 +50,6 @@ decrypt_binary(const char *keydata, unsigned char *in, size_t *len)
   unsigned char *out = NULL;
 
   *len -= *len % CRYPT_BLOCKSIZE;
-
   out = (unsigned char *) my_calloc(1, *len + 1);
   egg_memcpy(out, in, *len);
 
@@ -62,14 +61,15 @@ decrypt_binary(const char *keydata, unsigned char *in, size_t *len)
 
     strlcpy(key, keydata, sizeof(key));
     AES_set_decrypt_key((const unsigned char *) key, CRYPT_KEYBITS, &d_key);
-    /* Now loop through the blocks and crypt them */
+    /* Now loop through the blocks and decrypt them */
     blocks = *len / CRYPT_BLOCKSIZE;
 
-    for (block = blocks - 1; block >= 0; block--)
+    for (block = blocks - 1; block >= 0; --block)
       AES_decrypt(&out[block * CRYPT_BLOCKSIZE], &out[block * CRYPT_BLOCKSIZE], &d_key);
   }
 
   *len = strlen((char*) out);
+  out[*len] = 0;
   return out;
 }
 
