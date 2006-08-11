@@ -29,6 +29,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Optimized the cookie checking functions.
 * cmd_swhois is now -|- and hides all restricted information, channels; see 'help swhois'.
 * Fixed countless buffer overflows. (fixes #226)
+* Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 
 1.2.11
 * Fixed typo in help for .set
