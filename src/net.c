@@ -1222,40 +1222,52 @@ static int sockread(char *s, int *len)
 
 int sockgets(char *s, int *len)
 {
-  char xx[SGRAB + 4] = "", *p = NULL, *px = NULL;
+  char *p = NULL, *px = NULL;
   int ret;
+  size_t inlen = 0, plen = 0;
 
   for (int i = 0; i < MAXSOCKS; i++) {
     /* Check for stored-up data waiting to be processed */
     if (!(socklist[i].flags & SOCK_UNUSED) && !(socklist[i].flags & SOCK_BUFFER) && (socklist[i].inbuf != NULL)) {
       if (!(socklist[i].flags & SOCK_BINARY)) {
+        inlen = socklist[i].inbuflen;
 	/* look for \r too cos windows can't follow RFCs */
 	p = strchr(socklist[i].inbuf, '\n');
 	if (p == NULL)
 	  p = strchr(socklist[i].inbuf, '\r');
 	if (p != NULL) {
 	  *p = 0;
-	  if (strlen(socklist[i].inbuf) > SGRAB)
-	    socklist[i].inbuf[SGRAB] = 0;
-	  strcpy(s, socklist[i].inbuf);
-	  px = (char *) my_calloc(1, strlen(p + 1) + 1);
-	  strcpy(px, p + 1);
+          inlen = p - socklist[i].inbuf;
+          plen = socklist[i].inbuflen - inlen - 1;
+
+	  if (inlen > SGRAB) {
+            inlen = SGRAB;
+	    socklist[i].inbuf[inlen] = 0;
+          }
+	  strlcpy(s, socklist[i].inbuf, inlen + 1);
+	  px = (char *) my_calloc(1, plen + 1);
+	  strlcpy(px, p + 1, plen + 1);
 	  free(socklist[i].inbuf);
-	  if (px[0])
+	  if (px[0]) {
 	    socklist[i].inbuf = px;
-	  else {
+            socklist[i].inbuflen = plen;
+          } else {
 	    free(px);
 	    socklist[i].inbuf = NULL;
+            socklist[i].inbuflen = 0;
 	  }
+
+          *len = inlen;
 	  /* Strip CR if this was CR/LF combo */
-	  if (s[strlen(s) - 1] == '\r')
-	    s[strlen(s) - 1] = 0;
+	  if (s[*len - 1] == '\r') {
+	    s[*len - 1] = 0;
+            --(*len);
+          }
 
-          if (s[0] && socklist[i].encstatus)
+          if (s[0] && socklist[i].encstatus) {
             link_read(i, s, (size_t *) len);
-            
-          *len = strlen(s);
-
+            *len = strlen(s);
+          }
 	  return socklist[i].sock;
 	}
       } else {
@@ -1287,8 +1299,11 @@ int sockgets(char *s, int *len)
     }
   }
   /* No pent-up data of any worth -- down to business */
+  char xx[SGRAB + 4] = "";
+
   *len = 0;
   ret = sockread(xx, len);
+  //xx now contains read() data...
   if (ret < 0) {
     s[0] = 0;
     return ret;
@@ -1327,22 +1342,40 @@ int sockgets(char *s, int *len)
   /* Might be necessary to prepend stored-up data! */
   if (socklist[ret].inbuf != NULL) {
     p = socklist[ret].inbuf;
-    socklist[ret].inbuf = (char *) my_calloc(1, strlen(p) + strlen(xx) + 1);
-    strcpy(socklist[ret].inbuf, p);
-    strcat(socklist[ret].inbuf, xx);
+//    plen = strlen(p);
+    plen = socklist[ret].inbuflen;
+//    inlen = plen + *len;
+//    socklist[ret].inbuflen = inlen;
+//    socklist[ret].inbuf = (char *) my_calloc(1, inlen + 1);
+    socklist[ret].inbuflen += *len;
+    socklist[ret].inbuf = (char *) my_calloc(1, socklist[ret].inbuflen + 1);
+    strlcpy(socklist[ret].inbuf, p, plen + 1);
+    strlcpy(socklist[ret].inbuf + plen, xx, *len + 1);
+    //inbuf now has 'p' pre-pended to 'xx'
     free(p);
-    if (strlen(socklist[ret].inbuf) < (SGRAB + 2)) {
-      strcpy(xx, socklist[ret].inbuf);
+    if (socklist[ret].inbuflen < (SGRAB + 2)) {
+//      *len = inlen;
+      *len = socklist[ret].inbuflen;
+//      strlcpy(xx, socklist[ret].inbuf, *len + 1);
+      strlcpy(xx, socklist[ret].inbuf, socklist[ret].inbuflen + 1);
       free(socklist[ret].inbuf);
       socklist[ret].inbuf = NULL;
       socklist[ret].inbuflen = 0;
     } else {
+      /* We queued over our blocksize SGRAB into the buffer ... */
+   
+      /* Save older buffer as 'p' */
       p = socklist[ret].inbuf;
-      socklist[ret].inbuflen = strlen(p) - SGRAB;
+
+      /* Make a new buffer holding the remaining old buffer after copying SGRAB bytes from the beginning of that.. */
+//      socklist[ret].inbuflen = inlen - SGRAB;
+      socklist[ret].inbuflen -= SGRAB;
       socklist[ret].inbuf = (char *) my_calloc(1, socklist[ret].inbuflen + 1); 
-      strcpy(socklist[ret].inbuf, p + SGRAB);
+      strlcpy(socklist[ret].inbuf, p + SGRAB, socklist[ret].inbuflen + 1);
+      /* Now copy out the first SGRAB bytes from the old buffer ... */
       *(p + SGRAB) = 0;
-      strcpy(xx, p);
+      *len = SGRAB;
+      strlcpy(xx, p, *len + 1);
       free(p);
       /* (leave the rest to be post-pended later) */
     }
@@ -1356,30 +1389,38 @@ int sockgets(char *s, int *len)
     p = strchr(xx, '\r');
   if (p != NULL) {
     *p = 0;
+    /* 'plen' is the len for 'xx' */
+    plen = *len - (p - xx) - 1;
+    *len = p - xx;
 /* FIXME: overlapping here */
 
-    strcpy(s, xx);
-    strcpy(xx, p + 1);
+    /* 's' will be processed */
+    strlcpy(s, xx, *len + 1);
+    /* 'xx' will be pre-pended back into the buffer */
+    strlcpy(xx, p + 1, plen + 1);
 
-/*    if (s[0] && strlen(s) && (s[strlen(s) - 1] == '\r')) */
-    if (s[strlen(s) - 1] == '\r')
-      s[strlen(s) - 1] = 0;
+    if (s[*len - 1] == '\r') {
+      s[*len - 1] = 0;
+      --(*len);
+    }
     data = 1;			/* DCC_CHAT may now need to process a blank line */
-/* NO! */
-/* if (!s[0]) strcpy(s," ");  */
   } else {
     s[0] = 0;
-    if (strlen(xx) >= SGRAB) {
+    if (*len >= SGRAB) {
       /* String is too long, so just insert fake \n */
-      strcpy(s, xx);
+      strlcpy(s, xx, *len + 1);
       xx[0] = 0;
+      plen = 0;
       data = 1;
-    }
+    } else
+      *len = 0;
   }
-  if (s[0] && socklist[ret].encstatus)
-    link_read(ret, s, (size_t *) len);
 
-  *len = strlen(s);
+  if (s[0] && socklist[ret].encstatus) {
+    link_read(ret, s, (size_t *) len);
+//FIXME: This should NOT be needed - link_read should handle *len
+    *len = strlen(s);
+  }
 
   /* Anything left that needs to be saved? */
   if (!xx[0]) {
@@ -1391,15 +1432,16 @@ int sockgets(char *s, int *len)
   /* Prepend old data back */
   if (socklist[ret].inbuf != NULL) {
     p = socklist[ret].inbuf;
-    socklist[ret].inbuflen = strlen(p) + strlen(xx);
+    inlen = socklist[ret].inbuflen;
+    socklist[ret].inbuflen = inlen + plen;
     socklist[ret].inbuf = (char *) my_calloc(1, socklist[ret].inbuflen + 1);
-    strcpy(socklist[ret].inbuf, xx);
-    strcat(socklist[ret].inbuf, p);
+    strlcpy(socklist[ret].inbuf, xx, plen + 1);
+    strlcpy(socklist[ret].inbuf + plen, p, inlen + 1);
     free(p);
   } else {
-    socklist[ret].inbuflen = strlen(xx);
+    socklist[ret].inbuflen = plen;
     socklist[ret].inbuf = (char *) my_calloc(1, socklist[ret].inbuflen + 1);
-    strcpy(socklist[ret].inbuf, xx);
+    strlcpy(socklist[ret].inbuf, xx, socklist[ret].inbuflen + 1);
   }
   if (data) {
     return socklist[ret].sock;
@@ -1435,7 +1477,8 @@ void tputs(register int z, char *s, size_t len)
 
       if (len && socklist[i].encstatus)
         s = link_write(i, s, &len);
-      
+      if (len != strlen(s)) {
+      }
       if (socklist[i].outbuf != NULL) {
 	/* Already queueing: just add it */
 	p = (char *) my_realloc(socklist[i].outbuf, socklist[i].outbuflen + len);
