@@ -701,7 +701,8 @@ got_ban(struct chanset_t *chan, Member *m, char *mask, char *isserver)
   char s[UHOSTLEN] = "";
 
   simple_snprintf(s, sizeof s, "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
-  newban(chan, mask, s);
+  if (newban(chan, mask, s))
+    return; /* The ban was already set, don't bother with it */
 
   if (channel_pending(chan) || !me_op(chan))
     return;
@@ -777,6 +778,9 @@ got_unban(struct chanset_t *chan, Member *m, char *mask)
     free(b->mask);
     free(b->who);
     free(b);
+  } else {
+    /* The ban was not even set, why continue? */
+    return;
   }
 
   if (channel_pending(chan))
@@ -802,7 +806,8 @@ got_exempt(struct chanset_t *chan, Member *m, char *mask, char *isserver)
   char s[UHOSTLEN] = "";
 
   simple_snprintf(s, sizeof(s), "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
-  newexempt(chan, mask, s);
+  if (newexempt(chan, mask, s))
+    return; /* The exempt was already set, don't bother with it */
 
   if (channel_pending(chan))
     return;
@@ -838,6 +843,9 @@ got_unexempt(struct chanset_t *chan, Member *m, char *mask)
     free(e->mask);
     free(e->who);
     free(e);
+  } else {
+    /* The exempt was not even set, why continue? */
+    return;
   }
 
   if (channel_pending(chan))
@@ -874,7 +882,8 @@ got_invite(struct chanset_t *chan, Member *m, char *mask, char *isserver)
   char s[UHOSTLEN] = "";
 
   simple_snprintf(s, sizeof(s), "%s!%s", m ? m->nick : "", m ? m->client->GetUHost() : isserver);
-  newinvite(chan, mask, s);
+  if (newinvite(chan, mask, s))
+    return; /* The Invite was already set, don't bother with it */
 
   if (channel_pending(chan))
     return;
@@ -909,6 +918,9 @@ got_uninvite(struct chanset_t *chan, Member *m, char *mask)
     free(inv->mask);
     free(inv->who);
     free(inv);
+  } else {
+    /* The Invite was not even set, why continue? */
+    return;
   }
 
   if (channel_pending(chan))
