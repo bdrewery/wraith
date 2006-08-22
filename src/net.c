@@ -1412,8 +1412,10 @@ int sockgets(char *s, int *len)
       xx[0] = 0;
       plen = 0;
       data = 1;
-    } else
+    } else {
+      plen = *len; /* 'plen' = strlen('xx') */
       *len = 0;
+    }
   }
 
   if (s[0] && socklist[ret].encstatus) {
