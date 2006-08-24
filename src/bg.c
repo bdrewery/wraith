@@ -215,7 +215,7 @@ void go_background_and_write_pid() {
     if (!socksfile)
       printf("%s[%s%s%s]%s -%s- initiated\n", BOLD(-1), BOLD_END(-1), settings.packname, BOLD(-1), BOLD_END(-1), conf.bot->nick);
     writepid(conf.bot->pid_file, mypid);
-  }
+  } 
 }
 
 void check_if_already_running() {

@@ -717,6 +717,7 @@ int main(int argc, char **argv)
   use_stderr = 0;		/* stop writing to stderr now! */
 
   go_background_and_write_pid();
+  conf_setmypid(mypid);
 
   /* Terminal emulating dcc chat */
   if (!backgrd && term_z)
