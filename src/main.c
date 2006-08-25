@@ -371,7 +371,7 @@ static void dtx_arg(int argc, char *argv[])
 	sdprintf("pack: %d conf: %d settings_t: %d pad: %d\n", SIZE_PACK, SIZE_CONF, sizeof(settings_t), SIZE_PAD);
         /* This is simply to display the binary config */
         if (settings.uname[0]) {
-          sdebug++;
+          sdebug = 1;
           bin_to_conf();
         }
 	exit(0);
