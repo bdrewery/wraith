@@ -32,7 +32,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 
 1.2.11
-* Fixed typo in help for .set/.conf
+* Fixed typo in help for .set/.conf/.channel
 * Fixed a bug in cmd_chattr with |m users. (fixes #267)
 * Suicide now removes userfile backups, most pid files, and crontab entries. (Fixes #125)
 * Fixed removed bots not being automatically unlinked from botnet. (fixes #254)
