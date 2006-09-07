@@ -27,7 +27,10 @@ char auth_key[51] = "";
 char auth_prefix[2] = "";
 bool auth_obscure;
 int dcc_autoaway;
+#ifdef NOT_USED
 int badprocess;
+char process_list[1024] = "";
+#endif
 bool dccauth;
 int cloak_script = 0;
 rate_t close_threshold;
@@ -48,7 +51,6 @@ char msgop[21] = "";
 char msgpass[21] = "";
 int op_bots;
 rate_t op_requests;
-char process_list[1024] = "";
 int promisc;
 int trace;
 bool offensive_bans;
@@ -63,7 +65,9 @@ static variable_t vars[] = {
  VAR("auth-prefix",	auth_prefix,		VAR_STRING|VAR_NOLHUB|VAR_PERM,			0, 0, "+"),
  VAR("auth-obscure",	&auth_obscure,		VAR_INT|VAR_BOOL,				0, 1, "0"),
  VAR("dcc-autoaway",	&dcc_autoaway,		VAR_INT|VAR_NOLOC,				0, (5*60*60), "1800"),
+#ifdef NOT_USED
  VAR("bad-process",	&badprocess,		VAR_INT|VAR_DETECTED,				0, 0, "ignore"),
+#endif
  VAR("dccauth",		&dccauth,		VAR_INT|VAR_BOOL,				0, 1, "0"),
  VAR("chanset",		glob_chanset,		VAR_STRING|VAR_CHANSET|VAR_NOLHUB,		0, 0, NULL),
  VAR("cloak-script",	&cloak_script,		VAR_INT|VAR_CLOAK|VAR_NOLHUB,			0, 9, "0"),
@@ -90,7 +94,9 @@ static variable_t vars[] = {
  VAR("nick",		origbotname,		VAR_STRING|VAR_NOLHUB|VAR_NICK|VAR_NODEF|VAR_NOGHUB,	0, 0, NULL),
  VAR("op-bots",		&op_bots,		VAR_INT|VAR_NOLOC,				0, 0, "1"),
  VAR("op-requests",	&op_requests,		VAR_RATE|VAR_NOLOC,				0, 0, "2:5"),
+#ifdef NOT_USED
  VAR("process-list",	process_list,		VAR_STRING|VAR_LIST,				0, 0, NULL),
+#endif
  VAR("promisc",		&promisc,		VAR_INT|VAR_DETECTED,				0, 0, "warn"),
  VAR("realname",	botrealname,		VAR_STRING|VAR_NOLHUB,				0, 0, "A deranged product of evil coders"),
  VAR("relay-to",	relay_to,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
