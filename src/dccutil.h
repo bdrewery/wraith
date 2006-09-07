@@ -42,7 +42,6 @@ void dumplots(int, const char *, char *);
  void chanout_but(int, int, const char *, ...);
 #endif
 void dcc_chatter(int);
-void trim_dcclist(int);
 void lostdcc(int);
 void makepass(char *);
 void tell_dcc(int);
