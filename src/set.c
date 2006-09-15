@@ -178,9 +178,17 @@ sdprintf("var (mem): %s -> %s", var->name, datain);
     if (var->flags & VAR_CLOAK && !conf.bot->hub)
       scriptchanged();
   } else if (var->flags & VAR_BOOL) {
-    if (data && str_isdigit(data)) {
-      int num = atoi(data);
+    if (data && (str_isdigit(data) || !egg_strcasecmp(data, "true") || !egg_strcasecmp(data, "false"))) {
+      int num = 0;
+      if (str_isdigit(data))
+        num = atoi(data);
+      else if (!egg_strcasecmp(data, "true"))
+        num = 1;
+      else if (!egg_strcasecmp(data, "false"))
+        num = 0;
 
+      if (num > 0)
+        num = 1;
       if (num == 0 || num == 1)
         *(bool *) (var->mem) = (bool) num;
     } else if (!data) {

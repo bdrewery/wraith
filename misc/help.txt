@@ -1484,7 +1484,7 @@ See also: reload, backup
  
    Current variables:
  
-   $uB$u:    Boolean (0 or 1)
+   $uB$u:    Boolean (0/1/true/false)
    $uS$u:    String
    $uN$u:    Number
    $uL$u:    List capable
