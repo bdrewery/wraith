@@ -12,7 +12,6 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 
 1.3.0
 * Added primitive relay system. See help for set var 'relay-to' and help for chaninfo regarding +/-relay.
-* Clearing a variable via 'set var -' now resets that variable to default settings. (#111)
 * Added a buffer dump on SEGFAULTS to help with debugging.
 * Added somewhat advanced password scoring to replace current password restrictions. (#56)
 * Channel member list is now stored in a hash table / linked list mix (speeds up 50% of lookups to about O(1))
@@ -32,6 +31,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 
 1.2.12 - http://wraith.shatow.net/milestone/1.2.12
+* Clearing a variable via 'set var -' now resets that variable to default settings. (#111)
 * Fix bug introduced from fixing #274
 * Fixed overflow with cmd_set (fixes #289)
 * cmd_set now sanitizes input with ranges/limits. (fixes #289)
