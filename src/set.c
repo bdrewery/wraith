@@ -151,7 +151,7 @@ sdprintf("var (mem): %s -> %s", var->name, datain);
   }
 
   /* figure out it's type and set it's variable to the data */
-  if (var->flags & VAR_INT) {
+  if ((var->flags & VAR_INT) && !(var->flags & VAR_BOOL)) {
     bool isnumber = 0;
     int number = 0;
 
@@ -259,7 +259,7 @@ const char *var_string(variable_t *var)
   char *data = NULL;
 
   /* else: fill gdata and return it */
-  if (var->flags & (VAR_INT|VAR_BOOL)) {
+  if ((var->flags & VAR_INT) && !(var->flags & VAR_BOOL)) {
     /* only bother setting if we have a value that's not 0 */
     if (var->flags & VAR_DETECTED) {
       data = strdup(det_translate_num(*(int *) (var->mem)));
@@ -269,8 +269,15 @@ const char *var_string(variable_t *var)
         simple_snprintf(data, 11, "%d", *(int *) (var->mem));
       }
     }
-  }
-  else if (var->flags & VAR_STRING) {
+  } else if (var->flags & (VAR_BOOL)) {
+    /* only bother setting if we have a value that's not 0 */
+    if (*(int *) (var->mem)) {
+      bool num = *(bool *) (var->mem);
+      data = (char *) my_calloc(1, 2);
+      /* Only actually set 0 or 1 */
+      simple_snprintf(data, 2, "%d", num ? 1 : 0);
+    }
+  } else if (var->flags & VAR_STRING) {
     /* only bother setting if we have a non-empty string */
     if ((char *)var->mem && *(char *)var->mem)
       data = strdup((char *) var->mem);
