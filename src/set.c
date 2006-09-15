@@ -140,21 +140,13 @@ char *var_sanitize(variable_t *var, const char *data)
 /* var->a var->b */
   char *dataout = NULL;
 
-  if ((var->flags & VAR_INT) && !(var->flags & VAR_BOOL)) {
+  if ((var->flags & VAR_INT) && !(var->flags & VAR_BOOL) && !(var->flags & VAR_DETECTED)) {
     bool isnumber = 0;
     int number = 0;
 
     isnumber = data ? str_isdigit(data) : 0;
     if (isnumber)
       number = atoi(data);
-    else if (!isnumber && (var->flags & VAR_DETECTED)) {
-      number = data ? det_translate(data) : DET_IGNORE;
-#ifndef DEBUG
-      if (number < 2 && !egg_strcasecmp(var->name, "trace"))
-        number = DET_DIE;
-#endif
-    } else if (!isnumber)
-      number = 0;
 
     /* Do limit enforcing... */
     if (number < var->a)
@@ -164,6 +156,18 @@ char *var_sanitize(variable_t *var, const char *data)
 
     dataout = (char*) my_calloc(1, 11);
     simple_snprintf(dataout, 11, "%d", number);
+  } else if (var->flags & VAR_DETECTED) {
+    if (data) {
+      if (str_isdigit(data)) {
+        int number = atoi(data);
+        dataout = strdup(det_translate_num(number));
+      } else if (!egg_strcasecmp(data, "ignore") || !egg_strcasecmp(data, "warn") ||
+                 !egg_strcasecmp(data, "die") || !egg_strcasecmp(data, "reject") ||
+                 !egg_strcasecmp(data, "suicide")) {
+        dataout = strdup(data);
+      }
+    } else
+      dataout = strdup("ignore");
   } else if (var->flags & VAR_BOOL) {
     int num = 0;
 
@@ -226,7 +230,7 @@ sdprintf("var (mem): %s -> %s", var->name, datain);
   }
 
   /* figure out it's type and set it's variable to the data */
-  if ((var->flags & VAR_INT) && !(var->flags & VAR_BOOL)) {
+  if ((var->flags & VAR_INT) && !(var->flags & VAR_BOOL) && !(var->flags & VAR_DETECTED)) {
     int number = atoi(data);
 
     if (var->flags & VAR_CLOAK && !conf.bot->hub) {
@@ -238,6 +242,13 @@ sdprintf("var (mem): %s -> %s", var->name, datain);
 
     if (var->flags & VAR_CLOAK && !conf.bot->hub)
       scriptchanged();
+  } else if (var->flags & VAR_DETECTED) {
+    int number = data ? det_translate(data) : DET_IGNORE;
+#ifndef DEBUG
+    if (number < 2 && !egg_strcasecmp(var->name, "trace"))
+      number = DET_DIE;
+#endif
+    *(int *) (var->mem) = number;
   } else if (var->flags & VAR_BOOL) {
     bool num = 0;
     if (data[0] == '0')
@@ -413,7 +424,7 @@ void var_set(variable_t *var, const char *target, const char *datain)
      sanitize the data */
   char *sdata = NULL;
   /* Make a temporary to free at the end */
-  if (!data || (data && strcmp(data, "-"))) {
+  if (data && strcmp(data, "-")) {
     sdata = var_sanitize(var, data);
     data = sdata;
   }
