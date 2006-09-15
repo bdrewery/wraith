@@ -1222,6 +1222,7 @@ conf_bot *conf_getlocalhub(conf_bot *bots) {
     while (localhub && localhub->disabled)
       localhub = localhub->next;
 
+  if (!localhub) return NULL;
   return !localhub->disabled ? localhub : NULL;
 }
 
