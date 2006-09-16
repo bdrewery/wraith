@@ -13,7 +13,6 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 1.3.0
 * Added primitive relay system. See help for set var 'relay-to' and help for chaninfo regarding +/-relay.
 * Added a buffer dump on SEGFAULTS to help with debugging.
-* Added somewhat advanced password scoring to replace current password restrictions. (#56)
 * Channel member list is now stored in a hash table / linked list mix (speeds up 50% of lookups to about O(1))
 * Cmd_invite now attempts to resolve the username to a nickname (from a shared channel), if no nick is specified. (#159)
 * Cmds (op, deop, voice, devoice) now recognize console '*' and take '*'.
@@ -36,6 +35,7 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed overflow with cmd_set (fixes #289)
 * cmd_set now sanitizes input with ranges/limits. (fixes #289)
 * cmd_set now accepts 'true', 'on', 'false' and 'off' for boolean variables.
+* Added somewhat advanced password scoring to replace current password restrictions. (implements #56)
 
 1.2.11 - http://wraith.shatow.net/milestone/1.2.11
 * Fixed typo in help for .set/.conf/.channel
