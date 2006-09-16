@@ -18,14 +18,10 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Cmds (op, deop, voice, devoice) now recognize console '*' and take '*'.
   -Cmds will also attempt to find your irc nickname if not provided.
   -ie, .op -> Ops you on your console chan. .op * -> Ops you in all chans. .op nick * -> ops nick in all chans.
-* Added build os/architechture to output for ./binary -v
-* Added ARCH entry for bots in .whois
-* Added a new error code (23) which displays if attempting to run binary before using -C.
 * Many botnet signals are now passed onto to other bots before being parsed. (Affects botcmd)
 * Re-enabled hops sharing between member lists.
 * Disabled +take nick list randomizing as the new member list should do this already.
 * Optimized the cookie checking functions.
-* cmd_swhois is now -|- and hides all restricted information, channels; see 'help swhois'.
 * Fixed countless buffer overflows. (fixes #226)
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 
@@ -36,6 +32,10 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * cmd_set now sanitizes input with ranges/limits. (fixes #289)
 * cmd_set now accepts 'true', 'on', 'false' and 'off' for boolean variables.
 * Added somewhat advanced password scoring to replace current password restrictions. (implements #56)
+* Added build os/architechture to output for ./binary -v
+* Added ARCH entry for bots in .whois
+* Added a new error code (23) which displays if attempting to run binary before using -C.
+* cmd_swhois is now -|- and hides all restricted information, channels; see 'help swhois'.
 
 1.2.11 - http://wraith.shatow.net/milestone/1.2.11
 * Fixed typo in help for .set/.conf/.channel
