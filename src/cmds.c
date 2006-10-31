@@ -3593,8 +3593,9 @@ static void cmd_botserver(int idx, char * par) {
     dprintf(idx, "Usage: botserver <bot>\n");
     return;
   }
-  if (nextbot(par)<0) {
-    dprintf(idx, "%s isn't a linked bot\n", par);
+  if (egg_strcasecmp(conf->bot.nick, par) && nextbot(par)<0) {
+    dprintf(idx, "%s isn't a linked bot.\n", par);
+    return;
   }
   botnet_send_cmd(conf.bot->nick, par, dcc[idx].nick, idx, "cursrv");
 }
@@ -3642,8 +3643,8 @@ static void cmd_botversion(int idx, char * par) {
     dprintf(idx, "Usage: botversion <bot>\n");
     return;
   }
-  if (egg_strcasecmp(par, conf.bot->nick) && nextbot(par)<0) {
-    dprintf(idx, "%s isn't a linked bot\n", par);
+  if (egg_strcasecmp(conf.bot->nick, par) && nextbot(par)<0) {
+    dprintf(idx, "%s isn't a linked bot.\n", par);
     return;
   }
   botnet_send_cmd(conf.bot->nick, par, dcc[idx].nick, idx, "ver");
@@ -3715,8 +3716,8 @@ static void cmd_botmsg(int idx, char * par) {
     dprintf(idx, "Usage: botmsg <bot> <nick|#channel> <message>\n");
     return;
   }
-  if (nextbot(tbot)<0) {
-    dprintf(idx, "No such bot linked\n");
+  if (egg_strcasecmp(conf.bot->nick, tbot) && nextbot(tbot)<0) {
+    dprintf(idx, "%s isn't a linked bot.\n", tbot);
     return;
   }
   
@@ -4064,8 +4065,8 @@ static void cmd_botjump(int idx, char * par) {
     dprintf(idx, "Usage: botjump <bot> [server [port [pass]]]\n");
     return;
   }
-  if (nextbot(tbot)<0) {
-    dprintf(idx, "No such linked bot\n");
+  if (egg_strcasecmp(conf.bot->nick, tbot) && nextbot(tbot)<0) {
+    dprintf(idx, "%s isn't a linked bot.\n", tbot);
     return;
   }
 
