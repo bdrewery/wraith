@@ -97,6 +97,10 @@ void Auth::Done(bool _bd)
   bd = _bd;
 }
 
+void Auth::NewNick(const char *newnick) {
+  strlcpy(nick, newnick, nick_len + 1);
+}
+
 Auth *Auth::Find(const char *_host)
 {
   Auth *auth = NULL;
@@ -106,6 +110,7 @@ Auth *Auth::Find(const char *_host)
     sdprintf("Found auth: (%s!%s) [%s]", auth->nick, auth->host, auth->handle);
   return auth;
 }
+
 Auth *Auth::Find(const char *handle, bool _hand)
 {
   Auth *auth = NULL;

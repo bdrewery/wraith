@@ -2648,6 +2648,10 @@ static int gotnick(char *from, char *msg)
 
   client = Client::Find(nick);
 
+  Auth *auth = Auth::Find(uhost);
+  if (auth)
+    auth->NewNick(msg);
+
   /* We must do this because of capitalization changes */
   for (ptrlist<struct chanset_t>::iterator chan = client->chans.begin(); chan; chan++) {
     if ((m = ismember(chan, nick)))
