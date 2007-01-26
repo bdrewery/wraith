@@ -747,6 +747,7 @@ int do_chanset(char *result, struct chanset_t *chan, const char *options, int lo
   }
 
   if (local & DO_LOCAL) {
+    bool cmd = (local & CMD);
     struct chanset_t *ch = NULL;
     int all = chan ? 0 : 1;
 
@@ -760,7 +761,7 @@ int do_chanset(char *result, struct chanset_t *chan, const char *options, int lo
       int items = 0;
 
       if (SplitList(result, options, &items, &item) == OK) {
-        ret = channel_modify(result, ch, items, (char **) item);
+        ret = channel_modify(result, ch, items, (char **) item, cmd);
       } else 
         ret = ERROR;
 
