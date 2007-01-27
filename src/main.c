@@ -99,7 +99,7 @@ bool	use_stderr = 1;		/* Send stuff to stderr instead of logfiles? */
 char	quit_msg[1024];		/* quit message */
 time_t	now;			/* duh, now :) */
 
-char	get_buf[GET_BUFS][SGRAB + 10];
+char	get_buf[GET_BUFS][SGRAB + 5];
 int	current_get_buf = 0;
 
 
