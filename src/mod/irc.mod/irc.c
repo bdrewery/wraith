@@ -270,8 +270,9 @@ static void cache_invite(struct chanset_t *chan, char *nick, char *host, char *h
 
 inline char *
 cookie_hash(char *bnick, const char *chname, const char *ts, const char *randstring) {
-  char tohash[26] = "";
+  char tohash[26] = "", nick[NICKMAX + 1] = "";
 
+  strlcpy(nick, bnick, sizeof(nick));
   strtolower(bnick);
 
   /* Only use first 3 chars of chan */
