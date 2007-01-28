@@ -273,12 +273,12 @@ cookie_hash(char *bnick, const char *chname, const char *ts, const char *randstr
   char tohash[26] = "", nick[NICKMAX + 1] = "";
 
   strlcpy(nick, bnick, sizeof(nick));
-  strtolower(bnick);
+  strtolower(nick);
 
   /* Only use first 3 chars of chan */
   simple_snprintf(tohash, sizeof(tohash), "%c%s%c%c%c%s%s%c", 
 		settings.salt2[0], 
-		bnick, 
+		nick, 
   		toupper(chname[0]),
 		toupper(chname[1]),
 		toupper(chname[2]),  
