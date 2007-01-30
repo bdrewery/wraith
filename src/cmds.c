@@ -3084,7 +3084,6 @@ static void cmd_newleaf(int idx, char *par)
 {
   if (!par[0]) {
     dprintf(idx, "Usage: newleaf <handle> [host] [anotherhost]\n");
-    dprintf(idx, "       Leafs can't link unless you specify a *!ident@ip hostmask\n");
     return;
   }
 
