@@ -674,6 +674,8 @@ int stream_readuserfile(Stream& stream, struct userrec **ret)
 	    fl = newsplit(&s);
 	    rmspace(s);
 	    fr.match = FR_CHAN;
+            if (u->bot)
+              fr.match |= FR_BOT;
 	    break_down_flags(fl, &fr, 0);
 	    if (findchan_by_dname(chname)) {
 	      for (cr = u->chanrec; cr; cr = cr->next)
@@ -851,6 +853,8 @@ int stream_readuserfile(Stream& stream, struct userrec **ret)
 	      u = NULL;
 	    } else {
 	      fr.match = FR_GLOBAL;
+              if (isbot)
+                fr.match |= FR_BOT;
 	      break_down_flags(attr, &fr, 0);
 	      strcpy(lasthand, code);
 	      cst = NULL;
