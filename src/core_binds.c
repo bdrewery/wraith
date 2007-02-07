@@ -18,7 +18,6 @@
 #include "misc.h"
 #include "binds.h"
 #include "dcc.h"
-#include "src/mod/notes.mod/notes.h"
 #include "src/mod/channels.mod/channels.h"
 #include "src/mod/console.mod/console.h"
 
@@ -255,14 +254,4 @@ void check_chof(char *hand, int idx)
 
   u = get_user_by_handle(userlist, hand);
   touch_laston(u, "partyline", now);
-}
-
-void check_nkch(const char *ohand, const char *nhand)
-{
-  notes_change(ohand, nhand);
-}
-
-void check_away(const char *bot, int idx, const char *msg)
-{
-  away_notes(bot, idx, msg);
 }

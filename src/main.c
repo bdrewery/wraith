@@ -588,7 +588,6 @@ void check_for_changed_decoy_md5() {
 void console_init();
 void ctcp_init();
 void update_init();
-void notes_init();
 void server_init();
 void irc_init();
 void channels_init();
@@ -698,7 +697,6 @@ int main(int argc, char **argv)
   transfer_init();
   share_init();
   update_init();
-  notes_init();
   console_init();
   chanprog();
 

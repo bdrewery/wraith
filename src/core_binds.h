@@ -7,8 +7,6 @@ void core_binds_init();
 int check_bind_dcc(const char *, int, const char *);
 int real_check_bind_dcc(const char *, int, const char *, Auth *);
 void check_bind_bot(const char *, const char *, const char *);
-void check_nkch(const char *, const char *);
-void check_away(const char *, int, const char *);
 void check_chon(char *, int);
 void check_chof(char *, int);
 #endif /* !_CORE_BINDS_H */

@@ -859,7 +859,6 @@ void channels_report(int, int);
 void transfer_report(int, int);
 void share_report(int, int);
 void update_report(int, int);
-void notes_report(int, int);
 
 static void cmd_status(int idx, char *par)
 {
@@ -887,7 +886,6 @@ static void cmd_status(int idx, char *par)
   transfer_report(idx, all);
   share_report(idx, all);
   update_report(idx, all);
-  notes_report(idx, all);
 }
 
 static void cmd_dccstat(int idx, char *par)
