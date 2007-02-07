@@ -25,6 +25,9 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Fixed countless buffer overflows. (fixes #226)
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 
+1.2.14 - http://wraith.shatow.net/milestone/1.2.14
+* Fix another bug in shell functions. (fixes #321)
+
 1.2.13 - http://wraith.shatow.net/milestone/1.2.13
 * Fix cmd_chanset accepting invalid flags
 * Fix Auth system not tracking nick changes correctly. (fixes #318)
