@@ -3570,7 +3570,6 @@ static void cmd_mns_host(int idx, char *par)
 
     while (par[0]) {
       host = newsplit(&par);
-      addhost_by_handle(handle, host);
       if (delhost_by_handle(handle, host)) {
         if (!conf.bot->hub)
           check_this_user(handle, 2, host);
