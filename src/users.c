@@ -565,6 +565,7 @@ void backup_userfile()
  * $$#chan channel Invites
  */
 
+/* Read in the userfile from disk and then process via the stream interface */
 int readuserfile(const char *file, struct userrec **ret)
 {
   EncryptedStream stream(settings.salt1);
