@@ -1217,6 +1217,9 @@ write_tmp_userfile(char *fn, const struct userrec *bu, int idx)
 
 /* Erase old user list, switch to new one.
  */
+/* This is the old transfer.mod interface
+ * for interfacing with old hubs which do not push the userfile via a stream
+ */
 void
 finish_share(int idx)
 {
