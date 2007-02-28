@@ -75,8 +75,6 @@ const char	*egg_version = "1.2.9-cvs";
 bool	used_B = 0;		/* did we get started with -B? */
 int 	role;
 bool 	loading = 0;
-bool	have_take = 1;
-bool	beta = 0;
 int	default_flags = 0;	/* Default user flags and */
 int	default_uflags = 0;	/* Default userdefinied flags for people
 				   who say 'hello' or for .adduser */
@@ -670,11 +668,6 @@ int main(int argc, char **argv)
   startup_checks(0);
 
   check_if_already_running();
-
-  if (!strcmp(settings.packname, "beta")) {
-    have_take = 0;
-    beta = 1;
-  }
 
   init_flags();			/* needed to establish FLAGS[] */
   core_binds_init();

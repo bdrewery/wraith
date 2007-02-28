@@ -1215,7 +1215,7 @@ static void cmd_chaninfo(int idx, char *par)
     SHOW_FLAG("relay",		channel_relay(chan));
 //    SHOW_FLAG("revenge",	channel_revenge(chan));
 //    SHOW_FLAG("revengebot",	channel_revengebot(chan));
-    if (have_take)
+    if (HAVE_TAKE)
       SHOW_FLAG("take",		channel_take(chan));
     SHOW_FLAG("voice",		channel_voice(chan));
     SHOW_FLAG("", 0);
