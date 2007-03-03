@@ -601,7 +601,7 @@ int stream_readuserfile(Stream& stream, struct userrec **ret)
   stream.gets(s, 180);
   remove_crlf(s);
   if (s[1] < '4') {
-    fatal("boring....", 0);
+    fatal("Empty or malformed userfile.", 0);
   }
   if (s[1] > '4')
     fatal("Invalid userfile format.", 0);
