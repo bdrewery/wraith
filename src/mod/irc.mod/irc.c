@@ -489,25 +489,19 @@ getin_request(char *botnick, char *code, char *par)
       return;
     }
 
-    char s[256] = "", *p = NULL, *p2 = NULL, *p3 = NULL;
+    char s[256] = "", *p = NULL, *p2 = NULL;
     bool sendi = 0;
 
     strcpy(s, getchanmode(chan));
     p = (char *) &s;
     p2 = newsplit(&p);
-    p3 = newsplit(&p);
 
     if (strchr(p2, 'l')) {
       if (!me_op(chan)) {
         putlog(LOG_GETIN, "*", "inreq from %s/%s for %s - I haven't got ops", botnick, nick, chan->dname);
         return;
       } else {
-        int lim = chan->channel.members + 5, curlim;
-
-        if (!*p)
-          curlim = atoi(p3);
-        else
-          curlim = atoi(p);
+        int lim = chan->channel.members + 5, curlim = chan->channel.maxmembers;
         if (curlim > 0 && curlim < lim) {
           char s2[16] = "";
 
@@ -577,12 +571,13 @@ getin_request(char *botnick, char *code, char *par)
       }
     }
     if (strchr(p2, 'k')) {
+      char *key = chan->channel.key[0] ? chan->channel.key : chan->key_prot;
       sendi = 0;
-      size_t siz = chan->dlen + strlen(p3) + 6 + 1;
+      size_t siz = chan->dlen + strlen(key ? key : 0) + 6 + 1;
       tmp = (char *) my_calloc(1, siz);
-      simple_snprintf(tmp, siz, "gi K %s %s", chan->dname, p3);
+      simple_snprintf(tmp, siz, "gi K %s %s", chan->dname, key ? key : "");
       putbot(botnick, tmp);
-      putlog(LOG_GETIN, "*", "inreq from %s/%s for %s - Sent key (%s)", botnick, nick, chan->dname, p3);
+      putlog(LOG_GETIN, "*", "inreq from %s/%s for %s - Sent key (%s)", botnick, nick, chan->dname, key ? key : "");
       free(tmp);
     }
     if (strchr(p2, 'i')) {
