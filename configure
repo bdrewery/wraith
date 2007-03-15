@@ -12000,7 +12000,7 @@ case "$srcdir" in
 esac
 
 
-files="src/Makefile.in src/compat/Makefile.in src/crypto/Makefile.in src/mod/channels.mod/Makefile src/mod/compress.mod/Makefile src/mod/console.mod/Makefile src/mod/ctcp.mod/Makefile src/mod/irc.mod/Makefile src/mod/server.mod/Makefile src/mod/share.mod/Makefile src/mod/transfer.mod/Makefile src/mod/update.mod/Makefile src/structures/Makefile.in src/tests/Makefile.in"
+files="src/Makefile.in src/compat/Makefile.in src/bdlib/Makefile.in src/crypto/Makefile.in src/mod/channels.mod/Makefile src/mod/compress.mod/Makefile src/mod/console.mod/Makefile src/mod/ctcp.mod/Makefile src/mod/irc.mod/Makefile src/mod/server.mod/Makefile src/mod/share.mod/Makefile src/mod/transfer.mod/Makefile src/mod/update.mod/Makefile src/structures/Makefile.in src/tests/Makefile.in"
 for mf in $files; do
   # Strip MF so we end up with the name of the file.
 #  echo "MF: $mf"
@@ -12116,7 +12116,7 @@ echo X"$dir" |
 done
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/compat/Makefile src/crypto/Makefile src/mod/Makefile src/structures/Makefile src/buildinfo.h src/tests/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile src/compat/Makefile src/bdlib/Makefile src/crypto/Makefile src/mod/Makefile src/structures/Makefile src/buildinfo.h src/tests/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12674,6 +12674,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/compat/Makefile") CONFIG_FILES="$CONFIG_FILES src/compat/Makefile" ;;
+    "src/bdlib/Makefile") CONFIG_FILES="$CONFIG_FILES src/bdlib/Makefile" ;;
     "src/crypto/Makefile") CONFIG_FILES="$CONFIG_FILES src/crypto/Makefile" ;;
     "src/mod/Makefile") CONFIG_FILES="$CONFIG_FILES src/mod/Makefile" ;;
     "src/structures/Makefile") CONFIG_FILES="$CONFIG_FILES src/structures/Makefile" ;;
