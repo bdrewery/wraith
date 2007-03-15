@@ -45,7 +45,7 @@ void Stream::puts (const char* string, size_t len) {
   replace(tell(), string, len);
   pos += len;
   /* WTF **/
-  Ref->size = (capacity() < tell()) ? tell() : capacity();
+  //Ref->size = max(tell(), capacity());
 }
 
 int Stream::gets (char *data, size_t maxSize) {

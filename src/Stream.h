@@ -37,6 +37,8 @@ class Stream : public String {
         */
         void truncate() { Ref->len = pos; };
 
+//        operator void*() { return tell() <= length(); };
+
         int seek(int, int);
         void puts(const String);
         void puts(const char*, size_t);
