@@ -8,9 +8,11 @@
 #include "dcc.h"
 #include "net.h"
 #include "misc.h"
+#include "base64.h"
+#include "crypto/aes_util.h"
 
 #include <stdarg.h>
-
+#include <signal.h>
 static void ghost_link_case(int idx, direction_t direction)
 {
   int snum = findanysnum(dcc[idx].sock);
@@ -76,7 +78,7 @@ static void ghost_link_case(int idx, direction_t direction)
   }
 }
 
-static int
+static inline int
 prand(int *seed, int range)
 {
   long long i1 = *seed;
@@ -86,12 +88,7 @@ prand(int *seed, int range)
   return ((i1 * range) >> 32);
 }
 
-static int ghost_read(int snum, char *src, size_t *len)
-{
-  char *line = decrypt_string(socklist[snum].ikey, src);
-
-  strcpy(src, line);
-  free(line);
+static inline void ghost_cycle_key_in(int snum) {
   if (socklist[snum].iseed) {
     *(dword *) & socklist[snum].ikey[0] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
     *(dword *) & socklist[snum].ikey[4] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
@@ -99,8 +96,29 @@ static int ghost_read(int snum, char *src, size_t *len)
     *(dword *) & socklist[snum].ikey[12] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
 
     if (!socklist[snum].iseed)
-      socklist[snum].iseed++;
+      ++socklist[snum].iseed;
   }
+}
+
+static inline void ghost_cycle_key_out(int snum) {
+  if (socklist[snum].oseed) {
+      *(dword *) & socklist[snum].okey[0] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
+      *(dword *) & socklist[snum].okey[4] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
+      *(dword *) & socklist[snum].okey[8] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
+      *(dword *) & socklist[snum].okey[12] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
+
+      if (!socklist[snum].oseed)
+        ++socklist[snum].oseed;
+  }
+}
+
+static int ghost_read(int snum, char *src, size_t *len)
+{
+  char *line = decrypt_string(socklist[snum].ikey, src);
+
+  strcpy(src, line);
+  free(line);
+  ghost_cycle_key_in(snum);
 //  *len = strlen(src);
   return OK;
 }
@@ -118,15 +136,9 @@ static char *ghost_write(int snum, char *src, size_t *len)
   while (eol) {
     *eol++ = 0;
     eline = encrypt_string(socklist[snum].okey, line);
-    if (socklist[snum].oseed) {
-      *(dword *) & socklist[snum].okey[0] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[4] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[8] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[12] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
 
-      if (!socklist[snum].oseed)
-        socklist[snum].oseed++;
-    }
+    ghost_cycle_key_out(snum);
+ 
     buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
     strcpy((char *) &buf[bufpos], eline);
     free(eline);
@@ -137,15 +149,7 @@ static char *ghost_write(int snum, char *src, size_t *len)
   }
   if (line[0]) {
     eline = encrypt_string(socklist[snum].okey, line);
-    if (socklist[snum].oseed) {
-      *(dword *) & socklist[snum].okey[0] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[4] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[8] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[12] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-
-      if (!socklist[snum].oseed)
-        socklist[snum].oseed++;
-    }
+    ghost_cycle_key_out(snum);
     buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
     strcpy((char *) &buf[bufpos], eline);
     free(eline);
@@ -192,7 +196,7 @@ static int binary_read(int snum, char *src, size_t *len)
     *(dword *) & socklist[snum].ikey[12] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
 
     if (!socklist[snum].iseed)
-      socklist[snum].iseed++;
+      ++socklist[snum].iseed;
   }
 //  *len = strlen(src);
   return OK;
@@ -218,7 +222,7 @@ static char *binary_write(int snum, char *src, size_t *len)
       *(dword *) & socklist[snum].okey[12] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
 
       if (!socklist[snum].oseed)
-        socklist[snum].oseed++;
+        ++socklist[snum].oseed;
     }
     buf = (char *) my_realloc(buf, bufpos + len + 1 + 9);
     strcpy((char *) &buf[bufpos], eline);
@@ -237,7 +241,7 @@ static char *binary_write(int snum, char *src, size_t *len)
       *(dword *) & socklist[snum].okey[12] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
 
       if (!socklist[snum].oseed)
-        socklist[snum].oseed++;
+        ++socklist[snum].oseed;
     }
     buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
     strcpy((char *) &buf[bufpos], eline);
@@ -349,11 +353,13 @@ void link_get_method(int idx)
   if (enclink[n].name)
     dcc[idx].u.enc->method = &(enclink[n]);
 
-  dcc[idx].u.enc->method_number++;
+  ++dcc[idx].u.enc->method_number;
 }
 
 /* the order of entries here determines which will be picked */
 struct enc_link enclink[] = {
+//  { "ghost+cleanup", LINK_GHOSTCLEAN, ghost_link_case, ghostclean_write, ghost_read, ghost_parse },
+//  { "ghost+cleanup", LINK_GHOSTCLEAN, ghost_link_case, ghostclean_write, ghostclean_read, ghost_parse },
   { "ghost+case2", LINK_GHOSTCASE2, ghost_link_case, ghost_write, ghost_read, ghost_parse },
 // Disabled this one so 1.2.6->1.2.7 will use cleartext, as some 1.2.6 nets have an empty BDHASH
 //  { "ghost+case", LINK_GHOSTCASE, ghost_link_case, ghost_write, ghost_read, ghost_parse },
