@@ -185,6 +185,8 @@ void StringTest :: replaceTest(void)
   CPPUNIT_ASSERT(*c == "blah");
   g->replace(1, "ml");
   CPPUNIT_ASSERT(*g == "xml");
+  b->replace(0, "wtflongstring");
+  CPPUNIT_ASSERT_EQUAL((size_t) 13, b->length());
 }
 
 void StringTest :: concatTest(void)
@@ -300,11 +302,16 @@ void StringTest :: base64Test(void)
   CPPUNIT_ASSERT(*b != "blah");
   CPPUNIT_ASSERT(*b == "MalVO...");
   b->base64Decode();
+//printf("b(%d): '%s'\n", b->length(), b->c_str());
+//printf("c(%d): '%s'\n", c->length(), c->c_str());
   CPPUNIT_ASSERT(*b == *c);
   CPPUNIT_ASSERT(*b == "blah");
 
+//printf("d(%d): '%s'\n", d->length(), d->c_str());
   d->base64Encode();
   d->base64Decode();
+//printf("d(%d): '%s'\n", d->length(), d->c_str());
+//printf("cs(%d): '%s'\n", strlen(cstring), cstring);
   CPPUNIT_ASSERT(*d == cstring);
 
   String eff = String(*f);
@@ -318,6 +325,31 @@ void StringTest :: base64Test(void)
   tmp.base64Encode();
   tmp.base64Decode();
   CPPUNIT_ASSERT(tmp == cs);
+
+  const char *cs1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+  tmp = String(cs1);
+  tmp.base64Encode();
+  tmp.base64Decode();
+  CPPUNIT_ASSERT(tmp == cs1);
+
+  const char *cs2 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+  tmp = String(cs2);
+  tmp.base64Encode();
+  tmp.base64Decode();
+  CPPUNIT_ASSERT(tmp == cs2);
+
+  const char *cs3 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+  tmp = String(cs3);
+  tmp.base64Encode();
+  tmp.base64Decode();
+  CPPUNIT_ASSERT(tmp == cs3);
+
+//  *a = "DN44BpYNeevt5\\Cih7Whd...";
+//  a->base64Decode();
+//  std::cout << "'" << *a << "'" << std::endl;
 }
 
 void StringTest :: encryptBase64Test(void)

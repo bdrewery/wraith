@@ -160,7 +160,7 @@ void StreamTest :: printfTest (void)
 
 void StreamTest :: loadFileTest (void)
 {
-  const char *file = "Makefile.in";
+  const char *file = "src/net.c";
 
   FILE *f = NULL;
   f = fopen(file, "rb");
@@ -179,6 +179,20 @@ void StreamTest :: loadFileTest (void)
 
   CPPUNIT_ASSERT_EQUAL(size, a->length());
   CPPUNIT_ASSERT(*a == buffer);
+
+  char buf[1024] = "";
+  char sbuf[1024] = "";
+  size_t len = 0;
+  
+  fseek(f, 0, SEEK_SET);
+  while (fgets(buf, sizeof(buf), f) != NULL) {
+    len = a->gets(sbuf, sizeof(sbuf));
+    CPPUNIT_ASSERT_EQUAL(0, strcmp(buf, sbuf));
+//std::cout << sbuf << std::endl;
+//std::cout << buf << std::endl;
+  }
+  fclose(f);
+  
 
 //  char buf[1024];
 //  while (a->tell() < a->length()) {
