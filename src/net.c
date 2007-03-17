@@ -1492,8 +1492,6 @@ void tputs(register int z, char *s, size_t len)
 
       if (len && socklist[i].encstatus)
         s = link_write(i, s, &len);
-      if (len != strlen(s)) {
-      }
       if (socklist[i].outbuf != NULL) {
 	/* Already queueing: just add it */
 	p = (char *) my_realloc(socklist[i].outbuf, socklist[i].outbuflen + len);
