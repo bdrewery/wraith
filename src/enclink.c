@@ -191,6 +191,7 @@ static char *ghost_write(int snum, char *src, size_t *len)
     buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
     strcpy((char *) &buf[bufpos], eline);
     free(eline);
+    /* FIXME: technically, no \n was provided, so adding this can break checksum/size checking and cause mismatches.. */
     strcat(buf, "\n");
   }
   free(srcbuf);
@@ -286,6 +287,7 @@ static char *ghost_Prand_write(int snum, char *src, size_t *len)
     strncpy((char *) &buf[bufpos], eline, llen);
     free(eline);
     bufpos += llen;
+    /* FIXME: technically, no \n was provided, so adding this can break checksum/size checking and cause mismatches.. */
     buf[bufpos++] = '\n';
   }
   free(srcbuf);
