@@ -16,7 +16,7 @@
 
 #ifdef DEBUG
 #define DEBUG_ENCLINK 1
-#endif
+#endif 
 static void ghost_link_case(int idx, direction_t direction)
 {
   int snum = findanysnum(dcc[idx].sock);
@@ -127,7 +127,7 @@ static inline void ghost_cycle_key_out(int snum) {
 static inline void ghost_cycle_key_in_Prand(int snum) {
   if (socklist[snum].iseed) {
 #ifdef DEBUG_ENCLINK
-sdprintf("CYCLING IKEY ON %d", snum);
+    sdprintf("CYCLING IKEY ON %d", snum);
 #endif
     for (size_t i = 0; i < (sizeof(socklist[snum].ikey) - 1); i += sizeof(long))
       *(long*) &(socklist[snum].ikey)[i] = Prand(&(socklist[snum].iseed), 0xFFFFFFFF);
@@ -140,7 +140,7 @@ sdprintf("CYCLING IKEY ON %d", snum);
 static inline void ghost_cycle_key_out_Prand(int snum) {
   if (socklist[snum].oseed) {
 #ifdef DEBUG_ENCLINK
-sdprintf("CYCLING OKEY ON %d", snum);
+    sdprintf("CYCLING OKEY ON %d", snum);
 #endif
     for (size_t i = 0; i < (sizeof(socklist[snum].okey) - 1); i += sizeof(long))
       *(long*) &(socklist[snum].okey)[i] = Prand(&(socklist[snum].oseed), 0xFFFFFFFF);
@@ -176,7 +176,7 @@ static char *ghost_write(int snum, char *src, size_t *len)
     eline = encrypt_string(socklist[snum].okey, line);
 
     ghost_cycle_key_out(snum);
- 
+
     buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
     strcpy((char *) &buf[bufpos], eline);
     free(eline);
@@ -201,60 +201,101 @@ static char *ghost_write(int snum, char *src, size_t *len)
 
 static int ghost_Prand_read(int snum, char *src, size_t *len)
 {
-  char *line = decrypt_string(socklist[snum].ikey, src);
+  char *b64 = b64dec((unsigned char*) src, len);
+  char *line = (char *) decrypt_binary(socklist[snum].ikey, (unsigned char*) b64, len);
+  free(b64);
+
 #ifdef DEBUG_ENCLINK
-sdprintf("SEED: %-10lu IKEY: %s", socklist[snum].iseed, hexize((unsigned char*) socklist[snum].ikey, 32));
-sdprintf("READ: %s", line);
+  char *p = strchr(line, ' ');
+  *(p++) = 0;
+  size_t real_len = atoi(line);
+  *len = strlen(p);
+
+  if (real_len != *len) {
+    putlog(LOG_MISC, "*", "Encrypt MISMATCH %d != %d", real_len, *len);
+    sdprintf("Encrypt MISMATCH %d != %d\n", real_len, *len);
+    sdprintf("mismatch");
+  }
+
+  strlcpy(src, p, *len + 1);
+#else
+  strlcpy(src, line, *len + 1);
 #endif
-  strcpy(src, line);
   free(line);
+
+#ifdef DEBUG_ENCLINK
+  sdprintf("SEED: %-10lu IKEY: %s", socklist[snum].iseed, hexize((unsigned char*) socklist[snum].ikey, 32));
+  sdprintf("READ: %s", src);
+#endif
+
   ghost_cycle_key_in_Prand(snum);
-//  *len = strlen(src);
   return OK;
 }
 
 static char *ghost_Prand_write(int snum, char *src, size_t *len)
 {
   char *srcbuf = NULL, *buf = NULL, *line = NULL, *eol = NULL, *eline = NULL;
-  size_t bufpos = 0;
-
-  srcbuf = (char *) my_calloc(1, *len + 9 + 1);
-  strcpy(srcbuf, src);
-  line = srcbuf;
+  unsigned char *edata = NULL;
+  size_t bufpos = 0, llen = 0;
 
 #ifdef DEBUG_ENCLINK
-sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
-sdprintf("WRITE: %s", line);
+  sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
+  sdprintf("WRITE: %s", src);
 #endif
+
+  srcbuf = (char *) my_calloc(1, *len + 5 + 1);
+
+#ifdef DEBUG_ENCLINK
+  /* Add length at beginning to be checked */
+  simple_snprintf(srcbuf, *len + 5 + 1, "%d %s", *len - 1, src);
+  char *p = strchr(srcbuf, ' ');
+  *len += (p - srcbuf) + 1;
+#else
+  strlcpy(srcbuf, src, *len);
+#endif
+
+  line = srcbuf;
 
   eol = strchr(line, '\n');
   while (eol) {
+    llen = eol - line;
     *eol++ = 0;
-    eline = encrypt_string(socklist[snum].okey, line);
-
+    edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, &llen);
+    eline = b64enc(edata, &llen);
+    free(edata);
     ghost_cycle_key_out_Prand(snum);
  
-    buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
-    strcpy((char *) &buf[bufpos], eline);
+    buf = (char *) my_realloc(buf, bufpos + llen + 1 + 1);
+    strncpy((char *) &buf[bufpos], eline, llen);
     free(eline);
-    strcat(buf, "\n");
-    bufpos = strlen(buf);
+    bufpos += llen;
+    buf[bufpos++] = '\n';
+
     line = eol;
     eol = strchr(line, '\n');
+    *len -= llen;
   }
-  if (line[0]) {
-    eline = encrypt_string(socklist[snum].okey, line);
+  if (line[0]) { /* leftover line? */
+    llen = *len;
+    edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, &llen);
+    eline = b64enc(edata, &llen);
+    free(edata);
+
     ghost_cycle_key_out_Prand(snum);
-    buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
-    strcpy((char *) &buf[bufpos], eline);
+    buf = (char *) my_realloc(buf, bufpos + llen + 1 + 1);
+    strncpy((char *) &buf[bufpos], eline, llen);
     free(eline);
-    strcat(buf, "\n");
+    bufpos += llen;
+    buf[bufpos++] = '\n';
   }
   free(srcbuf);
 
-  *len = strlen(buf);
+  buf[bufpos] = 0;
+  *len = bufpos;
+
   return buf;
 }
+
 
 void ghost_parse(int idx, int snum, char *buf)
 {
@@ -484,8 +525,6 @@ void link_get_method(int idx)
 
 /* the order of entries here determines which will be picked */
 struct enc_link enclink[] = {
-//  { "ghost+cleanup", LINK_GHOSTCLEAN, ghost_link_case, ghostclean_write, ghost_read, ghost_parse },
-//  { "ghost+cleanup", LINK_GHOSTCLEAN, ghost_link_case, ghostclean_write, ghostclean_read, ghost_parse },
   { "ghost+prand", LINK_GHOSTPRAND, ghost_link_case, ghost_Prand_write, ghost_Prand_read, ghost_Prand_parse },
   { "ghost+case2", LINK_GHOSTCASE2, ghost_link_case, ghost_write, ghost_read, ghost_parse },
 // Disabled this one so 1.2.6->1.2.7 will use cleartext, as some 1.2.6 nets have an empty BDHASH

@@ -16,8 +16,7 @@ enum {
         LINK_CLEARTEXT,
 	LINK_GHOSTCASE, /* attic */
 	LINK_GHOSTCASE2,
-	LINK_GHOSTPRAND,
-        LINK_GHOSTCLEAN
+	LINK_GHOSTPRAND
 };
 enum direction_t {
         FROM,
