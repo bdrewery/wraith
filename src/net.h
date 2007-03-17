@@ -86,8 +86,8 @@ typedef struct {
 #endif /* USE_IPV6 */
   int sock;
   int encstatus;                        /* encrypted botlink */
-  int oseed;                            /* botlink out seed */
-  int iseed;                            /* botlink in seed */
+  long oseed;                            /* botlink out seed */
+  long iseed;                            /* botlink in seed */
   int gz; /* gzip compression */
   int enclink;				/* new encrypted botlink */
 #ifdef HAVE_SSL
