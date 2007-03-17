@@ -55,18 +55,20 @@ static void ghost_link_case(int idx, direction_t direction)
 
     if (direction == FROM) {
       make_rand_str(initkey, 32);       /* set the initial out/in link key to random chars. */
-      socklist[snum].oseed = random();
-      socklist[snum].iseed = socklist[snum].oseed;
+      socklist[snum].iseed = socklist[snum].oseed = random();
+#ifdef DEBUG
+sdprintf("sock: %d seed: %-10lu %s", snum, socklist[snum].oseed, hexize((unsigned char*) initkey, sizeof(initkey) - 1));
+#endif
       tmp2 = encrypt_string(settings.salt2, initkey);
       putlog(LOG_BOTS, "*", "Sending encrypted link handshake to %s...", dcc[idx].nick);
 
       socklist[snum].encstatus = 1;
       socklist[snum].gz = 1;
 
-      link_send(idx, "elink %s %d\n", tmp2, socklist[snum].oseed);
+      link_send(idx, "elink %s %lu\n", tmp2, socklist[snum].oseed);
       free(tmp2);
-      strcpy(socklist[snum].okey, initkey);
-      strcpy(socklist[snum].ikey, initkey);
+      strlcpy(socklist[snum].okey, initkey, sizeof(socklist[snum].okey));
+      strlcpy(socklist[snum].ikey, initkey, sizeof(socklist[snum].ikey));
     } else {
       socklist[snum].encstatus = 1;
       socklist[snum].gz = 1;
@@ -78,8 +80,8 @@ static void ghost_link_case(int idx, direction_t direction)
   }
 }
 
-static inline int
-prand(int *seed, int range)
+static inline long
+prand(long *seed, int range)
 {
   long long i1 = *seed;
 
@@ -88,12 +90,20 @@ prand(int *seed, int range)
   return ((i1 * range) >> 32);
 }
 
+static inline long
+Prand(long *seed, int range)
+{
+  long long i1 = *seed;
+
+  i1 = (i1 * 0x08088405 + 1) & 0xFFFFFFFF;
+  *seed = i1;
+  return (i1 * range);
+}
+
 static inline void ghost_cycle_key_in(int snum) {
   if (socklist[snum].iseed) {
-    *(dword *) & socklist[snum].ikey[0] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
-    *(dword *) & socklist[snum].ikey[4] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
-    *(dword *) & socklist[snum].ikey[8] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
-    *(dword *) & socklist[snum].ikey[12] = prand(&socklist[snum].iseed, 0xFFFFFFFF);
+    for (int i = 0; i < 16; i += sizeof(long))
+      *(long *) &(socklist[snum].ikey)[i] = prand(&(socklist[snum].iseed), 0xFFFFFFFF);
 
     if (!socklist[snum].iseed)
       ++socklist[snum].iseed;
@@ -102,10 +112,34 @@ static inline void ghost_cycle_key_in(int snum) {
 
 static inline void ghost_cycle_key_out(int snum) {
   if (socklist[snum].oseed) {
-      *(dword *) & socklist[snum].okey[0] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[4] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[8] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
-      *(dword *) & socklist[snum].okey[12] = prand(&socklist[snum].oseed, 0xFFFFFFFF);
+    for (int i = 0; i < 16; i += sizeof(long))
+      *(long *) &(socklist[snum].okey)[i] = prand(&(socklist[snum].oseed), 0xFFFFFFFF);
+
+      if (!socklist[snum].oseed)
+        ++socklist[snum].oseed;
+  }
+}
+
+static inline void ghost_cycle_key_in_Prand(int snum) {
+  if (socklist[snum].iseed) {
+#ifdef DEBUG
+sdprintf("CYCLING IKEY ON %d", snum);
+#endif
+    for (size_t i = 0; i < (sizeof(socklist[snum].ikey) - 1); i += sizeof(long))
+      *(long*) &(socklist[snum].ikey)[i] = Prand(&(socklist[snum].iseed), 0xFFFFFFFF);
+
+    if (!socklist[snum].iseed)
+      ++socklist[snum].iseed;
+  }
+}
+
+static inline void ghost_cycle_key_out_Prand(int snum) {
+  if (socklist[snum].oseed) {
+#ifdef DEBUG
+sdprintf("CYCLING OKEY ON %d", snum);
+#endif
+    for (size_t i = 0; i < (sizeof(socklist[snum].okey) - 1); i += sizeof(long))
+      *(long*) &(socklist[snum].okey)[i] = Prand(&(socklist[snum].oseed), 0xFFFFFFFF);
 
       if (!socklist[snum].oseed)
         ++socklist[snum].oseed;
@@ -161,6 +195,63 @@ static char *ghost_write(int snum, char *src, size_t *len)
   return buf;
 }
 
+static int ghost_Prand_read(int snum, char *src, size_t *len)
+{
+  char *line = decrypt_string(socklist[snum].ikey, src);
+#ifdef DEBUG
+sdprintf("SEED: %-10lu IKEY: %s", socklist[snum].iseed, hexize((unsigned char*) socklist[snum].ikey, 32));
+sdprintf("READ: %s", line);
+#endif
+  strcpy(src, line);
+  free(line);
+  ghost_cycle_key_in_Prand(snum);
+//  *len = strlen(src);
+  return OK;
+}
+
+static char *ghost_Prand_write(int snum, char *src, size_t *len)
+{
+  char *srcbuf = NULL, *buf = NULL, *line = NULL, *eol = NULL, *eline = NULL;
+  size_t bufpos = 0;
+
+  srcbuf = (char *) my_calloc(1, *len + 9 + 1);
+  strcpy(srcbuf, src);
+  line = srcbuf;
+
+#ifdef DEBUG
+sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
+sdprintf("WRITE: %s", line);
+#endif
+
+  eol = strchr(line, '\n');
+  while (eol) {
+    *eol++ = 0;
+    eline = encrypt_string(socklist[snum].okey, line);
+
+    ghost_cycle_key_out_Prand(snum);
+ 
+    buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
+    strcpy((char *) &buf[bufpos], eline);
+    free(eline);
+    strcat(buf, "\n");
+    bufpos = strlen(buf);
+    line = eol;
+    eol = strchr(line, '\n');
+  }
+  if (line[0]) {
+    eline = encrypt_string(socklist[snum].okey, line);
+    ghost_cycle_key_out_Prand(snum);
+    buf = (char *) my_realloc(buf, bufpos + strlen(eline) + 1 + 9);
+    strcpy((char *) &buf[bufpos], eline);
+    free(eline);
+    strcat(buf, "\n");
+  }
+  free(srcbuf);
+
+  *len = strlen(buf);
+  return buf;
+}
+
 void ghost_parse(int idx, int snum, char *buf)
 {
   /* putlog(LOG_DEBUG, "*", "Got elink: %s %s", code, buf); */
@@ -172,9 +263,40 @@ void ghost_parse(int idx, int snum, char *buf)
     char *tmp = decrypt_string(settings.salt2, newsplit(&buf));
 
     strlcpy(socklist[snum].okey, tmp, sizeof(socklist[snum].okey));
-    strlcpy(socklist[snum].ikey, socklist[snum].okey, sizeof(socklist[snum].ikey));
-    socklist[snum].iseed = atoi(buf);
-    socklist[snum].oseed = atoi(buf);
+    strlcpy(socklist[snum].ikey, tmp, sizeof(socklist[snum].ikey));
+    socklist[snum].iseed = socklist[snum].oseed = atol(buf);
+
+#ifdef DEBUG
+sdprintf("sock: %d seed: %-10lu %s", snum, socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, sizeof(socklist[snum].okey) - 1));
+#endif
+    putlog(LOG_BOTS, "*", "Handshake with %s succeeded, we're linked.", dcc[idx].nick);
+    free(tmp);
+    link_done(idx);
+  }
+}
+
+void ghost_Prand_parse(int idx, int snum, char *buf)
+{
+  /* putlog(LOG_DEBUG, "*", "Got elink: %s %s", code, buf); */
+  /* Set the socket key and we're linked */
+
+  char *code = newsplit(&buf);
+
+  if (!egg_strcasecmp(code, "elink")) {
+    char *tmp = decrypt_string(settings.salt2, newsplit(&buf));
+
+    socklist[snum].iseed = socklist[snum].oseed = atol(buf);
+
+    /* The hub/sender cycled the oseed once to send us this information.. so cycle/shift our iseed to match */
+    /* This operation was only on the seed, not the key, so do it before setting the key */
+    ghost_cycle_key_in_Prand(snum);
+
+    strlcpy(socklist[snum].okey, tmp, sizeof(socklist[snum].okey));
+    strlcpy(socklist[snum].ikey, tmp, sizeof(socklist[snum].ikey));
+
+#ifdef DEBUG
+sdprintf("sock: %d seed: %-10lu %s", snum, socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, sizeof(socklist[snum].okey) - 1));
+#endif
     putlog(LOG_BOTS, "*", "Handshake with %s succeeded, we're linked.", dcc[idx].nick);
     free(tmp);
     link_done(idx);
@@ -360,6 +482,7 @@ void link_get_method(int idx)
 struct enc_link enclink[] = {
 //  { "ghost+cleanup", LINK_GHOSTCLEAN, ghost_link_case, ghostclean_write, ghost_read, ghost_parse },
 //  { "ghost+cleanup", LINK_GHOSTCLEAN, ghost_link_case, ghostclean_write, ghostclean_read, ghost_parse },
+  { "ghost+prand", LINK_GHOSTPRAND, ghost_link_case, ghost_Prand_write, ghost_Prand_read, ghost_Prand_parse },
   { "ghost+case2", LINK_GHOSTCASE2, ghost_link_case, ghost_write, ghost_read, ghost_parse },
 // Disabled this one so 1.2.6->1.2.7 will use cleartext, as some 1.2.6 nets have an empty BDHASH
 //  { "ghost+case", LINK_GHOSTCASE, ghost_link_case, ghost_write, ghost_read, ghost_parse },
