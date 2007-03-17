@@ -211,7 +211,8 @@ static int ghost_Prand_read(int snum, char *src, size_t *len)
   char *p = strchr(line, ' ');
   *(p++) = 0;
   size_t real_len = atoi(line);
-  *len = strlen(p);
+
+  *len -= p - line;
 
   if (real_len != *len) {
     putlog(LOG_MISC, "*", "Encrypt MISMATCH %d != %d", real_len, *len);
