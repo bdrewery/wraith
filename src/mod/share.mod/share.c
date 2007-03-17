@@ -1020,6 +1020,14 @@ share_end(int idx, char *par)
 }
 
 static void share_userfile_line(int idx, char *par) {
+#ifdef no
+  char *size = newsplit(&par);
+  size_t len = atoi(size);
+
+  if (len != strlen(par)) {
+    putlog(LOG_MISC, "*", "Corrupt userfile transfer line: %s", par);
+  }
+#endif
   stream_in.puts(par);
   stream_in.puts('\n');
 }
@@ -1403,9 +1411,12 @@ static void share_read_stream(int idx, Stream& stream) {
 static void
 ulsend (int idx, const char* data, size_t datalen)
 {
-  char buf[1040];
-
+  char buf[2048] = "";
+#ifdef no
   simple_snprintf(buf, sizeof(buf), "s l %d %s", datalen-1, data);/* -1 for newline */
+#else
+  simple_snprintf(buf, sizeof(buf), "s l %s", data);
+#endif
   tputs(dcc[idx].sock, buf, strlen(buf)); 
 }
 
