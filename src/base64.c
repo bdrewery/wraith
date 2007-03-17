@@ -143,19 +143,33 @@ b64dec_buf(const unsigned char *data, size_t *len, char *dest)
 //  const size_t wholeBlocks = (*len / NUM_ENCODED_BYTES);
 //  const size_t remainingBytes (*len % NUM_ENCODED_BYTES);
 //  size_t maxTotal = (wholeBlocks + (0 != remainingBytes)) * NUM_ASCII_BYTES;
+
+#ifdef NO
   register int pads = 0;
+#endif
 
   for (i = 0, t = 0; i < *len; i += NUM_ENCODED_BYTES, t += NUM_ASCII_BYTES) {
 
     dest[t] = (DB(0) << 2) + (DB(1) >> 4);
     dest[t + 1] = ((DB(1) & 0x0F) << 4) + (DB(2) >> 2);
     dest[t + 2] = ((DB(2) & 3) << 6) + DB(3);
+  }
+
+#ifdef no
+i -= NUM_ENCODED_BYTES;
     /* Check for nulls (padding) - the >= check is because binary data might contain VALID NULLS */
     if ((i + NUM_ENCODED_BYTES) >= *len) {
-      if (dest[t] == 0) ++pads;
-      if (dest[t+1] == 0) ++pads;
-      if (dest[t+2] == 0) ++pads;
+//      if (dest[t] == 0) ++pads;
+      if (data[i+2] == '.' && data[i+3] == '.') ++pads;
+      if (data[i+3] == '.') ++pads;
+//      if (dest[t+1] == 0 && data[t+1] == '.') ++pads;
+//      if (dest[t+2] == 0 && data[t+2] == '.') ++pads;
+//printf("pads: %d data: %s\n", pads, data);
     }
+#endif
+
+#undef DB
+
 /*
 printf("i: %d *len: %d\n", i, *len);
 if (dest[t] == 0) printf("t:%d %d+%d '%c'\n", t, (XB(0) << 2), (XB(1) >> 4), base64r[(XB(0) << 2)] + base64r[(XB(1) >> 4)]);
@@ -165,15 +179,19 @@ else printf("t+1/%d\n", t+1);
 if (dest[t+2] == 0) printf("t+2:%d %d+%d '%c'\n", t+2, ((XB(2) & 3) << 6), XB(3), base64r[((XB(2) & 3) << 6)] + base64r[XB(3)]);
 else printf("t+2/%d\n", t+2);
 */
-  };
-#undef DB
-//  t += 3;
-//  t -= (t % 4);
-//*len = t;
-//dest[t] = 0;
 
-  *len = t - pads;
+  t += 3;
+  t -= (t % 4);
+*len = t;
+dest[t] = 0;
+
+//  *len = t - pads;
+//  dest[*len] = 0;
+
+
 //printf("pads: %d\n", pads);
 //*len = t;
-  dest[*len] = 0;
+//if (pads && t == ((t + 3) - ((t+3)%4)))
+//printf("*************************************\n****************************************\n****************************************\n****************\a\a\a\a\n");
+//printf("t: %d pads: %d told: %d\n", t, pads, (t + 3) - ((t+3)%4));
 }
