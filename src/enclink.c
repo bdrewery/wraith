@@ -13,6 +13,10 @@
 
 #include <stdarg.h>
 #include <signal.h>
+
+#ifdef DEBUG
+#define DEBUG_ENCLINK 1
+#endif
 static void ghost_link_case(int idx, direction_t direction)
 {
   int snum = findanysnum(dcc[idx].sock);
@@ -56,7 +60,7 @@ static void ghost_link_case(int idx, direction_t direction)
     if (direction == FROM) {
       make_rand_str(initkey, 32);       /* set the initial out/in link key to random chars. */
       socklist[snum].iseed = socklist[snum].oseed = random();
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("sock: %d seed: %-10lu %s", snum, socklist[snum].oseed, hexize((unsigned char*) initkey, sizeof(initkey) - 1));
 #endif
       tmp2 = encrypt_string(settings.salt2, initkey);
@@ -122,7 +126,7 @@ static inline void ghost_cycle_key_out(int snum) {
 
 static inline void ghost_cycle_key_in_Prand(int snum) {
   if (socklist[snum].iseed) {
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("CYCLING IKEY ON %d", snum);
 #endif
     for (size_t i = 0; i < (sizeof(socklist[snum].ikey) - 1); i += sizeof(long))
@@ -135,7 +139,7 @@ sdprintf("CYCLING IKEY ON %d", snum);
 
 static inline void ghost_cycle_key_out_Prand(int snum) {
   if (socklist[snum].oseed) {
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("CYCLING OKEY ON %d", snum);
 #endif
     for (size_t i = 0; i < (sizeof(socklist[snum].okey) - 1); i += sizeof(long))
@@ -198,7 +202,7 @@ static char *ghost_write(int snum, char *src, size_t *len)
 static int ghost_Prand_read(int snum, char *src, size_t *len)
 {
   char *line = decrypt_string(socklist[snum].ikey, src);
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("SEED: %-10lu IKEY: %s", socklist[snum].iseed, hexize((unsigned char*) socklist[snum].ikey, 32));
 sdprintf("READ: %s", line);
 #endif
@@ -218,7 +222,7 @@ static char *ghost_Prand_write(int snum, char *src, size_t *len)
   strcpy(srcbuf, src);
   line = srcbuf;
 
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
 sdprintf("WRITE: %s", line);
 #endif
@@ -266,7 +270,7 @@ void ghost_parse(int idx, int snum, char *buf)
     strlcpy(socklist[snum].ikey, tmp, sizeof(socklist[snum].ikey));
     socklist[snum].iseed = socklist[snum].oseed = atol(buf);
 
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("sock: %d seed: %-10lu %s", snum, socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, sizeof(socklist[snum].okey) - 1));
 #endif
     putlog(LOG_BOTS, "*", "Handshake with %s succeeded, we're linked.", dcc[idx].nick);
@@ -294,7 +298,7 @@ void ghost_Prand_parse(int idx, int snum, char *buf)
     strlcpy(socklist[snum].okey, tmp, sizeof(socklist[snum].okey));
     strlcpy(socklist[snum].ikey, tmp, sizeof(socklist[snum].ikey));
 
-#ifdef DEBUG
+#ifdef DEBUG_ENCLINK
 sdprintf("sock: %d seed: %-10lu %s", snum, socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, sizeof(socklist[snum].okey) - 1));
 #endif
     putlog(LOG_BOTS, "*", "Handshake with %s succeeded, we're linked.", dcc[idx].nick);
