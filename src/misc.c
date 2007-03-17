@@ -572,7 +572,7 @@ readsocks(const char *fname)
   FILE *f = NULL;
 
   if (!(f = fopen(fname, "r"))) {
-    fatal("CANT READ SOCKSFILE", 0);
+    fatal("CAN'T READ SOCKSFILE", 0);
   }
 
   char buf[1024] = "", *nick = NULL, *bufp = NULL, *type = NULL, *buf_ptr = NULL, *ip4 = NULL, *ip6 = NULL;
