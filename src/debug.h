@@ -39,6 +39,7 @@ void setlimits();
 #else
  void sdprintf (const char *, ...);
 #endif
+char* hexize(const unsigned char* data, size_t len);
 void init_signals();
 void init_debug();
 void eggContext(const char *, int);
