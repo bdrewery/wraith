@@ -251,7 +251,7 @@ static char *ghost_Prand_write(int snum, char *src, size_t *len)
   char *p = strchr(srcbuf, ' ');
   *len += (p - srcbuf) + 1;
 #else
-  strlcpy(srcbuf, src, *len);
+  strlcpy(srcbuf, src, *len + 1);
 #endif
 
   line = srcbuf;
