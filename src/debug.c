@@ -118,6 +118,9 @@ char* hexize(const unsigned char* data, size_t len) {
     else
       sprintf(buf, "%s %.2X", buf, (int) (data[i]));
   }
+
+  buf[len * 3] = 0;
+
   if (n == 5) n = 0;
   return buf;
 }
