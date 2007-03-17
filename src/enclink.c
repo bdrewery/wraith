@@ -159,7 +159,7 @@ static int ghost_read(int snum, char *src, size_t *len)
   strcpy(src, line);
   free(line);
   ghost_cycle_key_in(snum);
-//  *len = strlen(src);
+  *len = strlen(src);
   return OK;
 }
 

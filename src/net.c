@@ -1275,10 +1275,9 @@ int sockgets(char *s, int *len)
             --(*len);
           }
 
-          if (s[0] && socklist[i].encstatus) {
+          /* This updates s and *len as well */
+          if (s[0] && socklist[i].encstatus)
             link_read(i, s, (size_t *) len);
-            *len = strlen(s);
-          }
 	  return socklist[i].sock;
 	}
       } else {
@@ -1429,11 +1428,9 @@ int sockgets(char *s, int *len)
     }
   }
 
-  if (s[0] && socklist[ret].encstatus) {
+  /* This will update both s and *len */
+  if (s[0] && socklist[ret].encstatus)
     link_read(ret, s, (size_t *) len);
-//FIXME: This should NOT be needed - link_read should handle *len
-    *len = strlen(s);
-  }
 
   /* Anything left that needs to be saved? */
   if (!xx[0]) {
