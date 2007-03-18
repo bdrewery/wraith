@@ -139,6 +139,9 @@ static int ghost_Prand_read(int snum, char *src, size_t *len)
   free(b64);
 
 #ifdef DEBUG_ENCLINK
+  sdprintf("SEED: %-10lu IKEY: %s", socklist[snum].iseed, hexize((unsigned char*) socklist[snum].ikey, 32));
+  sdprintf("READ: %s", line);
+
   char *p = strchr(line, ' ');
   *(p++) = 0;
   size_t real_len = atoi(line);
@@ -157,11 +160,6 @@ static int ghost_Prand_read(int snum, char *src, size_t *len)
 #endif
   free(line);
 
-#ifdef DEBUG_ENCLINK
-  sdprintf("SEED: %-10lu IKEY: %s", socklist[snum].iseed, hexize((unsigned char*) socklist[snum].ikey, 32));
-  sdprintf("READ: %s", src);
-#endif
-
   ghost_cycle_key_in_Prand(snum);
   return OK;
 }
@@ -170,67 +168,60 @@ static char *ghost_Prand_write(int snum, char *src, size_t *len)
 {
   char *srcbuf = NULL, *buf = NULL, *line = NULL, *eol = NULL, *eline = NULL;
   unsigned char *edata = NULL;
-  size_t bufpos = 0, llen = 0;
+  size_t bufpos = 0;
 
-#ifdef DEBUG_ENCLINK
-  sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
-  sdprintf("WRITE: %s", src);
-#endif
-
-  srcbuf = (char *) my_calloc(1, *len + 5 + 1);
-
-#ifdef DEBUG_ENCLINK
-if (*len != strlen(src)) { sdprintf("WTF 54"); exit(1); }
-
-  /* Add length at beginning to be checked */
-  simple_snprintf(srcbuf, *len + 5 + 1, "%d %s", *len - 1, src); /* -1 to remove assumed trailing newline */
-  char *p = strchr(srcbuf, ' ');
-  *len += ++p - srcbuf;
-
-if (*len != strlen(srcbuf)) { sdprintf("WTF 1 -- %d != %d", *len, strlen(srcbuf)); exit(1); }
-#else
+  srcbuf = (char *) my_calloc(1, *len + 1);
   strlcpy(srcbuf, src, *len + 1);
-#endif
 
   line = srcbuf;
 
-  eol = strchr(line, '\n');
-  while (eol) {
-    llen = eol - line;
-    *eol++ = 0;
-    edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, &llen);
-    eline = b64enc(edata, &llen);
-    free(edata);
-    ghost_cycle_key_out_Prand(snum);
- 
-    buf = (char *) my_realloc(buf, bufpos + llen + 1 + 1);
-    strncpy((char *) &buf[bufpos], eline, llen);
-    free(eline);
-    bufpos += llen;
-    buf[bufpos++] = '\n';
+  do {
+    eol = strchr(line, '\n');
+    *len = eol - line;
+    *(eol++) = 0;
 
+    if (*len) {
+#ifdef DEBUG_ENCLINK
+     char *tmp = (char*) my_calloc(1, *len + 5 + 1);
+if (*len != strlen(line)) { sdprintf("WTF 54 %d != %d", *len, strlen(line)); exit(1); }
+
+     /* Add length at beginning to be checked */
+     simple_snprintf(tmp, *len + 5 + 1, "%d %s", *len, line);
+     char *p = strchr(tmp, ' ');
+     *len += ++p - tmp;
+
+     sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
+     sdprintf("WRITE: %s", tmp);
+
+if (*len != strlen(tmp)) { sdprintf("WTF 1 -- %d != %d", *len, strlen(tmp)); exit(1); }
+      edata = encrypt_binary(socklist[snum].okey, (unsigned char*) tmp, len);
+      free(tmp);
+#else
+      edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, len);
+#endif
+      eline = b64enc(edata, len);
+      free(edata);
+
+      ghost_cycle_key_out_Prand(snum);
+ 
+      buf = (char *) my_realloc(buf, bufpos + *len + 1 + 1);
+      strncpy((char *) &buf[bufpos], eline, *len);
+      free(eline);
+      bufpos += *len;
+      buf[bufpos++] = '\n';
+    }
     line = eol;
     eol = strchr(line, '\n');
-    *len -= llen;
-  }
-  if (line[0]) { /* leftover line? */
-    llen = *len;
-    edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, &llen);
-    eline = b64enc(edata, &llen);
-    free(edata);
+  } while (eol);
 
-    ghost_cycle_key_out_Prand(snum);
-    buf = (char *) my_realloc(buf, bufpos + llen + 1 + 1);
-    strncpy((char *) &buf[bufpos], eline, llen);
-    free(eline);
-    bufpos += llen;
-    /* FIXME: technically, no \n was provided, so adding this can break checksum/size checking and cause mismatches.. */
-    buf[bufpos++] = '\n';
-  }
   free(srcbuf);
 
-  buf[bufpos] = 0;
   *len = bufpos;
+  buf[*len] = 0;
+
+#ifdef DEBUG_ENCLINK
+if (*len != strlen(buf)) { sdprintf("WTF 6 %d != %d", *len, strlen(buf)); exit(1); }
+#endif
 
   return buf;
 }
