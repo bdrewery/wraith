@@ -249,10 +249,14 @@ static char *ghost_Prand_write(int snum, char *src, size_t *len)
   srcbuf = (char *) my_calloc(1, *len + 5 + 1);
 
 #ifdef DEBUG_ENCLINK
+if (*len != strlen(src)) { sdprintf("WTF 54"); exit(1); }
+
   /* Add length at beginning to be checked */
-  simple_snprintf(srcbuf, *len + 5 + 1, "%d %s", *len - 1, src);
+  simple_snprintf(srcbuf, *len + 5 + 1, "%d %s", *len - 1, src); /* -1 to remove assumed trailing newline */
   char *p = strchr(srcbuf, ' ');
-  *len += (p - srcbuf) + 1;
+  *len += ++p - srcbuf;
+
+if (*len != strlen(srcbuf)) { sdprintf("WTF 1 -- %d != %d", *len, strlen(srcbuf)); exit(1); }
 #else
   strlcpy(srcbuf, src, *len + 1);
 #endif
