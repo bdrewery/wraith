@@ -867,6 +867,8 @@ void channels_report(int idx, int details)
           i += my_strcpy(s + i, "nomassjoin ");
         if (channel_botbitch(chan))
           i += my_strcpy(s + i, "botbitch ");
+        if (channel_backup(chan))
+          i += my_strcpy(s + i, "backup ");
         if (channel_fastop(chan))
           i += my_strcpy(s + i, "fastop ");
         if (channel_privchan(chan))
