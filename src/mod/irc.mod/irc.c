@@ -1281,7 +1281,9 @@ raise_limit(struct chanset_t *chan)
 static void
 check_expired_chanstuff(struct chanset_t *chan)
 {
-  if (channel_active(chan)) {
+  if ((channel_active(chan) || channel_pending(chan)) && !shouldjoin(chan)) {
+    dprintf(DP_MODE, "PART %s\n", chan->name[0] ? chan->name : chan->dname);
+  } else if (channel_active(chan)) {
     masklist *b = NULL, *e = NULL;
     ptrlist<Member>::iterator m, n, p;
     char s[UHOSTLEN] = "";
