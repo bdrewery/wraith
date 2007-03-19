@@ -350,21 +350,20 @@ share_chattr(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
     char *hand = NULL, *atr = NULL, s[100] = "";
-    struct chanset_t *cst = NULL;
+    struct chanset_t *chan = NULL;
     struct userrec *u = NULL;
     struct flag_record fr2;
-    flag_t ofl;
 
     hand = newsplit(&par);
     u = get_user_by_handle(userlist, hand);
     if (u) {
       atr = newsplit(&par);
-      cst = findchan_by_dname(par);
-      if (!par[0] || cst) {
+      chan = findchan_by_dname(par);
+      if (!par[0] || chan) {
         if (!(dcc[idx].status & STAT_GETTING))
           shareout_but(idx, "a %s %s %s\n", hand, atr, par);
         noshare = 1;
-        if (par[0] && cst) {
+        if (par[0] && chan) {
           fr.match = FR_CHAN;
           fr2.match = FR_CHAN;
           if (u->bot) {
@@ -381,27 +380,27 @@ share_chattr(int idx, char *par)
             if (!(dcc[idx].status & STAT_GETTING))
               putlog(LOG_CMDS, "@", "%s: chattr %s %s %s", dcc[idx].nick, hand, s, par);
           } else
-            recheck_channel(cst, 0);
+            recheck_channel(chan, 0);
         } else {
           fr.match = FR_GLOBAL;
           get_user_flagrec(dcc[idx].user, &fr, 0);
           /* Don't let bot flags be altered */
-          ofl = fr.global;
+          fr2.global = fr.global;
           if (u->bot)
             fr.match |= FR_BOT;
           break_down_flags(atr, &fr, 0);
           fr.global = sanity_check(fr.global, u->bot);
           set_user_flagrec(u, &fr, 0);
           noshare = 0;
-          check_dcc_attrs(u, ofl);
+          check_dcc_attrs(u, fr2.global);
           build_flags(s, &fr, 0);
           fr.match = FR_CHAN;
           if (conf.bot->hub) {
             if (!(dcc[idx].status & STAT_GETTING))
               putlog(LOG_CMDS, "@", "%s: chattr %s %s", dcc[idx].nick, hand, s);
           } else {
-            for (cst = chanset; cst; cst = cst->next)
-              recheck_channel(cst, 0);
+            for (chan = chanset; chan; chan = chan->next)
+              recheck_channel(chan, 0);
           }
         }
         noshare = 0;
