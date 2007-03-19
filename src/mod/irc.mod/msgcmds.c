@@ -670,17 +670,18 @@ static int msgc_help(Auth *a, char *chname, char *par)
 
   table = bind_table_lookup("msgc");
 
-  for (entry = table->entries; entry && entry->next; entry = entry->next)
-    if (((chname && chname[0] && (entry->cflags & AUTH_CHAN)) || 
-        (!(chname && chname[0]) && (entry->cflags & AUTH_MSG))) && flagrec_ok(&entry->user_flags, &fr))
-      simple_snprintf(outbuf, sizeof(outbuf), "%s%s%s", outbuf[0] ? outbuf : "", outbuf[0] ? " " : "", &entry->function_name[6]);
-
-  table = bind_table_lookup("dcc");
-
-  for (entry = table->entries; entry && entry->next; entry = entry->next)
-    if (((chname && chname[0] && (entry->cflags & AUTH_CHAN)) || 
-        (!(chname && chname[0]) && (entry->cflags & AUTH_MSG))) && flagrec_ok(&entry->user_flags, &fr))
-      simple_snprintf(outbuf, sizeof(outbuf), "%s%s%s", outbuf[0] ? outbuf : "", outbuf[0] ? " " : "", &entry->function_name[5]);
+  for (int i = 0; i < 2; ++i) { 
+    for (entry = table->entries; entry && entry->next; entry = entry->next) {
+      if (flagrec_ok(&entry->user_flags, &fr) &&
+          (
+           (chname && chname[0] && (entry->cflags & AUTH_CHAN)) || 
+           (!(chname && chname[0]) && (entry->cflags & AUTH_MSG))
+          )
+         )
+        simple_snprintf(outbuf, sizeof(outbuf), "%s%s%s", outbuf[0] ? outbuf : "", outbuf[0] ? " " : "", entry->mask);
+    }
+    table = bind_table_lookup("dcc");
+  }
 
   strncat(outbuf, "\n", sizeof(outbuf));
 
