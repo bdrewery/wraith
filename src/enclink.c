@@ -15,7 +15,7 @@
 #include <signal.h>
 
 #ifdef DEBUG
-#define DEBUG_ENCLINK 1
+#define DEBUG_ENCLINK 0
 #endif 
 static void ghost_link_case(int idx, direction_t direction)
 {
