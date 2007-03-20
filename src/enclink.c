@@ -10,6 +10,7 @@
 #include "misc.h"
 #include "base64.h"
 #include "crypto/aes_util.h"
+#include "bdlib/base64.h"
 
 #include <stdarg.h>
 #include <signal.h>
@@ -134,7 +135,7 @@ static inline void ghost_cycle_key_out_Prand(int snum) {
 
 static int ghost_Prand_read(int snum, char *src, size_t *len)
 {
-  char *b64 = b64dec((unsigned char*) src, len);
+  char *b64 = BDLIB_NS::b64dec((unsigned char*) src, len);
   char *line = (char *) decrypt_binary(socklist[snum].ikey, (unsigned char*) b64, len);
   free(b64);
 
@@ -182,24 +183,23 @@ static char *ghost_Prand_write(int snum, char *src, size_t *len)
 
     if (*len) {
 #ifdef DEBUG_ENCLINK
-     char *tmp = (char*) my_calloc(1, *len + 5 + 1);
+      char *tmp = (char*) my_calloc(1, *len + 5 + 1);
 if (*len != strlen(line)) { sdprintf("WTF 54 %d != %d", *len, strlen(line)); exit(1); }
 
-     /* Add length at beginning to be checked */
-     simple_snprintf(tmp, *len + 5 + 1, "%d %s", *len, line);
-     char *p = strchr(tmp, ' ');
-     *len += ++p - tmp;
+      /* Add length at beginning to be checked */
+      simple_snprintf(tmp, *len + 5 + 1, "%d %s", *len, line);
+      char *p = strchr(tmp, ' ');
+      *len += ++p - tmp;
 
-     sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
-     sdprintf("WRITE: %s", tmp);
-
+      sdprintf("SEED: %-10lu OKEY: %s", socklist[snum].oseed, hexize((unsigned char*) socklist[snum].okey, 32));
+      sdprintf("WRITE: %s", tmp);
 if (*len != strlen(tmp)) { sdprintf("WTF 1 -- %d != %d", *len, strlen(tmp)); exit(1); }
       edata = encrypt_binary(socklist[snum].okey, (unsigned char*) tmp, len);
       free(tmp);
 #else
       edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, len);
 #endif
-      eline = b64enc(edata, len);
+      eline = BDLIB_NS::b64enc(edata, len);
       free(edata);
 
       ghost_cycle_key_out_Prand(snum);
