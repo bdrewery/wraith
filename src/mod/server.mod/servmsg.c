@@ -1183,7 +1183,7 @@ void check_hostmask()
 /* 311 $me nick username address * :realname */
 static int got311(char *from, char *msg)
 {
-  char *nick = NULL, *username = NULL, *address = NULL, uhost[UHOSTLEN + 1];
+  char *nick = NULL, *username = NULL, *address = NULL, uhost[UHOSTLEN + 1], *realname = NULL;
   struct userrec *u = NULL;
   Client *client = NULL;
   
@@ -1191,12 +1191,13 @@ static int got311(char *from, char *msg)
   nick = newsplit(&msg);
   username = newsplit(&msg);
   address = newsplit(&msg);
-  newsplit(&msg);
+  realname = newsplit(&msg);
   fixcolon(msg);
   
   if (!(client = Client::Find(nick))) {
     client = new Client(nick);
     client->SetUHost(address, username);
+    client->SetGecos(realname);
   }
 
   if (match_my_nick(nick)) {

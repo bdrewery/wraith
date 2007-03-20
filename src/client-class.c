@@ -78,7 +78,7 @@ void
   ptrlist<struct chanset_t>::iterator chan;
 
 
-  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s chans: ", nick, u ? u->handle : "-", userhost);
+  simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s realname: %s chans: ", nick, u ? u->handle : "-", userhost, gecos);
 
   for (chan = chans.begin(); chan; chan++)
     simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chan->dname);
@@ -156,6 +156,15 @@ void Client::SetUIP(const char *uip, const char *usr)
 char *Client::GetUHost()
 {
   return userhost;
+}
+
+char *Client::GetGecos()
+{
+  return gecos;
+}
+
+void Client::SetGecos(const char* realname) {
+  strlcpy(gecos, realname, sizeof(gecos));
 }
 
 char *Client::GetUIP()

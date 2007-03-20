@@ -36,6 +36,8 @@ class Client {
     char *GetUHost();
     void SetUIP(const char *, const char * = NULL);
     char *GetUIP();
+    void SetGecos(const char*);
+    char *GetGecos();
 
     void ClearUser();
     void UpdateUser(bool = 0);
@@ -56,8 +58,8 @@ class Client {
     char userhost[UHOSTLEN];
     char userip[UHOSTLEN];
     char user[11];
+    char gecos[REALLEN + 1];
     bool tried_getuser;
-
 };
 
 

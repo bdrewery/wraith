@@ -29,6 +29,7 @@
 #define HANDLEN		  9	/* valid values 9->NICKMAX		*/
 #define NICKMAX		 32	/* valid values HANDLEN->32		*/
 
+#define REALLEN 	50	/* For client->realname/gecos */
 
 /* Handy string lengths */
 
