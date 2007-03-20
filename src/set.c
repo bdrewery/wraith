@@ -842,9 +842,16 @@ int cmd_set_real(const char *botnick, int idx, char *par)
       dprintf(idx, "Data value ignored for listing.\n");
     }
 
-    if (name && !(var = var_get_var_by_name(name))) {
-      dprintf(idx, "No such variable: %s\n", name);
-      return 0;
+    if (name) {
+      var = var_get_var_by_name(name);
+#ifdef DEBUG
+      if (!var) {
+#else
+      if (!var || (var->flags & VAR_INTERNAL)) {
+#endif
+        dprintf(idx, "No such variable: %s\n", name);
+        return 0;
+      }
     }
 
     if (list && !(var->flags & VAR_LIST)) {
@@ -875,7 +882,7 @@ int cmd_set_real(const char *botnick, int idx, char *par)
         continue;
       }
       
-      if (!(var->flags & VAR_HIDE) && !((var->flags & VAR_PERM) && !isowner(dcc[idx].nick)) && 
+      if (!(var->flags & (VAR_HIDE|VAR_INTERNAL)) && !((var->flags & VAR_PERM) && !isowner(dcc[idx].nick)) && 
           !(botnick && ((var->flags & VAR_NOLOC) || (ishub && (var->flags & VAR_NOLHUB))))
          ) {		//Just display the data
         if (botnick) {				//fetch data from bot's USERENTRY_SET

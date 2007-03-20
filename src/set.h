@@ -10,6 +10,7 @@
 #define VAR_STRING	BIT1
 #define VAR_RATE	BIT2
 #define VAR_BOOL	BIT3
+/* Hide from viewing */
 #define VAR_HIDE	BIT4
 #define VAR_DETECTED	BIT5
 #define VAR_LIST	BIT6
@@ -34,6 +35,8 @@
 #define VAR_NOGHUB	BIT17
 /* (short) number */
 #define VAR_SHORT 	BIT18
+/* Do not allow to be set by users (internal use only) */
+#define VAR_INTERNAL	BIT19
 
 #define VAR_LDATA 	1
 #define VAR_GDATA	2
