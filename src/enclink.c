@@ -197,7 +197,7 @@ if (*len != strlen(tmp)) { sdprintf("WTF 1 -- %d != %d", *len, strlen(tmp)); exi
       edata = encrypt_binary(socklist[snum].okey, (unsigned char*) tmp, len);
       free(tmp);
 #else
-      eline = encrypt_binary(socklist[snum].okey, (unsigned char*) line, len);
+      edata = encrypt_binary(socklist[snum].okey, (unsigned char*) line, len);
 #endif
       eline = BDLIB_NS::b64enc(edata, len);
       free(edata);
