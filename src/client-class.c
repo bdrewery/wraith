@@ -24,6 +24,7 @@ void Client::_init(const char *nick)
   userhost[0] = 0;
   userip[0] = 0;
   user[0] = 0;
+  gecos[0] = 0;
   strlcpy(this->nick, nick, sizeof(this->nick));
 }
 
