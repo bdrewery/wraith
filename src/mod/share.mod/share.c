@@ -1416,11 +1416,11 @@ ulsend (int idx, const char* data, size_t datalen)
 {
   char buf[2048] = "";
 #ifdef no
-  simple_snprintf(buf, sizeof(buf), "s l %d %s", datalen-1, data);/* -1 for newline */
+  const size_t len = simple_snprintf(buf, sizeof(buf), "s l %d %s", datalen-1, data);/* -1 for newline */
 #else
-  simple_snprintf(buf, sizeof(buf), "s l %s", data);
+  const size_t len = simple_snprintf(buf, sizeof(buf), "s l %s", data);
 #endif
-  tputs(dcc[idx].sock, buf, strlen(buf)); 
+  tputs(dcc[idx].sock, buf, len); 
 }
 
 static void
