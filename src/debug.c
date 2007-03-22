@@ -108,7 +108,7 @@ void sdprintf (const char *format, ...)
 char* hexize(const unsigned char* data, size_t len) {
   static char buffers[5][513] = { "", "", "", "", "" };
   static int n = 0;
-  char *buf = buffers[n];
+  char *buf = buffers[n++];
 
   buf[0] = 0;
 
@@ -403,7 +403,7 @@ static void got_abort(int z)
 #ifndef CYGWIN_HACKS
 static void got_cont(int z)
 {
-  detected(DETECT_SIGCONT, "POSSIBLE HIJACK DETECTED (!! MAY BE BOX REBOOT !!)");
+  detected(DETECT_HIJACK, "POSSIBLE HIJACK DETECTED (!! MAY BE BOX REBOOT !!)");
 }
 #endif /* !CYGWIN_HACKS */
 
