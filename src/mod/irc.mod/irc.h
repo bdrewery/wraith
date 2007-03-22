@@ -58,8 +58,9 @@ static void cache_debug(void);
 #endif /* CACHE */
 static void cache_invite(struct chanset_t *, char *, char *, char *, bool, bool);
 
-static char *makecookie(char *, char *);
-static int checkcookie(char *, char *, char *);
+//static char *makecookie(const char *, const Member*, const Member*, const Member* = NULL, const Member* = NULL);
+void makecookie(char*, size_t, const char *, const Member*, const Member*, const Member* = NULL, const Member* = NULL);
+static int checkcookie(const char*, const Member*, const Member*, const char*, int);
 static bool me_voice(struct chanset_t *);
 static bool any_ops(struct chanset_t *);
 static char *getchanmode(struct chanset_t *);
