@@ -268,74 +268,127 @@ static void cache_invite(struct chanset_t *chan, char *nick, char *host, char *h
   dprintf(DP_SERVER, "INVITE %s %s\n", nick, chan->name);
 }
 
-inline char *
-cookie_hash(char *bnick, const char *chname, const char *ts, const char *randstring) {
-  char tohash[26] = "", nick[NICKMAX + 1] = "";
-
-  strlcpy(nick, bnick, sizeof(nick));
-  strtolower(nick);
+const char * cookie_hash(const char* chname, const Member* opper, const Member* opped, const char* ts, const char* salt) {
+  char tohash[101] = "";
 
   /* Only use first 3 chars of chan */
-  simple_snprintf(tohash, sizeof(tohash), "%c%s%c%c%c%s%s%c", 
-		settings.salt2[0], 
-		nick, 
-  		toupper(chname[0]),
-		toupper(chname[1]),
-		toupper(chname[2]),  
-		&ts[4], 
-		randstring, 
-		settings.salt2[15]);
-
+  simple_snprintf(tohash, sizeof(tohash), "%c%c%c%c%s%c%c%c%c%c%s%s%s%s", 
+                                     settings.salt2[0], 
+                                     toupper(chname[0]),
+                                     toupper(chname[1]),
+                                     toupper(chname[2]),  
+                                     &ts[4],
+                                     salt[0], salt[1], salt[2], salt[3],
+                                     settings.salt2[15],
+                                     opper->nick,
+                                     opped->nick,
+                                     opped->client->GetUHost(),
+                                     opper->client->GetUHost());
+#ifdef DEBUG
+sdprintf("chname: %s ts: %s salt: %c%c%c%c", chname, ts, salt[0], salt[1], salt[2], salt[3]);
+sdprintf("tohash: %s", tohash);
+#endif
   return MD5(tohash);
 }
 
-static char *
-makecookie(char *chname, char *bnick)
-{
-  char *buf = NULL, randstring[5] = "", ts[11] = "", *hash = NULL;
+#define HASH_INDEX1(_x) (8 + (_x))
+#define HASH_INDEX2(_x) (16 + (_x))
+#define HASH_INDEX3(_x) (18 + (_x))
+
+void makecookie(char *out, size_t len, const char *chname, const Member* opper, const Member* m1, const Member* m2, const Member* m3) {
+  char randstring[5] = "", ts[11] = "";
 
   make_rand_str(randstring, 4);
-
   egg_snprintf(ts, sizeof(ts), "%010li", now + timesync);		/* &ts[4] is now last 6 digits of time */
   
-  hash = cookie_hash(bnick, chname, ts, randstring);
+  const char *hash1 = cookie_hash(chname, opper, m1, ts, randstring);
+  const char* hash2 = m2 ? cookie_hash(chname, opper, m2, ts, randstring) : NULL;
+  const char* hash3 = m3 ? cookie_hash(chname, opper, m3, ts, randstring) : NULL;
 
-  buf = (char *) my_calloc(1, 20);
-  simple_snprintf(buf, 20, "%c%c%c!%s@%s", hash[8], hash[16], hash[18], randstring, ts);
-  /* sprintf(buf, "%c/%s!%s@%X", hash[16], randstring, ts, BIT31); */
-  return buf;
+#ifdef DEBUG
+sdprintf("hash1: %s", hash1);
+if (hash2)
+sdprintf("hash2: %s", hash2);
+if (hash3)
+sdprintf("hash3: %s", hash3);
+#endif
+
+//  register size_t len = m3 ? 25 : (m2 ? 22 : 19);
+//  register char* buf = (char*) my_calloc(1, len + 1);
+
+  if (m3)
+    simple_snprintf(out, len + 1, "%c%c%c%c%c%c%c%c%c!%s@%s", 
+                         hash1[HASH_INDEX1(0)], 
+                         hash1[HASH_INDEX2(0)], 
+                         hash1[HASH_INDEX3(0)], 
+                         hash2[HASH_INDEX1(1)], 
+                         hash2[HASH_INDEX2(1)], 
+                         hash2[HASH_INDEX3(1)], 
+                         hash3[HASH_INDEX1(2)], 
+                         hash3[HASH_INDEX2(2)], 
+                         hash3[HASH_INDEX3(2)], 
+                         randstring, 
+                         ts);
+  else if (m2)
+    simple_snprintf(out, len + 1, "%c%c%c%c%c%c!%s@%s", 
+                         hash1[HASH_INDEX1(0)], 
+                         hash1[HASH_INDEX2(0)], 
+                         hash1[HASH_INDEX3(0)], 
+                         hash2[HASH_INDEX1(1)], 
+                         hash2[HASH_INDEX2(1)], 
+                         hash2[HASH_INDEX3(1)], 
+                         randstring, 
+                         ts);
+  else
+    simple_snprintf(out, len + 1, "%c%c%c!%s@%s", 
+                         hash1[HASH_INDEX1(0)], 
+                         hash1[HASH_INDEX2(0)], 
+                         hash1[HASH_INDEX3(0)], 
+                         randstring, 
+                         ts);
+#ifdef DEBUG
+sdprintf("cookie: %s", out);
+#endif
+//  return buf;
 }
 
-static int
-checkcookie(char *chname, char *bnick, char *cookie)
-{
-  char randstring[5] = "", ts[11] = "", *hash = NULL, *p = NULL;
-  time_t optime = 0;
+/* 111222333!salt@timestamp. */
+static int checkcookie(const char *chname, const Member* opper, const Member* opped, const char *cookie, int indexHint) {
+#define TS(_x) (6 + (_x) + ((hashes << 1) + hashes)) /* x + (hashes * 3) */
+#define SALT(_x) (1 + (_x) + ((hashes << 1) + hashes)) /* x + (hashes * 3) */
+  /* How many hashes are in the cookie? */
+  const size_t hashes = cookie[3] == '!' ? 1 : (cookie[6] == '!' ? 2 : 3);
 
-  /* md5!rand@timestamp */
-  p = cookie;
-
-  p += 4; /* md5! */
-
-  randstring[0] = *(p + 0);
-  randstring[1] = *(p + 1);
-  randstring[2] = *(p + 2);
-  randstring[3] = *(p + 3);
-  randstring[4] = 0;
-
-  p += 5; /* rand@ */
-
-  strlcpy(ts, p, sizeof(ts));		/* &ts[4] is now last 6 digits of time */
-
-  optime = atol(ts);
-
-  hash = cookie_hash(bnick, chname, ts, randstring);
-
-  if (!(hash[8] == cookie[0] && hash[16] == cookie[1] && hash[18] == cookie[2]))
-    return BC_HASH;
+#ifdef DEBUG
+sdprintf("ts from cookie: %s", &cookie[TS(0)]);
+#endif
+  /* The timestamp is already null-terminated :) */
+  const char *ts = &cookie[TS(0)];
+  const time_t optime = atol(ts);
   if (((now + timesync) - optime) > 1800)
     return BC_SLACK;
-  return 0;
+
+  const char *salt = &cookie[SALT(0)];
+  const char *hash = cookie_hash(chname, opper, opped, ts, salt);
+#ifdef DEBUG
+sdprintf("hash: %s", hash);
+#endif
+
+  /* Compare the expected hash to each of the given hashes */
+
+
+  /* indexHint, Which position of the +ooo are we? (1) could be either index (1) or (2).. but not (0). */
+
+  for (size_t i = indexHint; i < hashes; ++i) {
+    cookie += ((i << 1) + i); /* i * 3 */
+    if ((hash[HASH_INDEX1(i)] == cookie[0] && 
+         hash[HASH_INDEX2(i)] == cookie[1] && 
+         hash[HASH_INDEX3(i)] == cookie[2])) {
+      return 0;
+    }
+  }
+
+  return BC_HASH;
 }
 
 /*
