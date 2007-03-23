@@ -105,9 +105,9 @@ int _wild_match(register unsigned char *m, register unsigned char *n)
 static inline int
 comp_with_mask(void *addr, void *dest, unsigned int mask)
 {
-  if (memcmp(addr, dest, mask >> 4) == 0)
+  if (memcmp(addr, dest, mask >> 3) == 0)
   {
-    int n = mask >> 4;
+    int n = mask >> 3;
     int m = ((-1) << (8 - (mask % 8)));
 
     if (mask % 8 == 0 ||
