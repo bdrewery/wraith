@@ -21,7 +21,6 @@ Lines prefixed with '-' were disabled before release and are not finished, or ar
 * Many botnet signals are now passed onto to other bots before being parsed. (Affects botcmd)
 * Re-enabled hops sharing between member lists.
 * Disabled +take nick list randomizing as the new member list should do this already.
-* Optimized the cookie checking functions.
 * Fixed countless buffer overflows. (fixes #226)
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 * New botlink encryption.
