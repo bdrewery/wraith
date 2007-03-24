@@ -1093,8 +1093,8 @@ static void cmd_chhandle(int idx, char *par)
 
   struct userrec *u2 = get_user_by_handle(userlist, hand);
 
-  if (!u2) {
-    dprintf(idx, "No such handle!\n");
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
+    dprintf(idx, "No such user!\n");
     return;
   }
 
@@ -1183,13 +1183,10 @@ static void cmd_chpass(int idx, char *par)
     dprintf(idx, "Usage: chpass <handle> [password]\n");
     return;
   }
-  char *handle = NULL;
-  struct userrec *u = NULL;
+  char *handle = newsplit(&par);
+  struct userrec *u = get_user_by_handle(userlist, handle);
 
-  handle = newsplit(&par);
-  if (!(u = get_user_by_handle(userlist, handle))) 
-    dprintf(idx, "No such user.\n");
-  else if (!whois_access(dcc[idx].user, u))
+  if (!u || (u && !whois_access(dcc[idx].user, u)))
     dprintf(idx, "No such user.\n");
   else if (u->bot)
     dprintf(idx, "Bots do not have passwords.\n");
@@ -1232,13 +1229,10 @@ static void cmd_chsecpass(int idx, char *par)
     dprintf(idx, "Usage: chsecpass <handle> [secpass/rand]\n");
     return;
   }
-  char *handle = NULL;
-  struct userrec *u = NULL;
+  char *handle = newsplit(&par);
+  struct userrec *u = get_user_by_handle(userlist, handle);
 
-  handle = newsplit(&par);
-  if (!(u = get_user_by_handle(userlist, handle))) 
-    dprintf(idx, "No such user.\n");
-  else if (!whois_access(dcc[idx].user, u))
+  if (!u || (u && !whois_access(dcc[idx].user, u)))
     dprintf(idx, "No such user.\n");
   else if (u->bot)
     dprintf(idx, "Bots do not have secpasses.\n");
@@ -1532,14 +1526,11 @@ static void cmd_comment(int idx, char *par)
 
   struct userrec *u1 = get_user_by_handle(userlist, handle);
 
-  if (!u1) {
+  if (!u1 || (u1 && !whois_access(dcc[idx].user, u1))) {
     dprintf(idx, "No such user!\n");
     return;
   }
-  if (!whois_access(dcc[idx].user, u1)) {
-    dprintf(idx, "You can't change comment on higher level users.\n");
-    return;
-  }
+
   putlog(LOG_CMDS, "*", "#%s# comment %s %s", dcc[idx].nick, handle, par);
   if (!egg_strcasecmp(par, "none")) {
     dprintf(idx, "Okay, comment blanked.\n");
@@ -1944,8 +1935,11 @@ static void cmd_simul(int idx, char *par)
     return;
   }
 
-  if (isowner(nick)) {
-    dprintf(idx, "Unable to '.simul' permanent owners.\n");
+
+  struct userrec *u2 = get_user_by_handle(userlist, nick);
+
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
+    dprintf(idx, "No such user.\n");
     return;
   }
 
@@ -2285,7 +2279,7 @@ static void cmd_chattr(int idx, char *par)
   char *hand = newsplit(&par);
   struct userrec *u2 = get_user_by_handle(userlist, hand);
 
-  if (!u2) {
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
     dprintf(idx, "No such user!\n");
     return;
   }
@@ -2985,14 +2979,12 @@ static void cmd_su(int idx, char *par)
 
   if (!par[0])
     dprintf(idx, "Usage: su <user>\n");
-  else if (!u)
+  else if (!u || (u && !whois_access(dcc[idx].user, u)))
     dprintf(idx, "No such user.\n");
   else if (u->bot)
     dprintf(idx, "You can't su to a bot... then again, why would you wanna?\n");
   else if (dcc[idx].u.chat->su_nick)
     dprintf(idx, "You cannot currently double .su; try .su'ing directly.\n");
-  else if (isowner(u->handle) && egg_strcasecmp(dcc[idx].nick, u->handle))
-    dprintf(idx, "You can't su to a permanent bot owner.\n");
   else {
     get_user_flagrec(u, &fr, NULL);
     ok = 1;
@@ -3185,7 +3177,7 @@ static void cmd_nopass(int idx, char *par)
 
   for (cu = userlist; cu; cu = cu->next) {
     if (!cu->bot) {
-      if (u_pass_match(cu, "-")) {
+      if (whois_access(dcc[idx].user, cu) && u_pass_match(cu, "-")) {
         cnt++;
         if (dopass) {
           pass[0] = 0;
@@ -3363,18 +3355,10 @@ static void cmd_mns_user(int idx, char *par)
   }
 
   char *handle = newsplit(&par);
-  struct userrec *u2 = NULL;
+  struct userrec *u2 = get_user_by_handle(userlist, handle);
 
-  if (!(u2 = get_user_by_handle(userlist, handle))) {
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
     dprintf(idx, "No such user!\n");
-    return;
-  }
-  if (isowner(u2->handle)) {
-    dprintf(idx, "You can't remove a permanent bot owner!\n");
-    return;
-  }
-  if ((u2->flags & USER_ADMIN) && !(isowner(dcc[idx].nick))) {
-    dprintf(idx, "You can't remove an admin!\n");
     return;
   }
   if ((u2->flags & USER_OWNER) && !(dcc[idx].user->flags & USER_OWNER)) {
@@ -3436,7 +3420,7 @@ static void cmd_pls_host(int idx, char *par)
     handle = dcc[idx].nick;
     u2 = dcc[idx].user;
   }
-  if (!u2 || !dcc[idx].user) {
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
     dprintf(idx, "No such user.\n");
     return;
   }
@@ -3545,7 +3529,7 @@ static void cmd_mns_host(int idx, char *par)
     handle = dcc[idx].nick;
     u2 = dcc[idx].user;
   }
-  if (!u2 || !dcc[idx].user) {
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
     dprintf(idx, "No such user.\n");
     return;
   }
@@ -3623,7 +3607,7 @@ static void cmd_clearhosts(int idx, char *par)
     u2 = dcc[idx].user;
   }
 
-  if (!u2 || !dcc[idx].user) {
+  if (!u2 || (u2 && !whois_access(dcc[idx].user, u2))) {
     dprintf(idx, "No such user.\n");
     return;
   }
