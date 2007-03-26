@@ -12,6 +12,9 @@
 #include "client-class.h"
 #include "structures/hash_table.h"
 
+#define FLOOD_EXEMPT_OP	1
+#define FLOOD_EXEMPT_VOICE 2
+
 #define CHANMETA "#&!+"
 #define NICKVALID "[{}]^`|\\_-"
 
@@ -158,6 +161,7 @@ struct chanset_t {
 /* Chanint template 
  *int temp;
  */
+  int flood_exempt_mode;
   int idle_kick;
 #ifdef REVENGE
   int revenge_mode;
