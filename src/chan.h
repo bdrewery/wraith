@@ -81,13 +81,16 @@ struct chan_t {
   time_t jointime;
   time_t parttime;
   time_t no_op;
+  time_t drone_jointime;
   int fighting;
+  int drone_joins;
 #ifdef G_BACKUP
   int backup_time;              /* If non-0, set +backup when now>backup_time */
 #endif /* G_BACKUP */
   int maxmembers;
   int members;
   int do_opreq;
+  bool set_im;
   char *topic;
   char *key;
   unsigned short int mode;
