@@ -2373,7 +2373,7 @@ static int gotjoin(char *from, char *chname)
 
         m->client->SetUHost(uhost);
 
-        if (channel_nomassjoin(chan) && me_op(chan)) {
+        if (!chk_op(fr, chan) && channel_nomassjoin(chan) && me_op(chan)) {
           if (chan->channel.drone_jointime < now - flood_massjoin.time) {      //expired, reset counter
             chan->channel.drone_joins = 0;
           }
@@ -2522,14 +2522,19 @@ static int gotpart(char *from, char *msg)
 {
   char *nick = NULL, *chname = NULL;
   struct chanset_t *chan = NULL;
-  struct userrec *u = NULL;
+  char buf[UHOSTLEN] = "", *uhost = buf;
 
   chname = newsplit(&msg);
   fixcolon(chname);
   fixcolon(msg);
   chan = findchan(chname);
-  u = get_user_by_host(from);
-  nick = splitnick(&from);
+
+  strcpy(uhost, from);
+  nick = splitnick(&uhost);
+
+  Member* m = ismember(chan, nick);
+  struct userrec *u = m->user;
+
   if (chan && !shouldjoin(chan) && match_my_nick(nick)) {
     irc_log(chan, "Parting");    
     clear_channel(chan, 1);
@@ -2545,15 +2550,14 @@ static int gotpart(char *from, char *msg)
       reset_chan_info(chan);
     }
     set_handle_laston(chan->dname, u, now);
-    chan = findchan(chname);
-    if (!chan)
-      return 0;
+
+    detect_chan_flood(nick, m->client->GetUHost(), from, chan, FLOOD_JOIN, NULL);
 
     killmember(chan, nick);
     if (msg[0])
-      irc_log(chan, "Part: %s (%s) [%s]", nick, from, msg);
+      irc_log(chan, "Part: %s (%s) [%s]", nick, uhost, msg);
     else
-      irc_log(chan, "Part: %s (%s)", nick, from);
+      irc_log(chan, "Part: %s (%s)", nick, uhost);
     /* If it was me, all hell breaks loose... */
     if (match_my_nick(nick)) {
       clear_channel(chan, 1);
