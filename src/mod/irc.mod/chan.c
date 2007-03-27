@@ -2374,13 +2374,13 @@ static int gotjoin(char *from, char *chname)
         m->client->SetUHost(uhost);
 
         if (!chk_op(fr, chan) && channel_nomassjoin(chan) && me_op(chan)) {
-          if (chan->channel.drone_jointime < now - flood_massjoin.time) {      //expired, reset counter
+          if (chan->channel.drone_jointime < now - chan->flood_mjoin_time) {      //expired, reset counter
             chan->channel.drone_joins = 0;
           }
           ++chan->channel.drone_joins;
           chan->channel.drone_jointime = now;
 
-          if (!chan->channel.drone_set_mode && chan->channel.drone_joins >= flood_massjoin.count) {  //flood from dronenet, let's attempt to set +im
+          if (!chan->channel.drone_set_mode && chan->channel.drone_joins >= chan->flood_mjoin_thr) {  //flood from dronenet, let's attempt to set +im
             detected_drone_flood(chan, m);
           }
         }
