@@ -379,7 +379,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
    */
   Member *m = ismember(chan, floodnick);
 
-  if (!m && (which != FLOOD_JOIN))
+  if (!m && (which != FLOOD_JOIN) && (which != FLOOD_PART))
     return 0;
 
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
@@ -421,6 +421,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
     strcpy(ftype, "nick");
     break;
   case FLOOD_JOIN:
+  case FLOOD_PART:
     thr = chan->flood_join_thr;
     lapse = chan->flood_join_time;
       strcpy(ftype, "join");
@@ -490,6 +491,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
       }
       return 1;
     case FLOOD_JOIN:
+    case FLOOD_PART:
     case FLOOD_NICK:
       if (use_exempts &&
 	  (u_match_mask(global_exempts, from) ||
@@ -503,21 +505,23 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
       if ((u_match_mask(global_bans, from))
 	  || (u_match_mask(chan->bans, from)))
 	return 1;		/* Already banned */
-      if (which == FLOOD_JOIN)
+      if (which == FLOOD_JOIN || which == FLOOD_PART)
 	putlog(LOG_MISC | LOG_JOIN, chan->dname, "JOIN flood from @%s!  Banning.", p);
       else
 	putlog(LOG_MISC | LOG_JOIN, chan->dname, "NICK flood from @%s!  Banning.", p);
       strcpy(ftype + 4, " flood");
       u_addmask('b', chan, h, conf.bot->nick, ftype, now + (60 * chan->ban_time), 0);
+      if (which == FLOOD_PART)
+        add_mode(chan, '+', 'b', h);
       if (!channel_enforcebans(chan) && me_op(chan)) {
 	  char s[UHOSTLEN] = "";
           ptrlist<Member>::iterator _p;
 
           PFOR (chan->channel.hmember, Member, m) {
 	    simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->client->GetUHost());
-	    if (wild_match(h, s) &&
+	    if (!chan_sentkick(m) && wild_match(h, s) &&
 		(m->joined >= chan->floodtime[which]) &&
-		!chan_sentkick(m) && !match_my_nick(m->nick) && me_op(chan)) {
+		!match_my_nick(m->nick) && me_op(chan)) {
 	      m->flags |= SENTKICK;
 	      if (which == FLOOD_JOIN)
    	        dprintf(DP_SERVER, "KICK %s %s :%sjoin flood\n", chan->name, m->nick, kickprefix);
@@ -2542,7 +2546,7 @@ static int gotpart(char *from, char *msg)
     set_handle_laston(chan->dname, u, now);
 
     if (m) {
-      detect_chan_flood(nick, m->client->GetUHost(), from, chan, FLOOD_JOIN, NULL);
+      detect_chan_flood(nick, m->client->GetUHost(), from, chan, FLOOD_PART, NULL);
       killmember(chan, nick);
     }
     if (msg[0])
