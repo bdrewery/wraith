@@ -831,16 +831,6 @@ static void resetmasks(struct chanset_t *chan, masklist *m, maskrec *mrec, maskr
   }
 }
 
-void check_this_mask(const char type, struct chanset_t *chan, char *mask, bool sticky)
-{
-  if (type == 'b')
-    check_this_ban(chan, mask, sticky);
-  else if (type == 'e')
-    check_this_exempt(chan, mask, sticky);
-  else if (type == 'I')
-    check_this_invite(chan, mask, sticky);
-}
-
 void check_this_ban(struct chanset_t *chan, char *banmask, bool sticky)
 {
   if (!me_op(chan))
@@ -2532,9 +2522,6 @@ static int gotpart(char *from, char *msg)
   strcpy(uhost, from);
   nick = splitnick(&uhost);
 
-  Member* m = ismember(chan, nick);
-  struct userrec *u = m->user;
-
   if (chan && !shouldjoin(chan) && match_my_nick(nick)) {
     irc_log(chan, "Parting");    
     clear_channel(chan, 1);
@@ -2542,6 +2529,9 @@ static int gotpart(char *from, char *msg)
     return 0;
   }
   if (chan && !channel_pending(chan)) {
+    Member* m = ismember(chan, nick);
+    struct userrec *u = (m && m->user) ? m->user : get_user_by_host(from);
+
     if (!channel_active(chan)) {
       /* whoa! */
       putlog(LOG_ERRORS, "*", "confused bot: guess I'm on %s and didn't realize it", chan->dname);
@@ -2551,9 +2541,10 @@ static int gotpart(char *from, char *msg)
     }
     set_handle_laston(chan->dname, u, now);
 
-    detect_chan_flood(nick, m->client->GetUHost(), from, chan, FLOOD_JOIN, NULL);
-
-    killmember(chan, nick);
+    if (m) {
+      detect_chan_flood(nick, m->client->GetUHost(), from, chan, FLOOD_JOIN, NULL);
+      killmember(chan, nick);
+    }
     if (msg[0])
       irc_log(chan, "Part: %s (%s) [%s]", nick, uhost, msg);
     else
