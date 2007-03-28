@@ -446,7 +446,13 @@ void stream_writeuserfile(Stream& stream, const struct userrec *bu, int idx) {
   strcpy(s1, ctime(&tt));
 
   stream.printf("#4v: %s -- %s -- written %s\n", ver, conf.bot->nick, s1);
-  channels_writeuserfile(stream);
+/* FIXME: REMOVE AFTER 1.2.14 */
+  bool old = 0;
+
+  tand_t* bot = findbot(dcc[idx].nick);
+  if (bot && bot->buildts < 1175102242) /* flood-* hacks */
+    old = 1;
+  channels_writeuserfile(stream, old);
 
   for (const struct userrec *u = bu; u; u = u->next)
     write_user(u, stream, idx);

@@ -772,10 +772,108 @@ flood-exempt %d flood-lock-time %d \
   }
 }
 
-void channels_writeuserfile(Stream& stream)
+
+/* FIXME: REMOVE THIS AFTER 1.2.14 */
+void write_chans_compat(Stream& stream, int idx)
+{
+  putlog(LOG_DEBUG, "*", "Writing channels..");
+
+  stream.printf(CHANS_NAME " - -\n");
+
+  char w[1024] = "";
+
+  for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
+    char inactive = 0;
+
+    putlog(LOG_DEBUG, "*", "writing channel %s to userfile..", chan->dname);
+    get_mode_protect(chan, w);
+
+    /* if a bot should explicitly NOT join, just set it +inactive ... */
+    if (idx >= 0 && !botshouldjoin(dcc[idx].user, chan))
+      inactive = '+';
+    /* ... otherwise give the bot the *actual* setting */
+    else
+      inactive = PLSMNS(channel_inactive(chan));
+
+    stream.printf("\
++ channel add %s { chanmode { %s } addedby %s addedts %lu idle-kick %d \
+bad-cookie %d manop %d mdop %d mop %d limit %d \
+flood-chan %d:%lu flood-ctcp %d:%lu flood-join %d:%lu \
+flood-kick %d:%lu flood-deop %d:%lu flood-nick %d:%lu \
+closed-ban %d closed-invite %d closed-private %d ban-time %lu \
+exempt-time %lu invite-time %lu voice-non-ident %d \
+%cenforcebans %cdynamicbans %cuserbans %cbitch \
+%cprivate %ccycle %cinactive %cdynamicexempts %cuserexempts \
+%cdynamicinvites %cuserinvites %cnodesynch %cclosed %cvoice \
+%cfastop %cautoop %cbotbitch %crelay %cnomassjoin %cbackup %c%s}\n",
+	chan->dname,
+	w,
+        chan->added_by,
+        chan->added_ts,
+/* Chanchar template
+ *      temp,
+ * also include temp %s in dprintf.
+ */
+	chan->idle_kick, /* idle-kick 0 is same as dont-idle-kick (lcode)*/
+	chan->bad_cookie,
+	chan->manop,
+	chan->mdop,
+	chan->mop,
+        chan->limitraise,
+	chan->flood_pub_thr, chan->flood_pub_time,
+        chan->flood_ctcp_thr, chan->flood_ctcp_time,
+        chan->flood_join_thr, chan->flood_join_time,
+        chan->flood_kick_thr, chan->flood_kick_time,
+        chan->flood_deop_thr, chan->flood_deop_time,
+	chan->flood_nick_thr, chan->flood_nick_time,
+        chan->closed_ban,
+/* Chanint template
+ *      chan->temp,
+ * also include temp %d in dprintf
+ */
+        chan->closed_invite,
+        chan->closed_private,
+        chan->ban_time,
+        chan->exempt_time,
+        chan->invite_time,
+        chan->voice_non_ident,
+ 	PLSMNS(channel_enforcebans(chan)),
+	PLSMNS(channel_dynamicbans(chan)),
+	PLSMNS(!channel_nouserbans(chan)),
+	PLSMNS(channel_bitch(chan)),
+	PLSMNS(channel_privchan(chan)),
+	PLSMNS(channel_cycle(chan)),
+        inactive,
+	PLSMNS(channel_dynamicexempts(chan)),
+	PLSMNS(!channel_nouserexempts(chan)),
+ 	PLSMNS(channel_dynamicinvites(chan)),
+	PLSMNS(!channel_nouserinvites(chan)),
+	PLSMNS(channel_nodesynch(chan)),
+	PLSMNS(channel_closed(chan)),
+	PLSMNS(channel_voice(chan)),
+	PLSMNS(channel_fastop(chan)),
+        PLSMNS(channel_autoop(chan)),
+        PLSMNS(channel_botbitch(chan)),
+        PLSMNS(channel_relay(chan)),
+        PLSMNS(channel_nomassjoin(chan)),
+        PLSMNS(channel_backup(chan)),
+	HAVE_TAKE ? PLSMNS(channel_take(chan)) : 0,
+        HAVE_TAKE ? "take " : " "
+/* Chanflag template
+ * also include a %ctemp above.
+ *      PLSMNS(channel_temp(chan)),
+ */
+    );
+  }
+}
+
+void channels_writeuserfile(Stream& stream, bool old)
 {
   putlog(LOG_DEBUG, "@", "Writing channel/ban/exempt/invite entries.");
-  write_chans(stream, -1);
+  if (!old)
+    write_chans(stream, -1);
+  else
+    write_chans_compat(stream, -1);
   write_vars_and_cmdpass(stream, -1);
   write_bans(stream, -1);
   write_exempts(stream, -1);
