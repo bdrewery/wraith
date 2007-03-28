@@ -36,7 +36,7 @@ bool dccauth;
 int cloak_script = 0;
 rate_t close_threshold;
 int fight_threshold;
-char *def_chanset = "+enforcebans +dynamicbans +userbans -bitch -protectops +cycle -inactive +userexempts -dynamicexempts +userinvites -dynamicinvites -nodesynch -closed -take -voice -private -fastop";
+char *def_chanset = "+enforcebans +dynamicbans +userbans -bitch +cycle -inactive +userexempts -dynamicexempts +userinvites -dynamicinvites -nodesynch -closed -take -voice -private -fastop";
 int set_noshare = 0;
 int fork_interval;
 int hijack;
