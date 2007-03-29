@@ -449,7 +449,7 @@ void stream_writeuserfile(Stream& stream, const struct userrec *bu, int idx) {
 /* FIXME: REMOVE AFTER 1.2.14 */
   bool old = 0;
 
-  tand_t* bot = findbot(dcc[idx].nick);
+  tand_t* bot = idx != -1 ? findbot(dcc[idx].nick) : NULL;
   if (bot && bot->buildts < 1175102242) /* flood-* hacks */
     old = 1;
   channels_writeuserfile(stream, old);
