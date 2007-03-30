@@ -1490,7 +1490,7 @@ check_expired_chanstuff(struct chanset_t *chan)
     }
 //#endif
     check_lonely_channel(chan);
-  } else if (shouldjoin(chan) && !channel_pending(chan) && !channel_joining(chan)) {
+  } else if (shouldjoin(chan) && !channel_pending(chan)) {
     dprintf(DP_MODE, "JOIN %s %s\n",
             (chan->name[0]) ? chan->name : chan->dname,
             chan->channel.key[0] ? chan->channel.key : chan->key_prot);
