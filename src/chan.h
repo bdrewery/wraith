@@ -133,7 +133,7 @@ struct chanset_t {
     int type;
   } cmode[MODES_PER_LINE_MAX];                 /* parameter-type mode changes -        */
   struct {
-    Member *op;
+    char *op;
   } ccmode[MODES_PER_LINE_MAX];                 /* parameter-type mode changes -        */
   /* detect floods */
   time_t floodtime[FLOOD_CHAN_MAX];
