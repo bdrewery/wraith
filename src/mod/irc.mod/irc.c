@@ -482,7 +482,7 @@ getin_request(char *botnick, char *code, char *par)
 
   if (what[0] != 'K') {
     if (!(channel_pending(chan) || channel_active(chan))) {
-      putlog(LOG_GETIN, "*", "%sreq from %s/%s %s %s - I'm not on %s right now., type, botnick, nick, desc, 
+      putlog(LOG_GETIN, "*", "%sreq from %s/%s %s %s - I'm not on %s right now.", type, botnick, nick, desc, 
                              chan->dname, chan->dname);
       return;
     }
