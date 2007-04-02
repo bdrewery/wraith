@@ -1093,12 +1093,9 @@ void showhelp(int idx, struct flag_record *flags, char *string)
 /* Arrange the N elements of ARRAY in random order. */
 void shuffleArray(char *array[], size_t n)
 {
-  size_t j = 0, i;
-  char *temp = NULL;
-
-  for (i = 0; i < n; i++) {
-    j = i + random() / (RAND_MAX / (n - i) + 1);
-    temp = array[j];
+  for (size_t i = 0; i < n; i++) {
+    const size_t j = randint(n);
+    char* temp = array[j];
     array[j] = array[i];
     array[i] = temp;
   }
