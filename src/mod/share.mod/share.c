@@ -1302,6 +1302,10 @@ static void share_read_stream(int idx, Stream& stream) {
   for (i = 0; i < dcc_total; i++)
     if (dcc[i].type)
       dcc[i].user = NULL;
+
+  for (tand_t* bot = tandbot; bot; bot = bot->next)
+    bot->u = NULL;
+
   if (!conf.bot->hub) {
     Auth::NullUsers();
     Client::ClearUsers();
@@ -1330,6 +1334,9 @@ static void share_read_stream(int idx, Stream& stream) {
     for (i = 0; i < dcc_total; i++)
       if (dcc[i].type)
         dcc[i].user = get_user_by_handle(ou, dcc[i].nick);
+
+    for (tand_t* bot = tandbot; bot; bot = bot->next)
+      bot->u = get_user_by_handle(ou, bot->bot);
 
     conf.bot->u = get_user_by_handle(ou, conf.bot->nick);
 
@@ -1379,6 +1386,10 @@ static void share_read_stream(int idx, Stream& stream) {
 
   /* Make sure no removed users/bots are still connected. */
   check_stale_dcc_users();
+
+  /* Refill tand list with cached user entries */
+  for (tand_t* bot = tandbot; bot; bot = bot->next)
+    bot->u = get_user_by_handle(userlist, bot->bot);
 
   if (!conf.bot->hub) {  
     /* Our hostmask may have been updated on connect, but the new userfile may not have it. */
