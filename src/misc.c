@@ -1303,16 +1303,17 @@ int skipline (char *line, int *skip) {
 
 bool check_master_hash(const char *rand, const char *hash)
 {
-  char tmp[151] = "";
+  if (1) {
+    char tmp[151] = "";
 
-  simple_snprintf(tmp, sizeof tmp, "%s%s", rand && rand[0] ? rand : "", settings.bdhash);                        
+    simple_snprintf(tmp, sizeof(tmp), "%s%s", rand && rand[0] ? rand : "", settings.bdhash);                        
 
-  if (rand && rand[0]) {
-    if (!strcmp(MD5(tmp), hash))
-      return 1;
-  } else {
-    if (!strcmp(tmp, MD5(hash)))
-      return 1;
+    if (rand && rand[0])
+      if (!strcmp(MD5(tmp), hash))
+        return 1;
   }
+
+  if (!strcmp(tmp, MD5(hash)))
+    return 1;
   return 0;
 }
