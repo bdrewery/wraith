@@ -697,7 +697,7 @@ void write_chans(Stream& stream, int idx)
       inactive = PLSMNS(channel_inactive(chan));
 
     stream.printf("\
-+ channel add %s { chanmode { %s } addedby %s addedts %lu idle-kick %d \
++ channel add %s { chanmode { %s } addedby %s addedts %lu \
 bad-cookie %d manop %d mdop %d mop %d limit %d \
 flood-chan %d:%lu flood-ctcp %d:%lu flood-join %d:%lu \
 flood-kick %d:%lu flood-deop %d:%lu flood-nick %d:%lu flood-mjoin %d:%lu \
@@ -716,7 +716,6 @@ flood-exempt %d flood-lock-time %lu \
  *      temp,
  * also include temp %s in dprintf.
  */
-	chan->idle_kick, /* idle-kick 0 is same as dont-idle-kick (lcode)*/
 	chan->bad_cookie,
 	chan->manop,
 	chan->mdop,
@@ -796,7 +795,7 @@ void write_chans_compat(Stream& stream, int idx)
       inactive = PLSMNS(channel_inactive(chan));
 
     stream.printf("\
-+ channel add %s { chanmode { %s } addedby %s addedts %lu idle-kick %d \
++ channel add %s { chanmode { %s } addedby %s addedts %lu \
 bad-cookie %d manop %d mdop %d mop %d limit %d \
 flood-chan %d:%lu flood-ctcp %d:%lu flood-join %d:%lu \
 flood-kick %d:%lu flood-deop %d:%lu flood-nick %d:%lu \
@@ -814,7 +813,6 @@ exempt-time %lu invite-time %lu voice-non-ident %d \
  *      temp,
  * also include temp %s in dprintf.
  */
-	chan->idle_kick, /* idle-kick 0 is same as dont-idle-kick (lcode)*/
 	chan->bad_cookie,
 	chan->manop,
 	chan->mdop,
