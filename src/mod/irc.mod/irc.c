@@ -752,8 +752,8 @@ request_op(struct chanset_t *chan)
 
   int cnt = op_bots, i2 = 0;
   Member *ml = NULL, *botops[MAX_BOTS];
-  char s[UHOSTLEN] = "";
   ptrlist<Member>::iterator _p;
+  char s[UHOSTLEN] = "";
 
   i = 0;
   PFOR (chan->channel.hmember, Member, ml) {
@@ -783,7 +783,8 @@ request_op(struct chanset_t *chan)
     return;
   }
 
-  char *l = (char *) my_calloc(1, cnt * 50);
+  char l[1024] = "";
+  size_t len = 0;
 
   /* first scan for bots on my server, ask first found for ops */
   simple_snprintf(s, sizeof(s), "gi o %s %s", chan->dname, botname);
@@ -793,16 +794,13 @@ request_op(struct chanset_t *chan)
     if (botops[i2]->client->hops < 2) {
       putbot(botops[i2]->user->handle, s);
       chan->opreqtime[first] = n;
-      if (l[0]) {
-        strcat(l, ", ");
-        strcat(l, botops[i2]->user->handle);
-      } else {
-        strcpy(l, botops[i2]->user->handle);
-      }
-      strcat(l, "/");
-      strcat(l, botops[i2]->nick);
+      if (l[0])
+        len += strlcpy(l + len, ", ", sizeof(l) - len);
+      len += strlcpy(l + len, botops[i2]->user->handle, sizeof(l) - len);
+      len += strlcpy(l + len, "/", sizeof(l) - len);
+      len += strlcpy(l + len, botops[i2]->nick, sizeof(l) - len);
       botops[i2] = NULL;
-      cnt--;
+      --cnt;
       break;
     }
   }
@@ -813,23 +811,20 @@ request_op(struct chanset_t *chan)
     if (botops[i2]) {
       putbot(botops[i2]->user->handle, s);
       chan->opreqtime[first] = n;
-      if (l[0]) {
-        strcat(l, ", ");
-        strcat(l, botops[i2]->user->handle);
-      } else {
-        strcpy(l, botops[i2]->user->handle);
-      }
-      strcat(l, "/");
-      strcat(l, botops[i2]->nick);
-      cnt--;
+      if (l[0])
+        len += strlcpy(l + len, ", ", sizeof(l) - len);
+      len += strlcpy(l + len, botops[i2]->user->handle, sizeof(l) - len);
+      len += strlcpy(l + len, "/", sizeof(l) - len);
+      len += strlcpy(l + len, botops[i2]->nick, sizeof(l) - len);
+      --cnt;
       botops[i2] = NULL;
     } else {
       if (i < op_bots)
         cnt--;
     }
   }
+  l[len] = 0;
   putlog(LOG_GETIN, "*", "Requested ops on %s from %s", chan->dname, l);
-  free(l);
 }
 
 static void
@@ -861,12 +856,14 @@ request_in(struct chanset_t *chan)
   }
 
   if (!foundBots) {
-    putlog(LOG_GETIN, "*", "No bots linked, can't request help to join %s", chan->dname);
+    putlog(LOG_GETIN, "*", "No bots available, can't request help to join %s", chan->dname);
     return;
   }
 
   int cnt = foundBots < in_bots ? foundBots : in_bots;
-  char s[255] = "", *l = (char *) my_calloc(1, cnt * 30);
+  char s[255] = "";
+  char l[1024] = "";
+  size_t len = 0;
 
   simple_snprintf(s, sizeof(s), "gi i %s %s %s %s", chan->dname, botname, me, botuserip);
 
@@ -874,15 +871,12 @@ request_in(struct chanset_t *chan)
   for (int n = 0; n < cnt; ++n) {
     putbot(botops[n], s);
 
-    if (l[0]) {
-      strcat(l, ", ");
-      strcat(l, botops[n]);
-    } else {
-      strcpy(l, botops[n]);
-    }
+    if (l[0])
+      len += strlcpy(l + len, ", ", sizeof(l) - len);
+    len += strlcpy(l + len, botops[n], sizeof(l) - len);
   }
+  l[len] = 0;
   putlog(LOG_GETIN, "*", "Requested help to join %s from %s", chan->dname, l);
-  free(l);
 }
 
 
