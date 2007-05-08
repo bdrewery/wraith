@@ -744,7 +744,7 @@ int channels_chon(const char *handle, int idx)
 	find = USER_OP;
       fr.match = FR_CHAN;
       while (chan && !found) {
-	get_user_flagrec(dcc[idx].user, &fr, chan->dname);
+	get_user_flagrec(dcc[idx].user, &fr, chan->dname, chan);
 	if (fr.chan & find)
 	  found = 1;
 	else
@@ -769,7 +769,7 @@ void channels_report(int idx, int details)
 
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     if (idx != DP_STDOUT)
-      get_user_flagrec(dcc[idx].user, &fr, chan->dname);
+      get_user_flagrec(dcc[idx].user, &fr, chan->dname, chan);
     if (!privchan(fr, chan, PRIV_OP) && ((idx == DP_STDOUT) || glob_master(fr) || chan_master(fr))) {
 
       s[0] = 0;
