@@ -1562,7 +1562,7 @@ static int got324(char *from, char *msg)
   return 0;
 }
 
-static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick, char *flags, int hops, char* realname)
+static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick, char *flags, int hops, char* realname, char* ip)
 {
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   char userhost[UHOSTLEN] = "";
@@ -1601,6 +1601,9 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   if (!m->client->GetUHost()[0])
     m->client->SetUHost(host, user);
 
+  if (ip && !m->client->GetUIP()[0])
+    m->client->SetUIP(ip, user);
+
   /* And realname */
   if (!m->client->GetGecos()[0])
     m->client->SetGecos(realname);
@@ -1625,7 +1628,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   }
 
   //userhost failed, let's try resolving them...
-  if (!m->user && doresolv(chan)) {
+  if (!m->user && !ip && doresolv(chan)) { /* !ip.. already checked for user earlier if set */
     if (is_dotted_ip(host))
       m->client->SetUIP(host, user);
     else  
@@ -1690,7 +1693,7 @@ static int got352(char *from, char *msg)
     hops = newsplit(&msg);	/* grab server hops */
     ++hops;			/* Skip the : */
     realname = newsplit(&msg);	/* realname/gecos */
-    got352or4(chan, user, host, nick, flags, atoi(hops), realname);
+    got352or4(chan, user, host, nick, flags, atoi(hops), realname, NULL);
   }
   return 0;
 }
@@ -1706,16 +1709,17 @@ static int got354(char *from, char *msg)
       struct chanset_t *chan = findchan(chname);	/* See if I'm on channel */
 
       if (chan) {		/* Am I? */
-        char *nick = NULL, *user = NULL, *host = NULL, *flags = NULL, *hops = NULL, *realname = NULL;
+        char *nick = NULL, *user = NULL, *host = NULL, *flags = NULL, *hops = NULL, *realname = NULL, *ip = NULL;
 
 	user = newsplit(&msg);	/* Grab the user */
+        ip = newsplit(&msg);    /** Get the numeric IP :) */
 	host = newsplit(&msg);	/* Grab the host */
 	nick = newsplit(&msg);	/* Grab the nick */
 	flags = newsplit(&msg);	/* Grab the flags */
-        hops = newsplit(&msg);  /* yay for hops, does iru even have hops?? */
+        hops = newsplit(&msg);  /* server hops */
         ++hops;			/* Skip the : */
-        realname = newsplit(&msg);
-	got352or4(chan, user, host, nick, flags, atoi(hops), realname);
+        realname = newsplit(&msg); /* realname/gecos */
+	got352or4(chan, user, host, nick, flags, atoi(hops), realname, ip);
       }
     }
   }
