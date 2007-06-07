@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include "common.h"
 #include "color.h"
+#include "chanprog.h"
 #include "userrec.h"
 #include "dcc.h"
 #include "auth.h"
