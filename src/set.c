@@ -27,6 +27,7 @@ bool auth_chan;
 char auth_key[51] = "";
 char auth_prefix[2] = "";
 bool auth_obscure;
+bool oidentd;
 int dcc_autoaway;
 #ifdef NOT_USED
 int badprocess;
@@ -94,6 +95,7 @@ static variable_t vars[] = {
  VAR("msg-op",		msgop,			VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
  VAR("msg-pass",	msgpass,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
  VAR("nick",		origbotname,		VAR_STRING|VAR_NOLHUB|VAR_NICK|VAR_NODEF|VAR_NOGHUB,	0, 0, NULL),
+ VAR("oidentd",		&oidentd,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "0"),
  VAR("op-bots",		&op_bots,		VAR_INT|VAR_NOLOC,				1, MAX_BOTS, "1"),
  VAR("op-requests",	&op_requests,		VAR_RATE|VAR_NOLOC,				0, 0, "2:5"),
 #ifdef NOT_USED
