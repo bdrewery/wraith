@@ -1316,7 +1316,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
       dprintf(DP_MODE, "MODE %s\n", chan->name);
     recheck_channel_modes(chan);
   }
-  stacking--;
+  --stacking;
 }
 
 /* got 302: userhost
@@ -1567,7 +1567,8 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   char userhost[UHOSTLEN] = "";
   Member *m = NULL;	/* in my channel list copy? */
-  bool waschanop = 0, me = 0;
+//  bool waschanop = 0;
+  bool me = 0;
 
   m = ismember(chan, nick);
   
@@ -1581,7 +1582,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 
   m->client->hops = hops;
 
-  waschanop = me_op(chan);      /* Am I opped here? */
+//  waschanop = me_op(chan);      /* Am I opped here? */
   if (strchr(flags, '@') != NULL)	/* Flags say he's opped? */
     m->flags |= (CHANOP | WASOP);	/* Yes, so flag in my table */
   else
@@ -1612,15 +1613,18 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 
   me = match_my_nick(nick);
 
+
   if (me) {			/* Is it me? */
 //    strcpy(botuserhost, m->client->GetUHost());		/* Yes, save my own userhost */
     m->joined = now;				/* set this to keep the whining masses happy */
-
+  }
+#ifdef do_this_at_end_of_who
     if (!waschanop && me_op(chan))
       recheck_channel(chan, 2);
     if (!me_op(chan) && any_ops(chan))
       chan->channel.do_opreq = 1;
   }
+#endif
 
   if (!m->user && !m->tried_getuser) {
     m->user = get_user_by_host(userhost);
@@ -1758,7 +1762,7 @@ static int got315(char *from, char *msg)
       recheck_channel(chan, 2);
     else if (chan->channel.members == 1)
       chan->status |= CHAN_STOP_CYCLE;
-    else
+    else if (any_ops(chan))
       request_op(chan);
   }
   /* do not check for i-lines here. */
