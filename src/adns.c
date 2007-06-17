@@ -229,7 +229,7 @@ static void answer_free(dns_answer_t *answer)
 	if (answer->list) free(answer->list);
 }
 
-static dns_query_t *alloc_query(void *client_data, dns_callback_t callback, const char *query)
+static dns_query_t *alloc_query(const char* query, dns_callback_t callback, void* client_data)
 {
 	dns_query_t *q = (dns_query_t *) my_calloc(1, sizeof(*q));
 
@@ -323,13 +323,14 @@ void dns_send_query(dns_query_t *q)
   char buf[512] = "";
   int len;
 
+  /* Host lookup */
   if (!q->ip) {
     /* Send the ipv4 query. */
     q->remaining = 1;
     len = make_header(buf, q->id);
     len += cut_host(q->query, buf + len);
-    buf[len] = 0; len++; buf[len] = DNS_A; len++;
-    buf[len] = 0; len++; buf[len] = 1; len++;
+    buf[len] = 0; ++len; buf[len] = DNS_A; ++len;
+    buf[len] = 0; ++len; buf[len] = 1; ++len;
 
     egg_dns_send(buf, len);
 
@@ -338,17 +339,18 @@ void dns_send_query(dns_query_t *q)
     q->remaining++;
     len = make_header(buf, q->id);
     len += cut_host(q->query, buf + len);
-    buf[len] = 0; len++; buf[len] = DNS_AAAA; len++;
-    buf[len] = 0; len++; buf[len] = 1; len++;
+    buf[len] = 0; ++len; buf[len] = DNS_AAAA; ++len;
+    buf[len] = 0; ++len; buf[len] = 1; ++len;
 
     egg_dns_send(buf, len);
 #endif
+  /* Ip lookup */
   } else if (q->ip) {
     q->remaining = 1;
     len = make_header(buf, q->id);
     len += cut_host(q->ip, buf + len);
-    buf[len] = 0; len++; buf[len] = DNS_PTR; len++;
-    buf[len] = 0; len++; buf[len] = 1; len++;
+    buf[len] = 0; ++len; buf[len] = DNS_PTR; ++len;
+    buf[len] = 0; ++len; buf[len] = 1; ++len;
 
     egg_dns_send(buf, len);
   }
@@ -402,7 +404,7 @@ int egg_dns_lookup(const char *host, int timeout, dns_callback_t callback, void 
 		return(-1);
 	}
 
-	/* Ok, now see if it's in our host cache. */
+	/* Ok, now see if it's in our static host list (.hosts) */
 	for (i = 0; i < nhosts; i++) {
 		if (!egg_strcasecmp(host, hosts[i].host)) {
 			dns_answer_t answer;
@@ -415,6 +417,7 @@ int egg_dns_lookup(const char *host, int timeout, dns_callback_t callback, void 
 		}
 	}
 
+        /* Now check cached list */
 	cache_id = cache_find(host);
 	if (cache_id >= 0) {
 		shuffleArray(cache[cache_id].answer.list, cache[cache_id].answer.len);
@@ -427,7 +430,7 @@ int egg_dns_lookup(const char *host, int timeout, dns_callback_t callback, void 
           return(-2);
 
 	/* Allocate our query struct. */
-        q = alloc_query(client_data, callback, host);
+        q = alloc_query(host, callback, client_data);
 
         dns_send_query(q);
 
@@ -455,7 +458,7 @@ int egg_dns_reverse(const char *ip, int timeout, dns_callback_t callback, void *
 		return(-1);
 	}
 
-	/* Ok, see if we have it in our host cache. */
+	/* Ok, see if we have it in the static host list (.hosts) */
 	for (i = 0; i < nhosts; i++) {
 		if (!egg_strcasecmp(hosts[i].ip, ip)) {
 			dns_answer_t answer;
@@ -468,6 +471,7 @@ int egg_dns_reverse(const char *ip, int timeout, dns_callback_t callback, void *
 		}
 	}
 
+        /* Then check the cached dns list */
 	cache_id = cache_find(ip);
         if (cache_id >= 0) {
 		shuffleArray(cache[cache_id].answer.list, cache[cache_id].answer.len);
@@ -479,7 +483,7 @@ int egg_dns_reverse(const char *ip, int timeout, dns_callback_t callback, void *
         if (find_query(ip))
           return(-1);
 
-	q = alloc_query(client_data, callback, ip);
+	q = alloc_query(ip, callback, client_data);
 
 	/* We need to transform the ip address into the proper form
 	 * for reverse lookup. */
@@ -488,13 +492,12 @@ int egg_dns_reverse(const char *ip, int timeout, dns_callback_t callback, void *
 
 		socket_ipv6_to_dots(ip, temp);
 sdprintf("dots: %s", temp);
-		q->ip = (char *) my_calloc(1, strlen(temp) + 9 + 1);
+		q->ip = (char *) my_calloc(1, strlen(temp) + 8 + 1);
 //		reverse_ip(temp, q->ip);
 		strcat(q->ip, temp);
 		strcat(q->ip, "ip6.arpa");
 sdprintf("reversed ipv6 ip: %s", q->ip);
-	}
-	else {
+	} else {
 		q->ip = (char *) my_calloc(1, strlen(ip) + 13 + 1);
 		reverse_ip(ip, q->ip);
 		strcat(q->ip, ".in-addr.arpa");
