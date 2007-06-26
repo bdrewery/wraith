@@ -3,12 +3,13 @@
 
 #include "types.h"
 
-#define SOCKET_CLIENT   1
-#define SOCKET_SERVER   2
-#define SOCKET_BIND     4
-#define SOCKET_NONBLOCK 8
-#define SOCKET_TCP      16
-#define SOCKET_UDP      32
+#define SOCKET_CLIENT   	1
+#define SOCKET_SERVER  		2
+#define SOCKET_BIND     	4
+#define SOCKET_NONBLOCK 	8
+#define SOCKET_TCP      	16
+#define SOCKET_UDP      	32
+#define SOCKET_BROADCAST	64
 
 int get_addr(const char *, my_addr_t *);
 

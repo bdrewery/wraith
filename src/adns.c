@@ -59,7 +59,7 @@ typedef struct {
 /* Entries from resolv.conf */
 typedef struct dns_server {
 	char *ip;
-	int idx;
+        struct sockaddr_in to;
 } dns_server_t;
 
 /* Entries from hosts */
@@ -84,7 +84,6 @@ static dns_cache_t *cache = NULL;
 static int ncache = 0;
 static dns_server_t *servers = NULL;
 static int nservers = 0;
-static int cur_server = -1;
 
 static char separators[] = " ,\t\r\n";
 
@@ -104,7 +103,6 @@ static int cache_find(const char *);
 //static int dns_on_eof(void *client_data, int idx, int err, const char *errmsg);
 static void dns_on_read(int idx, char *buf, int atr);
 static void dns_on_eof(int idx);
-static const char *dns_next_server();
 static int parse_reply(char *response, size_t nbytes);
 
 time_t async_lookup_timeout = 30;
@@ -247,25 +245,21 @@ static dns_query_t *alloc_query(const char* query, dns_callback_t callback, void
 
 static int get_dns_idx()
 {
-	int i, sock;
+	int sock;
        
 	sock = -1;
-	for (i = 0; i < nservers; i++) {
-		if (!dns_ip) dns_ip = dns_next_server();
-		sock = socket_create(dns_ip, DNS_PORT, NULL, 0, SOCKET_CLIENT | SOCKET_NONBLOCK | SOCKET_UDP);
-		if (sock < 0) {
-			/* Try the next server. */
-			dns_ip = NULL;
-		}
-		else break;
+	sock = socket_create(NULL, 0, NULL, 0, SOCKET_NONBLOCK | SOCKET_UDP | SOCKET_BROADCAST);
+	if (sock < 0) {
+		putlog(LOG_ERROR, "*", "Unable to open DNS socket. (%d)", sock);
+		return 1;
 	}
-	if (i == nservers) return 1;
+
 //	dns_idx = sockbuf_new();
 //	sockbuf_set_handler(dns_idx, &dns_handler, NULL);
 //	sockbuf_set_sock(dns_idx, sock, 0);
 //        allocsock(sock, SOCK_CONNECT);
 
-        if (sock >= 0 && dns_ip) {
+        if (sock >= 0) {
           dns_idx = new_dcc(&dns_handler, 0);
 
           if (dns_idx < 0) {
@@ -277,9 +271,9 @@ static int get_dns_idx()
           dcc[dns_idx].sock = sock;
           dns_sock = sock;
           sdprintf("dns_sock: %d", dcc[dns_idx].sock);
-          strcpy(dcc[dns_idx].host, dns_ip);
+//          strcpy(dcc[dns_idx].host, dns_ip);
           strcpy(dcc[dns_idx].nick, "(adns)");
-          sdprintf("dns_ip: %s", dns_ip);
+//          sdprintf("dns_ip: %s", dns_ip);
           dcc[dns_idx].timeval = now;
           dns_handler.timeout_val = 0;
           return 0;
@@ -304,7 +298,14 @@ void egg_dns_send(char *query, int len)
           sdprintf("SETTING TIMEOUT to %li", async_server_timeout);
           dcc[dns_idx].timeval = now;
         }
-        write(dcc[dns_idx].sock, query, len);
+
+	/* Send request to all name servers */
+	for (int i = 0; i < nservers; ++i) {
+		sendto(dcc[dns_idx].sock, query, len, 0, 
+                   (struct sockaddr*) &(servers[i].to), sizeof(struct sockaddr));
+	}
+	
+//        write(dcc[dns_idx].sock, query, len);
 //	sockbuf_write(dns_idx, query, len);
 }
 
@@ -572,19 +573,19 @@ int egg_dns_shutdown(void)
 	return (0);
 }
 */
-static const char *dns_next_server()
-{
-	if (!servers || nservers < 1) return("127.0.0.1");
-	cur_server++;
-	if (cur_server >= nservers) cur_server = 0;
-	return(servers[cur_server].ip);
-}
 
 static void add_dns_server(char *ip)
 {
 	servers = (dns_server_t *) my_realloc(servers, (nservers+1)*sizeof(*servers));
 	servers[nservers].ip = strdup(ip);
-	nservers++;
+
+	struct sockaddr_in *to = &(servers[nservers].to);
+	to->sin_family = AF_INET;
+	to->sin_port = htons(DNS_PORT);
+	to->sin_addr.s_addr = inet_addr(ip);
+	egg_memset(to->sin_zero, 0, sizeof(to->sin_zero));
+
+        ++nservers;
         sdprintf("Added NS: %s", ip);
 }
 

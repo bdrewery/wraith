@@ -145,7 +145,7 @@ int socket_set_nonblock(int sock, int value)
 int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int src_port, int flags)
 {
         char *passive[] = {"::", "0.0.0.0"};
-        int sock = -1, pfamily, try_ok;
+        int sock = -1, pfamily = PF_INET, try_ok;
         sockname_t dest_name, src_name;
 
         /* If no source ip address is given, try :: and 0.0.0.0 (passive). */
@@ -158,7 +158,7 @@ int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int sr
 
                 if (flags & SOCKET_CLIENT) pfamily = dest_name.family;
                 else if (flags & SOCKET_SERVER) pfamily = src_name.family;
-                else {
+                else if (!(flags & SOCKET_BROADCAST)) {
                         errno = EADDRNOTAVAIL;
                         return(-1);
                 }
@@ -172,9 +172,14 @@ int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int sr
 
         if (sock < 0) return(-2);
 
-        allocsock(sock, 0);
+        allocsock(sock, (flags & (SOCKET_CLIENT|SOCKET_BROADCAST)) ? SOCK_PASS : 0);
 
         if (flags & SOCKET_NONBLOCK) socket_set_nonblock(sock, 1);
+        if (flags & SOCKET_BROADCAST) {
+                int yes = 1;
+                if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(int)))
+                  return (-3);
+        }
 
         /* Do the bind if necessary. */
         if (flags & (SOCKET_SERVER|SOCKET_BIND)) {
@@ -183,7 +188,7 @@ int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int sr
                 setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
                 if (bind(sock, &src_name.u.addr, src_name.len) != 0) {
 			killsock(sock);
-			return(-3);
+			return(-4);
 		}
                 if (flags & SOCKET_SERVER) listen(sock, 50);
         }
@@ -201,7 +206,7 @@ int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int sr
           if (connect(sock, &dest_name.u.addr, dest_name.len) != 0) {
 		if (errno != EINPROGRESS) {
 			killsock(sock);
-			return(-4);
+			return(-5);
 		}
           }
         }
