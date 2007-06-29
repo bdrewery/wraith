@@ -106,7 +106,7 @@ static void dns_on_eof(int idx);
 static int parse_reply(char *response, size_t nbytes);
 
 time_t async_lookup_timeout = 30;
-time_t async_server_timeout = 40;
+//time_t async_server_timeout = 40;
 //int resend_on_read = 0;
 
 static void 
@@ -131,6 +131,7 @@ dns_reinit(int idx)
           sdprintf("Failed to reopen dns socket");
 }
 
+#ifdef no
 static void
 dns_timeout(int idx)
 {
@@ -141,6 +142,7 @@ dns_timeout(int idx)
 //  sleep(2);
 //  dns_resend_queries();
 }
+#endif
 
 static struct dcc_table dns_handler = {
   "adns",
@@ -148,7 +150,8 @@ static struct dcc_table dns_handler = {
   dns_on_eof,
   dns_on_read,
   NULL,
-  dns_timeout,
+  /*dns_timeout*/
+  NULL,
   dns_display,
   NULL,
   NULL,
@@ -283,6 +286,7 @@ static int get_dns_idx()
 
 void egg_dns_send(char *query, int len)
 {
+	sdprintf("egg_dns_send()");
         if (dns_idx >= 0 && dcc[dns_idx].sock == -1) {
           lostdcc(dns_idx);
           dns_idx = -1;
@@ -293,12 +297,13 @@ void egg_dns_send(char *query, int len)
                   return;
                 }
 	}
+/*
         if (!dns_handler.timeout_val) {
           dns_handler.timeout_val = &async_server_timeout;
           sdprintf("SETTING TIMEOUT to %li", async_server_timeout);
           dcc[dns_idx].timeval = now;
         }
-
+*/
 	/* Send request to all name servers */
 	for (int i = 0; i < nservers; ++i) {
 		sendto(dcc[dns_idx].sock, query, len, 0, 
@@ -533,8 +538,10 @@ static void dns_on_read(int idx, char *buf, int atr)
             return;
           }
         }
+/*
         sdprintf("SETTING TIMEOUT to 0");
         dns_handler.timeout_val = 0;
+*/
 	if (parse_reply(buf, atr))
           dns_on_eof(idx);
 	return;
