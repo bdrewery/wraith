@@ -33,6 +33,8 @@ int main(int argc, char *argv[])
   tree.insert(key10, value10);
   tree.insert(key3, value3);
 
+  tree.remove(key3);
+
   binary_tree<string, string>::iterator iter = tree.begin();
   while (iter.hasNext())
     cout << (string) iter.next() << endl;
