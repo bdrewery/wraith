@@ -225,7 +225,7 @@ char *myipstr(int af_type)
 {
   if (cached_ip) {
 #ifdef USE_IPV6
-    if (af_type == 6) {
+    if (af_type == AF_INET6) {
       static char s[UHOSTLEN + 1] = "";
 
       egg_inet_ntop(AF_INET6, &cached_myip6_so.sin6.sin6_addr, s, 119);
@@ -233,7 +233,7 @@ char *myipstr(int af_type)
       return s;
     } else
 #endif /* USE_IPV6 */
-      if (af_type == 4) {
+      if (af_type == AF_INET) {
         static char s[UHOSTLEN + 1] = "";
 
         egg_inet_ntop(AF_INET, &cached_myip4_so.sin.sin_addr, s, 119);
@@ -613,7 +613,7 @@ void initialize_sockaddr(int af_type, const char *host, port_t port, union socka
  *   -1  strerror()/errno type error
  *   -2  can't resolve hostname
  */
-int _open_telnet_raw(int sock, const char *ipIn, port_t sport, bool proxy_on, const char *file, int line)
+int _open_telnet_raw(int sock, const char *ipIn, port_t sport, bool proxy_on, const char *file, int line, bool identd)
 {
   static port_t port = 0;
   union sockaddr_union so;
@@ -668,8 +668,12 @@ int _open_telnet_raw(int sock, const char *ipIn, port_t sport, bool proxy_on, co
       socklist[i].flags = (socklist[i].flags & ~SOCK_VIRTUAL) | SOCK_CONNECT;
       socklist[i].host = strdup(ipIn);
       socklist[i].port = port;
+      break;
     }
   }
+
+  if (identd)
+    identd_open(myipstr(is_resolved), ipIn);
 
   int rc = -1;
 
@@ -701,7 +705,7 @@ int _open_telnet_raw(int sock, const char *ipIn, port_t sport, bool proxy_on, co
 }
 
 /* Ordinary non-binary connection attempt */
-int open_telnet(const char *ip, port_t port, bool proxy)
+int open_telnet(const char *ip, port_t port, bool proxy, bool identd)
 {
   int sock = -1;
   
@@ -711,7 +715,7 @@ int open_telnet(const char *ip, port_t port, bool proxy)
   sock = getsock(0);
 #endif /* USE_IPV6 */
   if (sock >= 0)
-    return open_telnet_raw(sock, ip, port, proxy);
+    return open_telnet_raw(sock, ip, port, proxy, identd);
   return -1;
 }
 
@@ -1032,7 +1036,7 @@ int open_telnet_dcc(int sock, char *ip, char *port)
   debug3("open_telnet_raw %s %d %d", sv, sock, p);
 #  endif /* DEBUG_IPV6 */
 #endif /* USE_IPV6 */
-  return open_telnet_raw(sock, sv, p, 0);
+  return open_telnet_raw(sock, sv, p, 0, 0);
 }
 
 /* Attempts to read from all the sockets in socklist
