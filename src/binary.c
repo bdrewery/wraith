@@ -164,6 +164,9 @@ bin_checksum(const char *fname, int todo)
         fseek(newbin->f, newpos + SIZE_PAD, SEEK_SET);
         newpos += SIZE_PAD;
 
+
+/* What happened to copying the rest of the binary? */
+
         /* skip reading over the stuff we already wrote */
         fseek(f, newpos, SEEK_SET);
       } else if (!hash[0])		/* hash as long as we haven't reached the prefix */
