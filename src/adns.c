@@ -397,12 +397,11 @@ int egg_dns_lookup(const char *host, int timeout, dns_callback_t callback, void 
 	dns_query_t *q = NULL;
 	int i, cache_id;
 
-	sdprintf("egg_dns_lookup(%s, %d)", host, timeout);
-
 	if (is_dotted_ip(host)) {
 		/* If it's already an ip, we're done. */
 		dns_answer_t answer;
 
+                sdprintf("egg_dns_lookup(%s, %d) -> already an ip", host, timeout);
 		answer_init(&answer);
 		answer_add(&answer, host);
 		callback(-1, client_data, host, answer.list);
@@ -414,7 +413,8 @@ int egg_dns_lookup(const char *host, int timeout, dns_callback_t callback, void 
 	for (i = 0; i < nhosts; i++) {
 		if (!egg_strcasecmp(host, hosts[i].host)) {
 			dns_answer_t answer;
-
+  
+                        sdprintf("egg_dns_lookup(%s, %d) -> [.hosts] -> %s", host, timeout, hosts[i].ip);
 			answer_init(&answer);
 			answer_add(&answer, hosts[i].ip);
 			callback(-1, client_data, host, answer.list);
@@ -427,23 +427,25 @@ int egg_dns_lookup(const char *host, int timeout, dns_callback_t callback, void 
 	cache_id = cache_find(host);
 	if (cache_id >= 0) {
 		shuffleArray(cache[cache_id].answer.list, cache[cache_id].answer.len);
+                sdprintf("egg_dns_lookup(%s, %d) -> [cached (%ds)] -> %s", host, timeout, cache[cache_id].expiretime - now, cache[cache_id].answer.list[0]);
 		callback(-1, client_data, host, cache[cache_id].answer.list);
 		return(-1);
 	}
 
 	/* check if the query was already made */
-        if (find_query(host))
+        if (find_query(host)) {
+          sdprintf("egg_dns_lookup(%s, %d) -> already requested", host, timeout);
           return(-2);
+        }
 
 	/* Allocate our query struct. */
         q = alloc_query(host, callback, client_data);
 
+        sdprintf("egg_dns_lookup(%s, %d) -> querying", host, timeout);
         dns_send_query(q);
 
 //        /* setup a timer to detect dead ns */
 //	dns_create_timeout_timer(&q, host, timeout);
-
-	/* Send the ipv4 query. */
 
 	return(q->id);
 }
@@ -542,6 +544,7 @@ static void dns_on_read(int idx, char *buf, int atr)
         sdprintf("SETTING TIMEOUT to 0");
         dns_handler.timeout_val = 0;
 */
+        sdprintf("DNS reply from: %s", iptostr(htonl(dcc[idx].addr)));
 	if (parse_reply(buf, atr))
           dns_on_eof(idx);
 	return;
@@ -843,6 +846,7 @@ static int parse_reply(char *response, size_t nbytes)
 	header.ar_count = ntohs(header.ar_count);
 	header.ns_count = ntohs(header.ns_count);
 
+        sdprintf("Reply (%d) questions: %d answers: %d ar: %d ns: %d flags: %d", header.id, header.question_count, header.answer_count, header.ar_count, header.ns_count, header.flags);
 //	print_header(header);
 
 	/* Find our copy of the query before proceeding. */
@@ -887,22 +891,26 @@ static int parse_reply(char *response, size_t nbytes)
 		switch (reply.type) {
 		case DNS_A:
 			inet_ntop(AF_INET, ptr, result, 512);
+                        sdprintf("Reply (%d): A %s", header.id, result);
 			answer_add(&q->answer, result);
 			break;
 		case DNS_AAAA:
 #ifdef USE_IPV6
 			inet_ntop(AF_INET6, ptr, result, 512);
+                        sdprintf("Reply (%d): AAAA %s", header.id, result);
 			answer_add(&q->answer, result);
 #endif /* USE_IPV6 */
 			break;
 		case DNS_PTR:
 			r = my_dn_expand((const unsigned char *) response, eop, ptr, result, sizeof(result));
 
-			if (r != -1 && result[0])
+			if (r != -1 && result[0]) {
+                                sdprintf("Reply (%d): PTR %s", header.id, result);
 				answer_add(&q->answer, result);
+                        }
 			break;
 		default:
-			sdprintf("Unhandled DNS reply type: %d", reply.type);
+			sdprintf("Unhandled DNS reply (%d) type: %d", header.id, reply.type);
 			break;
 		}
 
@@ -913,6 +921,7 @@ static int parse_reply(char *response, size_t nbytes)
 	if (q->remaining > 0) return 0;
 
         if (!q->answers) {
+/* FIXME: might just be a broken nameserver, no reason to fail. */
           sdprintf("Failed to get any answers for query");
 
           if (prev) prev->next = q->next;
