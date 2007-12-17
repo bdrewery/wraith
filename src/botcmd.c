@@ -404,7 +404,7 @@ static void bot_shellinfo(int idx, char *par)
   sysname = newsplit(&par);
   nodename = newsplit(&par);
   arch = newsplit(&par);
-  version = newsplit(&narpar);
+  version = newsplit(&par);
 
   set_user(&USERENTRY_USERNAME, dcc[idx].user, username);
   set_user(&USERENTRY_OS, dcc[idx].user, sysname);
