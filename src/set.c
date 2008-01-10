@@ -31,7 +31,7 @@ bool auth_obscure;
 bool oidentd;
 bool ident_botnick;
 int dcc_autoaway;
-int irc_autoaway;
+bool irc_autoaway;
 #ifdef NOT_USED
 int badprocess;
 char process_list[1024] = "";
