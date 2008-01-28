@@ -1171,6 +1171,7 @@ static void cmd_mop(int idx, char *par)
 {
   struct chanset_t *chan = NULL;
   bool found = 0, all = 0;
+  char *chname = NULL;
 
   if (par[0] == '*' && !par[1]) {
     get_user_flagrec(dcc[idx].user, &user, NULL);
@@ -1183,22 +1184,21 @@ static void cmd_mop(int idx, char *par)
     newsplit(&par);
   } else {
     if (par[0] && (strchr(CHANMETA, par[0]) != NULL)) {
-      chan = get_channel(idx, newsplit(&par), 0);
+      chname = newsplit(&par);
+      chan = get_channel(idx, chname, 0);
     } else
       chan = get_channel(idx, "", 0);
   }
 
-  putlog(LOG_CMDS, "*", "#%s# (%s) mop %s", dcc[idx].nick, all ? "*" : (chan ? chan->dname : ""), par);
-
-  if (!chan)
-    return;
-
-  if (!all) {
+  if (!chan && !all && !chname) {
     dprintf(idx, "Usage: mop <channel|*>\n");
     return;
-  }
+  } else if (!chan)
+    return;
 
   Member *m = NULL;
+  putlog(LOG_CMDS, "*", "#%s# (%s) mop %s", dcc[idx].nick, all ? "*" : chan->dname, par);
+
   char s[256] = "";
   ptrlist<Member>::iterator _p;
 
