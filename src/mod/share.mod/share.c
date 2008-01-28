@@ -1009,6 +1009,10 @@ share_endstartup(int idx, char *par)
   /* Send to any other sharebots */
   if (conf.bot->hub)
     hook_read_userfile();
+  else {
+    /* Our hostmask may have been updated on connect, but the new userfile may not have it. */
+    check_hostmask();
+  }
 }
 
 static void
@@ -1394,8 +1398,6 @@ static void share_read_stream(int idx, Stream& stream) {
     bot->u = get_user_by_handle(userlist, bot->bot);
 
   if (!conf.bot->hub) {  
-    /* Our hostmask may have been updated on connect, but the new userfile may not have it. */
-    check_hostmask();
     /* copy over any auth users */
     Auth::FillUsers();
     Client::FillUsers();
