@@ -601,10 +601,13 @@ int stream_readuserfile(Stream& stream, struct userrec **ret)
   stream.gets(s, 180);
   remove_crlf(s);
   if (s[1] < '4') {
-    fatal("Empty or malformed userfile.", 0);
+    putlog(LOG_MISC, "*", "!*! Empty or malformed userfile.");
+    return 0;
   }
-  if (s[1] > '4')
-    fatal("Invalid userfile format.", 0);
+  if (s[1] > '4') {
+    putlog(LOG_MISC, "*", "Invalid userfile format.");
+    return 0;
+  }
   while (stream.tell() < stream.length()) {
     s = buf;
     stream.gets(s, sizeof(buf));
