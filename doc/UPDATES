@@ -21,6 +21,8 @@
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 * New botlink encryption.
 
+1.2.15 - http://wraith.botpack.net/milestone/1.2.15
+
 1.2.14 - http://wraith.botpack.net/milestone/1.2.14
 * Fix another bug in shell functions. (fixes #321)
 * Fix some bugs with bot flags. (fixes #334 and #337 and #344)
