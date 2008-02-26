@@ -342,7 +342,7 @@ void makecookie(char *out, size_t len, const char *chname, const Member* opper, 
   make_rand_str(randstring, 4);
   egg_snprintf(ts, sizeof(ts), "%010li", now + timesync);		/* &ts[4] is now last 6 digits of time */
   
-  const char *hash1 = cookie_hash(chname, opper, m1, ts, randstring);
+  const char* hash1 = cookie_hash(chname, opper, m1, ts, randstring);
   const char* hash2 = m2 ? cookie_hash(chname, opper, m2, ts, randstring) : NULL;
   const char* hash3 = m3 ? cookie_hash(chname, opper, m3, ts, randstring) : NULL;
 
