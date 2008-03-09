@@ -707,7 +707,7 @@ flood-exempt %d flood-lock-time %lu \
 %cenforcebans %cdynamicbans %cuserbans %cbitch \
 %cprivate %ccycle %cinactive %cdynamicexempts %cuserexempts \
 %cdynamicinvites %cuserinvites %cnodesynch %cclosed %cvoice \
-%cfastop %cautoop %cbotbitch %crelay %cnomassjoin %cbackup %c%s}\n",
+%cfastop %cautoop %cbotbitch %crelay %cnomassjoin %cbackup %cknock %c%s}\n",
 	chan->dname,
 	w,
         chan->added_by,
@@ -762,6 +762,7 @@ flood-exempt %d flood-lock-time %lu \
         PLSMNS(channel_relay(chan)),
         PLSMNS(channel_nomassjoin(chan)),
         PLSMNS(channel_backup(chan)),
+        PLSMNS(channel_knock(chan)),
 	HAVE_TAKE ? PLSMNS(channel_take(chan)) : 0,
         HAVE_TAKE ? "take " : " "
 /* Chanflag template
@@ -805,7 +806,7 @@ exempt-time %lu invite-time %lu voice-non-ident %d auto-delay %d \
 %cenforcebans %cdynamicbans %cuserbans %cbitch \
 %cprivate %ccycle %cinactive %cdynamicexempts %cuserexempts \
 %cdynamicinvites %cuserinvites %cnodesynch %cclosed %cvoice \
-%cfastop %cautoop %cbotbitch %crelay %cnomassjoin %cbackup %c%s}\n",
+%cfastop %cautoop %cbotbitch %crelay %cnomassjoin %cbackup %cknock %c%s}\n",
 	chan->dname,
 	w,
         chan->added_by,
@@ -857,6 +858,7 @@ exempt-time %lu invite-time %lu voice-non-ident %d auto-delay %d \
         PLSMNS(channel_relay(chan)),
         PLSMNS(channel_nomassjoin(chan)),
         PLSMNS(channel_backup(chan)),
+        PLSMNS(channel_knock(chan)),
 	HAVE_TAKE ? PLSMNS(channel_take(chan)) : 0,
         HAVE_TAKE ? "take " : " "
 /* Chanflag template
