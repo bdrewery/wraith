@@ -342,7 +342,7 @@ static void cmd_voice(int idx, char *par)
     chan = chanset;
   putlog(LOG_CMDS, "*", "#%s# (%s) voice %s", dcc[idx].nick, all ? "*" : chan->dname , nick);
   while (chan) {
-    if (!nick[0] && !(nick = getnick(dcc[idx].nick, chan))) {
+    if ((nick && !nick[0]) || !(nick = getnick(dcc[idx].nick, chan))) {
       if (all) goto next;
       dprintf(idx, "Usage: voice <nick> [channel|*]\n");
       return;
@@ -413,7 +413,7 @@ static void cmd_devoice(int idx, char *par)
     chan = chanset;
   putlog(LOG_CMDS, "*", "#%s# (%s) devoice %s", dcc[idx].nick, all ? "*" : chan->dname, nick);
   while (chan) {
-  if (!nick[0] && !(nick = getnick(dcc[idx].nick, chan))) {
+  if ((nick && !nick[0]) || !(nick = getnick(dcc[idx].nick, chan))) {
     if (all) goto next;
     dprintf(idx, "Usage: devoice <nick> [channel|*]\n");
     return;
@@ -488,7 +488,7 @@ static void cmd_op(int idx, char *par)
 
   while (chan) {
   get_user_flagrec(dcc[idx].user, &user, chan->dname);
-  if (!nick[0] && !(nick = getnick(dcc[idx].nick, chan))) {
+  if ((nick && !nick[0]) || !(nick = getnick(dcc[idx].nick, chan))) {
     if (all) goto next;
     dprintf(idx, "Usage: op <nick> [channel|*]\n");
     return;
@@ -974,7 +974,7 @@ static void cmd_deop(int idx, char *par)
 
   while (chan) {
     get_user_flagrec(dcc[idx].user, &user, chan->dname);
-    if (!nick[0] && !(nick = getnick(dcc[idx].nick, chan))) {
+    if ((nick && !nick[0]) || !(nick = getnick(dcc[idx].nick, chan))) {
       if (all) goto next;  
       dprintf(idx, "Usage: deop <nick> [channel|*]\n");
       return;
