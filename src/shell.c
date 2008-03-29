@@ -417,7 +417,8 @@ void check_trace(int start)
         return;
       case 0:		//child
         i = ptrace(PT_ATTACH, parent, 0, 0);
-        if (i == -1) {
+        /* EPERM is given on fbsd when security.bsd.unprivileged_proc_debug=0 */
+        if (i == -1 && errno != EPERM) {
           if (start) {
             kill(parent, SIGKILL);
             exit(1);
@@ -1116,7 +1117,7 @@ void crazy_trace()
     /* child */
     int i;
     i = ptrace(PTRACE_ATTACH, parent, (char *) 1, 0);
-    if (i == (-1) && errno == EPERM) {
+    if (i == -1) {
       printf("CANT PTRACE PARENT: errno: %d %s, i: %d\n", errno, strerror(errno), i);
       waitpid(parent, &i, 0);
       kill(parent, SIGCHLD);
