@@ -77,7 +77,7 @@ extern maskrec *global_bans, *global_exempts, *global_invites;
 
 /* For every channel i join */
 struct chan_t {
-  Htree<Member> *hmember;
+  Htree<Member, HASH_TABLE_RFCSTRINGS> *hmember;
   masklist *ban;
   masklist *exempt;
   masklist *invite;

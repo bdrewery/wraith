@@ -63,5 +63,5 @@ class Client {
 };
 
 
-extern Htree<Client> clients;
+extern Htree<Client, HASH_TABLE_RFCSTRINGS> clients;
 #endif

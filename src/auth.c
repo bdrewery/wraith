@@ -37,8 +37,8 @@
 
 #include "stat.h"
 
-Htree<Auth> Auth::ht_handle;
-Htree<Auth> Auth::ht_host;
+Htree<Auth, HASH_TABLE_STRINGS> Auth::ht_handle;
+Htree<Auth, HASH_TABLE_STRINGS> Auth::ht_host;
 
 
 Auth::Auth(const char *_nick, const char *_host, struct userrec *u)

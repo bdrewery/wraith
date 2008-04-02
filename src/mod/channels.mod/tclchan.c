@@ -803,7 +803,7 @@ static void init_channel(struct chanset_t *chan, bool reset)
 
   chan->channel.topic = NULL;
 
-  chan->channel.hmember = new Htree<Member>();
+  chan->channel.hmember = new Htree<Member, HASH_TABLE_RFCSTRINGS>();
 }
 
 static void clear_masklist(masklist *m)

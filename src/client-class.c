@@ -6,7 +6,7 @@
 #include "client-class.h"
 #include "socket.h"
 
-Htree < Client > clients;
+Htree < Client, HASH_TABLE_RFCSTRINGS > clients;
 
 void Client::_init(const char *nick)
 {

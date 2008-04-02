@@ -46,8 +46,8 @@ class Auth {
 
   private:
   int status;
-  static Htree<Auth> ht_host;
-  static Htree<Auth> ht_handle;
+  static Htree<Auth, HASH_TABLE_STRINGS> ht_host;
+  static Htree<Auth, HASH_TABLE_STRINGS> ht_handle;
 };
 
 const char* makebdhash(char *);
