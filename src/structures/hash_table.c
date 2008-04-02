@@ -5,8 +5,10 @@
 
 #include "common.h"
 #include "hash_table.h"
+#include "../rfc1459.h"
 
 static unsigned int my_string_hash(const void *key);
+static unsigned int my_rfcstring_hash(const void *key);
 static unsigned int my_int_hash(const void *key);
 static unsigned int my_mixed_hash (const void *key);
 static int my_int_cmp(const void *left, const void *right);
@@ -23,12 +25,14 @@ hash_table_t *hash_table_create(hash_table_hash_alg alg, hash_table_cmp_alg cmp,
 	if (alg) ht->hash = alg;
 	else {
 		if (flags & HASH_TABLE_STRINGS) ht->hash = my_string_hash;
+		else if (flags & HASH_TABLE_RFCSTRINGS) ht->hash = my_rfcstring_hash;
 		else if (flags & HASH_TABLE_INTS) ht->hash = my_int_hash;
 		else ht->hash = my_mixed_hash;
 	}
 	if (cmp) ht->cmp = cmp;
 	else {
 		if (flags & HASH_TABLE_INTS) ht->cmp = my_int_cmp;
+		else if (flags & HASH_TABLE_RFCSTRINGS) ht->cmp = (int (*)(const void*, const void*)) rfc_casecmp;
 		else ht->cmp = (hash_table_cmp_alg) strcmp;
 	}
 	ht->flags = flags;
@@ -306,6 +310,42 @@ static unsigned int my_string_hash(const void *key)
 			} while (--loop);
 	}
 	return(hash);
+#undef HASHC
+}
+
+static unsigned int my_rfcstring_hash(const void *key)
+{
+	const unsigned char *k = (const unsigned char*) strdup((const char*) key), *kp = k;
+        size_t keylen = strlen((const char*) key);
+
+#define HASHC hash = rfc_toupper(*(k++)) + 65599 * hash
+
+	if (!keylen) return(0);
+
+        int hash = 0, loop = (keylen + 8 - 1) >> 3;
+	switch (keylen & (8 - 1)) {
+		case 0:
+			do {
+				HASHC;
+		case 7:
+				HASHC;
+		case 6:
+				HASHC;
+		case 5:
+				HASHC;
+		case 4:
+				HASHC;
+		case 3:
+				HASHC;
+		case 2:
+				HASHC;
+		case 1:
+				HASHC;
+			} while (--loop);
+	}
+        free((void*)kp);
+	return(hash);
+#undef HASHC
 }
 
 static unsigned int my_int_hash(const void *key)

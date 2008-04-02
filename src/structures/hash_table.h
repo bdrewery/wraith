@@ -9,9 +9,10 @@
 #endif
 
 #define HASH_TABLE_STRINGS	BIT0
-#define HASH_TABLE_INTS		BIT1
-#define HASH_TABLE_MIXED	BIT2
-#define HASH_TABLE_NORESIZE	BIT3
+#define HASH_TABLE_RFCSTRINGS	BIT1
+#define HASH_TABLE_INTS		BIT2
+#define HASH_TABLE_MIXED	BIT3
+#define HASH_TABLE_NORESIZE	BIT4
 
 #define DEFAULT_SIZE 		50
 
@@ -55,12 +56,12 @@ int hash_table_remove(hash_table_t *ht, const void *key, void *dataptr);
 int hash_table_walk(hash_table_t *ht, hash_table_node_func callback, void *param);
 int hash_table_rename(hash_table_t *ht, const void *key, const void *newkey);
 
-template <class T> class Htree {
+template <class T, int HF> class Htree {
   private:
     hash_table_t *table;
     int my_entries;
   public:
-    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)), my_entries(0), sort(0) {  }
+    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HF)), my_entries(0), sort(0) {  }
 //    Htree() : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_MIXED)) {  }
 //    Htree(int) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_INTS)) {  }
 //    Htree(char *) : table(hash_table_create(NULL, NULL, DEFAULT_SIZE, HASH_TABLE_STRINGS)) {  }
