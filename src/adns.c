@@ -593,7 +593,7 @@ static void dns_on_read(int idx, char *buf, int atr)
         sdprintf("SETTING TIMEOUT to 0");
         dns_handler.timeout_val = 0;
 */
-        sdprintf("DNS reply from: %s", server_ip);
+//        sdprintf("DNS reply from: %s", server_ip);
 	if (parse_reply(buf, atr, server_ip))
 	/* FIXME: The udp socket is broadcast now, should just remove this server is parse_reply returns 1 */
           dns_on_eof(idx);
@@ -904,7 +904,7 @@ static int parse_reply(char *response, size_t nbytes, const char *server_ip)
 		prev = q;
 	}
 	if (!q) { 
-                sdprintf("Ignoring duplicate or invalid reply(%d) from: %s", header.id, server_ip);
+//                sdprintf("Ignoring duplicate or invalid reply(%d) from: %s", header.id, server_ip);
                 return 0;
         }
 
@@ -977,6 +977,12 @@ static int parse_reply(char *response, size_t nbytes, const char *server_ip)
 
 		ptr += reply.rdlength;
 	}
+	/* FIXME: This assumes 1 dns query, but the new format
+                  sends out 4 queries, each with multiple questions.
+                  I guess this doesn't matter though as if the reply
+                  has gotten this far, it's probably a good server
+                  and will return the other answer
+        */
 	/* Don't continue if we haven't gotten all expected replies. */
 	if (--q->remaining > 0) return 0;
 
