@@ -133,7 +133,7 @@ static int cache_find(const char *);
 //static int dns_on_eof(void *client_data, int idx, int err, const char *errmsg);
 static void dns_on_read(int idx, char *buf, int atr);
 static void dns_on_eof(int idx);
-static int parse_reply(char *response, size_t nbytes);
+static int parse_reply(char *response, size_t nbytes, const char *);
 
 time_t async_lookup_timeout = 30;
 //time_t async_server_timeout = 40;
@@ -560,22 +560,42 @@ static void dns_on_read(int idx, char *buf, int atr)
 //		return;
 //	}
 
-        atr = read(dcc[idx].sock, buf, 512);
+        struct sockaddr_in from;
+        socklen_t socklen = sizeof(struct sockaddr_in);
+
+        atr = recvfrom(dcc[idx].sock, buf, 512, 0, (struct sockaddr *) &from, &socklen);
 
         if (atr == -1) {
           if (errno == EAGAIN)
-            atr = read(dcc[idx].sock, buf, 512);
+            atr = recvfrom(dcc[idx].sock, buf, 512, 0, (struct sockaddr *) &from, &socklen);
           if (atr == -1) {
             dns_on_eof(idx);
             return;
           }
         }
+
+        const char *server_ip = iptostr(from.sin_addr.s_addr);
+
+        /* Make sure this was a server that was queried */
+        bool found = 0;
+        for (int i = 0; i < nservers; ++i) {
+                if (servers[i].to.sin_addr.s_addr == from.sin_addr.s_addr) {
+                        found = 1;
+                        break;
+                }
+        }
+        if (found == 0) {
+                sdprintf("IGNORING DNS REPLY FROM UNQUERIED IP: %s\n", server_ip);
+                return;
+        }
+
 /*
         sdprintf("SETTING TIMEOUT to 0");
         dns_handler.timeout_val = 0;
 */
-        sdprintf("DNS reply from: %s", iptostr(htonl(dcc[idx].addr)));
-	if (parse_reply(buf, atr))
+        sdprintf("DNS reply from: %s", server_ip);
+	if (parse_reply(buf, atr, server_ip))
+	/* FIXME: The udp socket is broadcast now, should just remove this server is parse_reply returns 1 */
           dns_on_eof(idx);
 	return;
 }
@@ -855,7 +875,7 @@ void print_reply(dns_rr_t &reply)
 }
 */
 
-static int parse_reply(char *response, size_t nbytes)
+static int parse_reply(char *response, size_t nbytes, const char *server_ip)
 {
 	dns_header_t header;
 	dns_query_t *q = NULL, *prev = NULL;
@@ -884,15 +904,15 @@ static int parse_reply(char *response, size_t nbytes)
 		prev = q;
 	}
 	if (!q) { 
-                sdprintf("Ignoring duplicate or invalid reply (%d)", header.id);
+                sdprintf("Ignoring duplicate or invalid reply(%d) from: %s", header.id, server_ip);
                 return 0;
         }
 
-        sdprintf("Reply (%d) questions: %d answers: %d ar: %d ns: %d flags: %d", header.id, header.question_count, header.answer_count, header.ar_count, header.ns_count, header.flags);
+        sdprintf("Reply (%d) questions: %d answers: %d ar: %d ns: %d flags: %d from: %s", header.id, header.question_count, header.answer_count, header.ar_count, header.ns_count, header.flags, server_ip);
 
         /* Did this server give us recursion? */
         if (!GET_RA(header.flags)) {
-                sdprintf("Ignoring reply (%d): no recusion available.", header.id);
+                sdprintf("Ignoring reply(%d) from %s: no recusion available.", header.id, server_ip);
                 /* FIXME: Remove dns server from list */
                 return 0;
         }

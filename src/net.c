@@ -913,13 +913,18 @@ int ssl_link(register int sock, int state)
 /* Returns the given network byte order IP address in the
  * dotted format - "##.##.##.##"
  */
-char *iptostr(in_addr_t ip)
+const char *iptostr(in_addr_t ip)
 {
-  static char ipbuf[32];
+  static int n = 0;
+  static char ret[5][16];
+  char* ipbuf = ret[n++];
   struct in_addr a;
 
   a.s_addr = ip;
-  return (char *) egg_inet_ntop(AF_INET, &a, ipbuf, sizeof(ipbuf));
+
+  if (n == 5) n = 0;
+
+  return (const char *) egg_inet_ntop(AF_INET, &a, ipbuf, 16);
 }
 
 /* Short routine to answer a connect received on a socket made previously

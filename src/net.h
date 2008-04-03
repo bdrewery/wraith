@@ -147,7 +147,7 @@ void tputs(int, char *, size_t);
 void dequeue_sockets();
 int sockgets(char *, int *);
 void tell_netdebug(int);
-char *iptostr(in_addr_t);
+const char *iptostr(in_addr_t);
 bool sock_has_data(int, int);
 int sockoptions(int sock, int operation, int sock_options);
 void init_net(void);
