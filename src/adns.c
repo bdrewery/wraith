@@ -876,14 +876,6 @@ static int parse_reply(char *response, size_t nbytes)
 	header.ar_count = ntohs(header.ar_count);
 	header.ns_count = ntohs(header.ns_count);
 
-        sdprintf("Reply (%d) questions: %d answers: %d ar: %d ns: %d flags: %d", header.id, header.question_count, header.answer_count, header.ar_count, header.ns_count, header.flags);
-        /* Did this server give us recursion? */
-        if (!GET_RA(header.flags)) {
-                sdprintf("No recusion available.");
-                /* FIXME: Remove dns server from list */
-                return 0;
-        }
-
 //	print_header(header);
 
 	/* Find our copy of the query before proceeding. */
@@ -891,7 +883,19 @@ static int parse_reply(char *response, size_t nbytes)
 		if (q->id == header.id) break;
 		prev = q;
 	}
-	if (!q) return 0;
+	if (!q) { 
+                sdprintf("Ignoring duplicate or invalid reply (%d)", header.id);
+                return 0;
+        }
+
+        sdprintf("Reply (%d) questions: %d answers: %d ar: %d ns: %d flags: %d", header.id, header.question_count, header.answer_count, header.ar_count, header.ns_count, header.flags);
+
+        /* Did this server give us recursion? */
+        if (!GET_RA(header.flags)) {
+                sdprintf("Ignoring reply (%d): no recusion available.", header.id);
+                /* FIXME: Remove dns server from list */
+                return 0;
+        }
         
 //        /* destroy our async timeout */
 //        timer_destroy(q->timer_id);
