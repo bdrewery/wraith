@@ -850,7 +850,7 @@ strip_mirc_codes(int flags, char *text)
 }
 
 static void
-append_line(int idx, const char *line)
+append_line(int idx, char *line)
 {
   struct msgq *p = NULL, *q = NULL;
   struct chat_info *c = dcc[idx].u.chat;
@@ -863,7 +863,7 @@ append_line(int idx, const char *line)
       free(p);
     }
     c->buffer = NULL;
-    c->current_line = 0;
+    c->current_lines = 0;
     dcc[idx].status &= ~STAT_PAGE;
     do_boot(idx, conf.bot->nick, "too many pages - senq full");
     return;
