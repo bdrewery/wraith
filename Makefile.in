@@ -87,10 +87,11 @@ clean:  cleanutils
 	@rm -f src/help.h src/response.h src/responses.h utctime@EXEEXT@ ts@EXEEXT@
 
 distclean: clean
-	@rm -f Makefile src/Makefile src/compat/Makefile src/bdlib/Makefile src/structures/Makefile src/mod/Makefile src/crypto/Makefile src/buildinfo.h
-	@rm -f config.cache config.log config.status config.h 
+	@rm -f Makefile src/Makefile src/compat/Makefile src/structures/Makefile src/mod/Makefile src/crypto/Makefile src/buildinfo.h
+	@rm -f config.cache config.log config.status config.h confdefs.h
 	@rm -rf *-$(VERSION)/ autom4te.cache/ autoscan.log configure.scan
-	@rm -rf src/.deps/ src/compat/.deps/ src/bdlib/.deps/ src/strucutres/.deps/ src/mod/*.mod/.deps/ src/crypto/.deps
+	@rm -rf src/.deps/ src/compat/.deps/ src/strucutres/.deps/ src/mod/*.mod/.deps/ src/crypto/.deps
+	+@cd src/bdlib && $(MAKE) distclean
 
 
 distrib: clean

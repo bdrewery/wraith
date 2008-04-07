@@ -10,7 +10,7 @@
 #include "misc.h"
 #include "base64.h"
 #include "crypto/aes_util.h"
-#include "bdlib/base64.h"
+#include "bdlib/src/base64.h"
 
 #include <stdarg.h>
 #include <signal.h>

@@ -66,7 +66,7 @@ MODOBJS = mod/channels.o \
         mod/transfer.o \
         mod/update.o
 
-MAKE_GENERIC = $(MAKE) 'MAKE=$(MAKE)' 'CXX=$(CXX)' 'LD=$(LD)' 'STRIP=$(STRIP)' 'CFLGS=$(CFLGS)' 'CCDEPMODE=$(CCDEPMODE)'
+MAKE_GENERIC = $(MAKE) 'MAKE=$(MAKE)' 'MAKEFLAGS=$(MAKEFLAGS)' 'CXX=$(CXX)' 'LD=$(LD)' 'STRIP=$(STRIP)' 'CFLGS=$(CFLGS)' 'CCDEPMODE=$(CCDEPMODE)'
 
 blah:
 	@echo ""
@@ -103,7 +103,7 @@ stringfix: stringfix.c common.h ../config.h eggdrop.h
 	@echo ""
 	@echo "Linking wraith... $(EGGBUILD)"
 	@echo ""
-	$(LD) -o ../$(EGGEXEC) $(OBJS) $(MODOBJS) $(LIBS) compat/*.o crypto/*.o structures/*.o bdlib/*.o
+	$(LD) -o ../$(EGGEXEC) $(OBJS) $(MODOBJS) $(LIBS) compat/*.o crypto/*.o structures/*.o bdlib/src/libbdlib.a
 	@$(STRIP) ../$(EGGEXEC)
 	@$(OBJCOPY) ../$(EGGEXEC)
 	@echo "Successful compile: $(EGGEXEC)"
@@ -131,7 +131,7 @@ compatability:
 
 mybdlib:
 	@echo "[*] Compiling BDLIB components"
-	+@cd bdlib && $(MAKE_GENERIC) bdlib
+	+@cd bdlib && $(MAKE_GENERIC)
 
 mystructures:
 	@echo "[*] Compiling data structures"
