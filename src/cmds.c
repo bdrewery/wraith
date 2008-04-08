@@ -4453,6 +4453,15 @@ void cmd_test(int idx, char *par)
   clients.dump_idx(idx);
 }
 
+void cmd_botlink(int idx, char *par)
+{
+  putlog(LOG_CMDS, "*", "#%s# botlink %s", dcc[idx].nick, par);
+  if (conf.bot->hub)
+    send_hubs(par, strlen(par));
+  else
+    send_uplink(par, strlen(par));
+}
+
 /* DCC CHAT COMMANDS
  */
 /* Function call should be:
@@ -4562,6 +4571,7 @@ cmd_t C_dcc[] =
   {"w", 		"n", 	(Function) cmd_w, 		NULL, 0},
   {"channels", 		"", 	(Function) cmd_channels, 	NULL, 0},
   {"test",		"",	(Function) cmd_test,		NULL, 0},
+  {"botlink",		"a",	(Function) cmd_botlink,		NULL, 0},
   {"randstring", 	"", 	(Function) cmd_randstring, 	NULL, AUTH_ALL},
   {"md5",		"",	(Function) cmd_md5,		NULL, AUTH_ALL},
   {"sha1",		"",	(Function) cmd_sha1,		NULL, AUTH_ALL},
