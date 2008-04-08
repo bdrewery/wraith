@@ -161,7 +161,7 @@ EGG_SUBST_MOD_UPDIR
 DO_DEPS
 DO_UNITS
 
-AC_CONFIG_FILES([Makefile src/Makefile src/compat/Makefile src/crypto/Makefile src/mod/Makefile src/structures/Makefile src/buildinfo.h src/tests/Makefile])
+AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile src/compat/Makefile src/crypto/Makefile src/mod/Makefile src/structures/Makefile src/buildinfo.h src/tests/Makefile])
 AC_OUTPUT
 
 AH_TEMPLATE(HAVE_ST_MTIM, [Define to 1 if your struct stat has an st_mtim member])
@@ -206,4 +206,4 @@ AH_BOTTOM([/*
 echo ""
 echo ""
 echo "------------ Configuring BDLIB ------------"
-cd src/bdlib && ./configure
+cd lib/bdlib && ./configure

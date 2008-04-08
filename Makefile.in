@@ -78,11 +78,11 @@ cleanutils:
 clean:  cleanutils
 	+@cd src && $(MAKE) clean
 	+@cd src/compat && $(MAKE) clean
-	+@cd src/bdlib && $(MAKE) clean
 	+@cd src/structures && $(MAKE) clean
 	+@cd src/crypto && $(MAKE) clean
 	+@cd src/tests && $(MAKE) clean
 	+@cd src/mod && $(MAKE) distclean
+	-+@cd lib && $(MAKE) clean
 	@rm -f $(BINEXEC) stamp.* *~ src/*~ configure.temp .mangled
 	@rm -f src/help.h src/response.h src/responses.h utctime@EXEEXT@ ts@EXEEXT@
 
@@ -91,7 +91,7 @@ distclean: clean
 	@rm -f config.cache config.log config.status config.h confdefs.h
 	@rm -rf *-$(VERSION)/ autom4te.cache/ autoscan.log configure.scan
 	@rm -rf src/.deps/ src/compat/.deps/ src/strucutres/.deps/ src/mod/*.mod/.deps/ src/crypto/.deps
-	+@cd src/bdlib && $(MAKE) distclean
+	-+@cd lib && $(MAKE) distclean
 
 
 distrib: clean
@@ -205,6 +205,7 @@ wraith:	general
 	@echo "Making binary"
 	@echo ""
 	@echo ""
+	+@cd lib && $(MAKE)
 	+@cd src/mod && $(MAKE_BIN) static
 	+@cd src && $(MAKE_BIN) $(BINEXEC)
 	@echo ""
@@ -216,6 +217,7 @@ debug:  general
 	@echo "Making debug binary"
 	@echo ""
 	@echo ""
+	+@cd lib && $(MAKE) debug
 	+@cd src/mod && $(MAKE_DEBUG) static
 	+@cd src && $(MAKE_DEBUG) $(BINEXEC)
 	@echo ""
