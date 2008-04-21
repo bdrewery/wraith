@@ -51,7 +51,6 @@ OBJS = auth.o \
 	sprintf.o \
 	Stream.o \
 	EncryptedStream.o \
-	String.o \
 	traffic.o \
 	userent.o \
 	userrec.o \

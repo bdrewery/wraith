@@ -2,7 +2,7 @@
 #define _STREAM_H 1
 
 #include <iostream>
-#include "String.h"
+#include <bdlib/src/String.h>
 
 #define STREAM_BLOCKSIZE	1024
 /* The possibilities for the third argument to `fseek'.
@@ -11,7 +11,7 @@
 #define SEEK_CUR        1       /* Seek from current position.  */
 #define SEEK_END        2       /* Seek from end of file.  */
 
-class Stream : public String {
+class Stream : public bd::String {
   protected:
         unsigned int pos;
 
@@ -40,7 +40,7 @@ class Stream : public String {
 //        operator void*() { return tell() <= length(); };
 
         int seek(int, int);
-        void puts(const String);
+        void puts(const String&);
         void puts(const char*, size_t);
         virtual int gets(char *, size_t);
         int loadFile(const char*);

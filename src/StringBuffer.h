@@ -4,13 +4,13 @@
 #ifndef _STRINGBUFFER_H
 #define _STRINGBUFFER_H 1
 
-#include "String.h"
+#include <bdlib/src/String.h>
 /* Doesn't shrink internal buffer ever */
 /**
  * @class StringBuffer
  * @brief A String that doesn't shrink.
  */
-class StringBuffer : public String {
+class StringBuffer : public bd::String {
   public:
     StringBuffer() : String() {};
     StringBuffer(const String& str) : String(str) {};
