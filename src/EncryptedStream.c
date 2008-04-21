@@ -1,6 +1,7 @@
 /* EncryptedStream.c
  *
  */
+#include "base64.h"
 #include <bdlib/src/String.h>
 #include "EncryptedStream.h"
 #include <stdarg.h>
@@ -12,10 +13,8 @@ int EncryptedStream::gets (char *data, size_t maxSize) {
     bd::String tmp(data, size);
     if (tmp[tmp.length() - 1] == '\n')
       --tmp;
-    tmp.base64Decode();
-    bd::String decrypted(decrypt_string(key, tmp));
+    bd::String decrypted(decrypt_string(key, broken_base64Decode(tmp)));
     decrypted += '\n';
-
     strlcpy(data, decrypted.c_str(), maxSize);
     return decrypted.length();
   }
@@ -36,8 +35,7 @@ void EncryptedStream::printf (const char* format, ...)
   if (key.length()) {
     if (string[string.length() - 1] == '\n')
       --string;
-    bd::String encrypted(encrypt_string(key, string));
-    encrypted.base64Encode();
+    bd::String encrypted(broken_base64Encode(encrypt_string(key, string)));
     encrypted += '\n';
     Stream::puts(encrypted);
     return;
