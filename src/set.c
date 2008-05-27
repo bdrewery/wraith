@@ -23,6 +23,7 @@
 
 #include "set_default.h"
 
+char *altchars = NULL;
 char alias[1024] = "";
 bool auth_chan;
 char auth_key[51] = "";
@@ -66,6 +67,7 @@ char usermode[15] = "";
 
 static variable_t vars[] = {
  VAR("alias", 		alias,			VAR_STRING|VAR_LIST|VAR_NOLOC|VAR_PERM,		0, 0, DEFAULT_ALIAS),
+ VAR("altchars",	altchars,		VAR_STRING|VAR_NOLHUB,				0, 0, "-_\\`^[]"),
  VAR("auth-chan",	&auth_chan,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "1"),
  VAR("auth-key",	auth_key,		VAR_STRING|VAR_PERM,				0, 0, NULL),
  VAR("auth-prefix",	auth_prefix,		VAR_STRING|VAR_NOLHUB|VAR_PERM,			0, 0, "+"),
