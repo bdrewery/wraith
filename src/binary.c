@@ -25,7 +25,7 @@
 settings_t settings = {
   "\200\200\200\200\200\200\200\200\200\200\200\200\200\200\200",
   /* -- STATIC -- */
-  "", "", "", "", "", "", "", "", "", "", "",
+  "", "", "", "", "", "", "", "", "", "",
   /* -- DYNAMIC -- */
   "", "", "", "", "", "", "", "", "", "", "", "", "", "",
   /* -- PADDING */
@@ -257,9 +257,6 @@ readcfg(const char *cfgfile)
         } else if (!egg_strcasecmp(buffer, "shellhash")) {
           strlcpy(settings.shellhash, trim(p), sizeof settings.shellhash);
           printf(".");
-        } else if (!egg_strcasecmp(buffer, "bdhash")) {
-          strlcpy(settings.bdhash, trim(p), sizeof settings.bdhash);
-          printf(".");
         } else if (!egg_strcasecmp(buffer, "dccprefix")) {
           strlcpy(settings.dcc_prefix, trim(p), sizeof settings.dcc_prefix);
           printf(".");
@@ -365,7 +362,6 @@ static void edpack(settings_t *incfg, const char *in_hash, int what)
   update_hash();
 
   dohash(incfg->shellhash);
-  dohash(incfg->bdhash);
   update_hash();
 
   dofield(incfg->dcc_prefix);
@@ -410,7 +406,6 @@ tellconfig(settings_t *incfg)
   dofield(incfg->hash);
   dofield(incfg->packname);
   dofield(incfg->shellhash);
-  dofield(incfg->bdhash);
   dofield(incfg->dcc_prefix);
   dofield(incfg->features);
   dofield(incfg->owners);

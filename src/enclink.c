@@ -47,8 +47,8 @@ static void ghost_link_case(int idx, direction_t direction)
     }
 
     /* initkey-gen */
-    /* bdhash port mynick conf.bot->nick */
-    sprintf(tmp, "%s@%4x@%s@%s", settings.bdhash, port, strtoupper(nick1), strtoupper(nick2));
+    /* salt1 salt2 port mynick conf.bot->nick */
+    sprintf(tmp, "%s@%s@%4x@%s@%s", settings.salt1, settings.salt2, port, strtoupper(nick1), strtoupper(nick2));
     free(nick1);
     free(nick2);
     strlcpy(keyp, SHA1(tmp), ENC_KEY_LEN + 1);
@@ -356,7 +356,7 @@ void link_get_method(int idx)
 
 /* the order of entries here determines which will be picked */
 struct enc_link enclink[] = {
-  { "ghost+prand", LINK_GHOSTPRAND, ghost_link_case, ghost_Prand_write, ghost_Prand_read, ghost_Prand_parse },
+  { "ghost+prand2", LINK_GHOSTPRAND2, ghost_link_case, ghost_Prand_write, ghost_Prand_read, ghost_Prand_parse },
 // Disabled this one so 1.2.6->1.2.7 will use cleartext, as some 1.2.6 nets have an empty BDHASH
 //  { "ghost+case", LINK_GHOSTCASE, ghost_link_case, ghost_write, ghost_read, ghost_parse },
   { "cleartext", LINK_CLEARTEXT, NULL, NULL, NULL, NULL },

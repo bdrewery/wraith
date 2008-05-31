@@ -379,6 +379,7 @@ static void dtx_arg(int& argc, char *argv[])
         printf("BuildOS: %s%s%s BuildArch: %s%s%s\n", BOLD(-1), BUILD_OS, BOLD_END(-1), BOLD(-1), BUILD_ARCH, BOLD_END(-1));
 
 	sdprintf("pack: %d conf: %d settings_t: %d pad: %d\n", SIZE_PACK, SIZE_CONF, sizeof(settings_t), SIZE_PAD);
+	sdprintf("pack: %d conf: %d settings_t: %d prefix: %d pad: %d\n", SIZE_PACK, SIZE_CONF, sizeof(settings_t), PREFIXLEN, SIZE_PAD);
         /* This is simply to display the binary config */
         if (settings.uname[0]) {
           sdebug = 1;
