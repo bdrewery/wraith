@@ -976,6 +976,11 @@ static int parse_reply(char *response, size_t nbytes, const char *server_ip)
 		}
 
 		ptr += reply.rdlength;
+                if ((size_t) (ptr - (unsigned char*) response) > nbytes) {
+                  sdprintf("MALFORMED/TRUNCATED DNS PACKET detected (need TCP).");
+                  q->remaining = 0;
+                  break;
+                }
 	}
 	/* FIXME: This assumes 1 dns query, but the new format
                   sends out 4 queries, each with multiple questions.
