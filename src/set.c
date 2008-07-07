@@ -41,7 +41,7 @@ bool dccauth;
 int cloak_script = 0;
 rate_t close_threshold;
 int fight_threshold;
-char *def_chanset = "+enforcebans +dynamicbans +userbans -bitch +cycle -inactive +userexempts -dynamicexempts +userinvites -dynamicinvites -nodesynch -closed -take -voice -private -fastop";
+char *def_chanset = "+enforcebans +dynamicbans +userbans -bitch +cycle -inactive +userexempts -dynamicexempts +userinvites -dynamicinvites -nodesynch -closed -take -voice -private -fastop +meankicks";
 int set_noshare = 0;
 int fork_interval;
 int hijack;
@@ -59,7 +59,6 @@ int op_bots;
 rate_t op_requests;
 int promisc;
 int trace;
-bool offensive_bans;
 bool manop_warn;
 char homechan[51] = "";
 char relay_to[101] = "";
@@ -95,7 +94,6 @@ static variable_t vars[] = {
  VAR("lag-threshold",	&lag_threshold,		VAR_INT|VAR_NOLHUB,				0, 0, "15"),
  VAR("login",		&login,			VAR_INT|VAR_DETECTED,				0, 4, "warn"),
  VAR("manop-warn",	&manop_warn,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "1"),
- VAR("mean-kicks",	&offensive_bans,	VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "1"),
  VAR("motd",		motd,			VAR_STRING|VAR_HIDE|VAR_NOLOC,			0, 0, NULL),
  VAR("msg-ident",	msgident,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
  VAR("msg-invite",	msginvite,		VAR_STRING|VAR_NOLHUB,				0, 0, NULL),
