@@ -66,7 +66,7 @@ Auth::Auth(const char *_nick, const char *_host, struct userrec *u)
   if (user)
     ht_handle.add(handle, this);
 
-  sdprintf("New auth created! (%s!%s) [%s]", nick, host, handle);
+  sdprintf(STR("New auth created! (%s!%s) [%s]"), nick, host, handle);
   authtime = atime = now;
   bd = 0;
   idx = -1;
@@ -74,7 +74,7 @@ Auth::Auth(const char *_nick, const char *_host, struct userrec *u)
 
 Auth::~Auth()
 {
-  sdprintf("Removing auth: (%s!%s) [%s]", nick, host, handle);
+  sdprintf(STR("Removing auth: (%s!%s) [%s]"), nick, host, handle);
   if (user)
     ht_handle.remove(handle, this);
   ht_host.remove(this);
@@ -107,7 +107,7 @@ Auth *Auth::Find(const char *_host)
 
   auth = ht_host.find(_host);
   if (auth)
-    sdprintf("Found auth: (%s!%s) [%s]", auth->nick, auth->host, auth->handle);
+    sdprintf(STR("Found auth: (%s!%s) [%s]"), auth->nick, auth->host, auth->handle);
   return auth;
 }
 
@@ -117,14 +117,14 @@ Auth *Auth::Find(const char *handle, bool _hand)
 
   auth = ht_handle.find(handle);
   if (auth)
-    sdprintf("Found auth (by handle): %s (%s!%s)", handle, auth->nick, auth->host);
+    sdprintf(STR("Found auth (by handle): %s (%s!%s)"), handle, auth->nick, auth->host);
   return auth;
 }
 
 static int auth_clear_users_walk(Auth *auth, void *data)
 {
   if (auth->user) {
-    sdprintf("Clearing USER for auth: (%s!%s) [%s]", auth->nick, auth->host, auth->handle);
+    sdprintf(STR("Clearing USER for auth: (%s!%s) [%s]"), auth->nick, auth->host, auth->handle);
     auth->user = NULL;
   }
   return 0;
@@ -138,7 +138,7 @@ void Auth::NullUsers()
 static int auth_fill_users_walk(Auth *auth, void *data)
 {
   if (strcmp(auth->handle, "*")) {
-    sdprintf("Filling USER for auth: (%s!%s) [%s]", auth->nick, auth->host, auth->handle);
+    sdprintf(STR("Filling USER for auth: (%s!%s) [%s]"), auth->nick, auth->host, auth->handle);
     auth->user = get_user_by_handle(userlist, auth->handle);
   }
 
@@ -169,7 +169,7 @@ void Auth::ExpireAuths()
 
 static int auth_delete_all_walk(Auth *auth, void *data)
 {
-  putlog(LOG_DEBUG, "*", "Removing (%s!%s) [%s], from auth list.", auth->nick, auth->host, auth->handle);
+  putlog(LOG_DEBUG, "*", STR("Removing (%s!%s) [%s], from auth list."), auth->nick, auth->host, auth->handle);
   delete auth;
 
   return 0;
@@ -178,24 +178,24 @@ static int auth_delete_all_walk(Auth *auth, void *data)
 void Auth::DeleteAll()
 {
   if (ischanhub()) {
-    putlog(LOG_DEBUG, "*", "Removing auth entries.");
+    putlog(LOG_DEBUG, "*", STR("Removing auth entries."));
     ht_host.walk(auth_delete_all_walk);
   }
 }
 
 void Auth::InitTimer()
 {
-  timer_create_secs(60, "Auth::ExpireAuths", (Function) Auth::ExpireAuths);
+  timer_create_secs(60, STR("Auth::ExpireAuths"), (Function) Auth::ExpireAuths);
 }
 
 bool Auth::GetIdx(const char *chname)
 {
-sdprintf("GETIDX: auth: %s, idx: %d", nick, idx);
+sdprintf(STR("GETIDX: auth: %s, idx: %d"), nick, idx);
   if (idx != -1) {
     if (!valid_idx(idx))
       idx = -1;
     else {
-      sdprintf("FIRST FOUND: %d", idx);
+      sdprintf(STR("FIRST FOUND: %d"), idx);
       strlcpy(dcc[idx].simulbot, chname ? chname : nick, NICKLEN);
       strlcpy(dcc[idx].u.chat->con_chan, chname ? chname : "*", 81);
       return 1;
@@ -208,7 +208,7 @@ sdprintf("GETIDX: auth: %s, idx: %d", nick, idx);
     if (dcc[i].type && dcc[i].irc &&
        (((chname && chname[0]) && !strcmp(dcc[i].simulbot, chname) && !strcmp(dcc[i].nick, handle)) ||
        (!(chname && chname[0]) && !strcmp(dcc[i].simulbot, nick)))) {
-      putlog(LOG_DEBUG, "*", "Simul found old idx for %s/%s: (%s!%s)", nick, chname, nick, host);
+      putlog(LOG_DEBUG, "*", STR("Simul found old idx for %s/%s: (%s!%s)"), nick, chname, nick, host);
       dcc[i].simultime = now;
       idx = i;
       strlcpy(dcc[idx].simulbot, chname ? chname : nick, NICKLEN);
@@ -272,14 +272,15 @@ void makehash(struct userrec *u, const char *randstring, char *out, size_t out_s
   OPENSSL_cleanse(hash, sizeof(hash));
 }
 
+/* This isn't even used */
 const char*
 makebdhash(char *randstring)
 {
   char hash[70] = "";
-  char *bdpass = "bdpass";
+  char *bdpass = STR("bdpass");
 
   simple_snprintf(hash, sizeof hash, "%s%s%s", randstring, bdpass, settings.packname);
-  sdprintf("bdhash: %s", hash);
+  sdprintf(STR("bdhash: %s"), hash);
 
   const char* md5 = MD5(hash);
   OPENSSL_cleanse(hash, sizeof(hash));

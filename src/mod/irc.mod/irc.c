@@ -311,7 +311,7 @@ const char * cookie_hash(const char* chname, const Member* opper, const Member* 
   char tohash[101] = "";
 
   /* Only use first 3 chars of chan */
-  simple_snprintf(tohash, sizeof(tohash), "%c%c%c%c%s%c%c%c%c%c%s%s%s%s", 
+  simple_snprintf(tohash, sizeof(tohash), STR("%c%c%c%c%s%c%c%c%c%c%s%s%s%s"),
                                      settings.salt2[0], 
                                      toupper(chname[0]),
                                      toupper(chname[1]),
@@ -358,7 +358,7 @@ sdprintf("hash3: %s", hash3);
 //  register char* buf = (char*) my_calloc(1, len + 1);
 
   if (m3)
-    simple_snprintf(out, len + 1, "%c%c%c%c%c%c%c%c%c!%s@%s", 
+    simple_snprintf(out, len + 1, STR("%c%c%c%c%c%c%c%c%c!%s@%s"), 
                          hash1[HASH_INDEX1(0)], 
                          hash1[HASH_INDEX2(0)], 
                          hash1[HASH_INDEX3(0)], 
@@ -371,7 +371,7 @@ sdprintf("hash3: %s", hash3);
                          randstring, 
                          ts);
   else if (m2)
-    simple_snprintf(out, len + 1, "%c%c%c%c%c%c!%s@%s", 
+    simple_snprintf(out, len + 1, STR("%c%c%c%c%c%c!%s@%s"), 
                          hash1[HASH_INDEX1(0)], 
                          hash1[HASH_INDEX2(0)], 
                          hash1[HASH_INDEX3(0)], 
@@ -381,7 +381,7 @@ sdprintf("hash3: %s", hash3);
                          randstring, 
                          ts);
   else
-    simple_snprintf(out, len + 1, "%c%c%c!%s@%s", 
+    simple_snprintf(out, len + 1, STR("%c%c%c!%s@%s"), 
                          hash1[HASH_INDEX1(0)], 
                          hash1[HASH_INDEX2(0)], 
                          hash1[HASH_INDEX3(0)], 

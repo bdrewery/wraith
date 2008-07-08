@@ -121,7 +121,7 @@ static char *getfullbinname(const char *argv_zero)
 #endif /* CYGWIN_HACKS */
 
   if (!getcwd(cwd, PATH_MAX))
-    fatal("getcwd() failed", 0);
+    fatal(STR("getcwd() failed"), 0);
 
   if (cwd[strlen(cwd) - 1] == '/')
     cwd[strlen(cwd) - 1] = 0;
@@ -163,12 +163,12 @@ static char *getfullbinname(const char *argv_zero)
 
 void fatal(const char *s, int recoverable)
 {
-  sdprintf("FATAL(%d) %s", recoverable, s);
+  sdprintf(STR("FATAL(%d) %s"), recoverable, s);
   if (server_online)
     nuke_server((char *) s);
 
   if (s && s[0])
-    putlog(LOG_MISC, "*", "!*! %s", s);
+    putlog(LOG_MISC, "*", STR("!*! %s"), s);
 
 /*  flushlogs(); */
 #ifdef HAVE_SSL
@@ -178,10 +178,10 @@ void fatal(const char *s, int recoverable)
   if (my_port)
     listen_all(my_port, 1); /* close the listening port... */
 
-  sdprintf("Closing %d sockets", dcc_total);
+  sdprintf(STR("Closing %d sockets"), dcc_total);
   for (int i = 0; i < dcc_total; i++) {
     if (dcc[i].type && dcc[i].sock >= 0) {
-      sdprintf("Closing %s dcc(%d)", dcc[i].type->name, i);
+      sdprintf(STR("Closing %s dcc(%d)"), dcc[i].type->name, i);
       killsock(dcc[i].sock);
       lostdcc(i);
     }
@@ -207,9 +207,9 @@ static void checkpass()
   if (!checkedpass) {
 #ifdef HAVE_GETPASSPHRASE
     /* Solaris' getpass() truncates at 8 */
-    char *gpasswd = (char*) getpassphrase("bash$ ");
+    char *gpasswd = (char*) getpassphrase(STR("bash$ "));
 #else
-    char *gpasswd = (char*) getpass("bash$ ");
+    char *gpasswd = (char*) getpass(STR("bash$ "));
 #endif
 
     checkedpass = 1;
@@ -226,17 +226,17 @@ static void got_ed(char *, char *, char*) __attribute__((noreturn));
 
 static void got_ed(char *which, char *in, char *out)
 {
-  sdprintf("got_Ed called: -%s i: %s o: %s", which, in, out);
+  sdprintf(STR("got_Ed called: -%s i: %s o: %s"), which, in, out);
   if (!in || !out)
     fatal(STR("Wrong number of arguments: -e/-d <infile> <outfile/STDOUT>"),0);
   if (!strcmp(in, out))
-    fatal("<infile> should NOT be the same name as <outfile>", 0);
+    fatal(STR("<infile> should NOT be the same name as <outfile>"), 0);
   if (!strcmp(which, "e")) {
     Encrypt_File(in, out);
-    fatal("File Encryption complete",3);
+    fatal(STR("File Encryption complete"),3);
   } else if (!strcmp(which, "d")) {
     Decrypt_File(in, out);
-    fatal("File Decryption complete",3);
+    fatal(STR("File Decryption complete"),3);
   }
   exit(0);
 }
@@ -254,8 +254,8 @@ static void show_help()
   printf(STR("%s\n\n"), version);
   printf(STR("%s [options] [botnick[.conf]]\n"));
   printf(STR("Not supplying any options will make all bots in the binary spawn.\n"));
-  printf(format, "Option", "Description");
-  printf(format, "------", "-----------");
+  printf(format, STR("Option"), STR("Description"));
+  printf(format, STR("------"), STR("-----------"));
   printf(format, STR("[-B] <botnick>"), STR("Starts the specified bot [deprecated]"));
   printf(format, STR("-c"), STR("Config file editor [reads env: EDITOR] [No auto update]"));
   printf(format, STR("-C"), STR("Config file editor [reads env: EDITOR]"));
@@ -266,7 +266,7 @@ static void show_help()
 /*  printf(format, STR("-g <file>"), STR("Generates a template config file"));
   printf(format, STR("-G <file>"), STR("Generates a custom config for the box"));
 */
-  printf(format, "-h", "Display this help listing");
+  printf(format, STR("-h"), STR("Display this help listing"));
   printf(format, STR("-k <botname>"), STR("Terminates (botname) with kill -9 (see also: -r)"));
   printf(format, STR("-n"), STR("Disables backgrounding bot (requires [-B] <botnick>)"));
   printf(format, STR("-r <botname>"), STR("Restarts the specified bot (see also: -k)"));
@@ -274,7 +274,7 @@ static void show_help()
   printf(format, STR("-t"), STR("Enables \"Partyline\" emulation (requires -nB)"));
   printf(format, STR("-u <binary>"), STR("Update binary, Automatically kill/respawn bots"));
   printf(format, STR("-U <binary>"), STR("Update binary"));
-  printf(format, "-v", "Displays bot version");
+  printf(format, STR("-v"), STR("Displays bot version"));
   exit(0);
 }
 
@@ -313,8 +313,8 @@ static void dtx_arg(int& argc, char *argv[])
         strlcpy(origbotnick, optarg, HANDLEN + 1);
         break;
       case 'H':
-        printf("SHA1 (%s): %s\n", optarg, SHA1(optarg));
-        printf("MD5  (%s): %s\n", optarg, MD5(optarg));
+        printf(STR("SHA1 (%s): %s\n"), optarg, SHA1(optarg));
+        printf(STR("MD5  (%s): %s\n"), optarg, MD5(optarg));
 //        do_crypt_console();
         exit(0);
         break;
@@ -347,12 +347,12 @@ static void dtx_arg(int& argc, char *argv[])
       case 'E':
         p = argv[optind];
         if (p && p[0] && egg_isdigit(p[0])) {
-          putlog(LOG_MISC, "*", "Error #%d: %s", atoi(p), werr_tostr(atoi(p)));
+          putlog(LOG_MISC, "*", STR("Error #%d: %s"), atoi(p), werr_tostr(atoi(p)));
         } else {
           int n;
-          putlog(LOG_MISC, "*", "Listing all errors");
+          putlog(LOG_MISC, "*", STR("Listing all errors"));
           for (n = 1; n < ERR_MAX; n++)
-          putlog(LOG_MISC, "*", "Error #%d: %s", n, werr_tostr(n));
+          putlog(LOG_MISC, "*", STR("Error #%d: %s"), n, werr_tostr(n));
         }
         exit(0);
         break;
@@ -380,12 +380,12 @@ static void dtx_arg(int& argc, char *argv[])
         char date[50] = "";
 
         egg_strftime(date, sizeof date, "%c %Z", gmtime(&buildts));
-	printf("%s\nBuild Date: %s (%s%lu%s)\n", version, date, BOLD(-1), buildts, BOLD_END(-1));
-        printf("Revision: %d\n", revision);
-        printf("BuildOS: %s%s%s BuildArch: %s%s%s\n", BOLD(-1), BUILD_OS, BOLD_END(-1), BOLD(-1), BUILD_ARCH, BOLD_END(-1));
+	printf(STR("%s\nBuild Date: %s (%s%lu%s)\n"), version, date, BOLD(-1), buildts, BOLD_END(-1));
+        printf(STR("Revision: %d\n"), revision);
+        printf(STR("BuildOS: %s%s%s BuildArch: %s%s%s\n"), BOLD(-1), BUILD_OS, BOLD_END(-1), BOLD(-1), BUILD_ARCH, BOLD_END(-1));
 
-	sdprintf("pack: %d conf: %d settings_t: %d pad: %d\n", SIZE_PACK, SIZE_CONF, sizeof(settings_t), SIZE_PAD);
-	sdprintf("pack: %d conf: %d settings_t: %d prefix: %d pad: %d\n", SIZE_PACK, SIZE_CONF, sizeof(settings_t), PREFIXLEN, SIZE_PAD);
+	sdprintf(STR("pack: %d conf: %d settings_t: %d pad: %d\n"), SIZE_PACK, SIZE_CONF, sizeof(settings_t), SIZE_PAD);
+	sdprintf(STR("pack: %d conf: %d settings_t: %d prefix: %d pad: %d\n"), SIZE_PACK, SIZE_CONF, sizeof(settings_t), PREFIXLEN, SIZE_PAD);
         /* This is simply to display the binary config */
         if (settings.uname[0]) {
           sdebug = 1;
@@ -519,7 +519,7 @@ static void core_minutely()
     if (washub == -1)
       washub = conf.bot->hub;
     else if (washub != conf.bot->hub)
-      fatal("MEMORY HACKED", 0);
+      fatal(STR("MEMORY HACKED"), 0);
     check_maxfiles();
     check_mypid();
   } else
@@ -619,7 +619,7 @@ void check_for_changed_decoy_md5() {
 
   if (strcmp(fake_md5, STR("596a96cc7bf9108cd896f33c44aedc8a"))) {
     unlink(binname);
-    fatal("!! Invalid binary", 0);
+    fatal(STR("!! Invalid binary"), 0);
   }
 }
 
@@ -673,12 +673,12 @@ int main(int argc, char **argv)
   /* This allows -2/-0 to be used without an initialized binary */
 //  if (!(argc == 2 && (!strcmp(argv[1], "-2") || !strcmp(argv[1], "0")))) {
 //  doesn't work correctly yet, if we don't go in here, our settings stay encrypted
-  if (argc == 2 && (!strcmp(argv[1], "-q") || !strcmp(argv[1], "-p"))) {
+  if (argc == 2 && (!strcmp(argv[1], STR("-q")) || !strcmp(argv[1], STR("-p")))) {
     if (settings.hash[0]) exit(4);	/* initialized */
     exit(5);				/* not initialized */
   }
 
-  check_sum(binname, argc >= 3 && !strcmp(argv[1], "-q") ? argv[2] : NULL);
+  check_sum(binname, argc >= 3 && !strcmp(argv[1], STR("-q")) ? argv[2] : NULL);
   // Now settings struct is decrypted
   if (!checked_bin_buf)
     exit(1);
@@ -694,15 +694,15 @@ int main(int argc, char **argv)
   init_conf();			/* establishes conf and sets to defaults */
 
   /* Version info! */
-  simple_snprintf(ver, sizeof ver, "[%s] Wraith %s", settings.packname, egg_version);
-  egg_snprintf(version, sizeof version, "[%s] Wraith %s (%lu:%d)", settings.packname, egg_version, buildts, revision);
+  simple_snprintf(ver, sizeof ver, STR("[%s] Wraith %s"), settings.packname, egg_version);
+  egg_snprintf(version, sizeof version, STR("[%s] Wraith %s (%lu:%d)"), settings.packname, egg_version, buildts, revision);
 
   egg_memcpy(&nowtm, gmtime(&now), sizeof(struct tm));
   lastmin = nowtm.tm_min;
 
   dtx_arg(argc, argv);
 
-  sdprintf("my euid: %d my uuid: %d, my ppid: %d my pid: %d", myuid, getuid(), getppid(), mypid);
+  sdprintf(STR("my euid: %d my uuid: %d, my ppid: %d my pid: %d"), myuid, getuid(), getppid(), mypid);
 
   /* Check and load conf file */
   startup_checks(0);
@@ -756,19 +756,19 @@ int main(int argc, char **argv)
   
   autolink_cycle(NULL);		/* Try linking to a hub */
   
-  timer_create_secs(1, "core_secondly", (Function) core_secondly);
-  timer_create_secs(10, "check_expired_dcc", (Function) check_expired_dcc);
-  timer_create_secs(10, "core_10secondly", (Function) core_10secondly);
-  timer_create_secs(30, "check_expired_simuls", (Function) check_expired_simuls);
-  timer_create_secs(60, "core_minutely", (Function) core_minutely);
-  timer_create_secs(60, "check_botnet_pings", (Function) check_botnet_pings);
-  timer_create_secs(60, "check_expired_ignores", (Function) check_expired_ignores);
-  timer_create_secs(1800, "core_halfhourly", (Function) core_halfhourly);
+  timer_create_secs(1, STR("core_secondly"), (Function) core_secondly);
+  timer_create_secs(10, STR("check_expired_dcc"), (Function) check_expired_dcc);
+  timer_create_secs(10, STR("core_10secondly"), (Function) core_10secondly);
+  timer_create_secs(30, STR("check_expired_simuls"), (Function) check_expired_simuls);
+  timer_create_secs(60, STR("core_minutely"), (Function) core_minutely);
+  timer_create_secs(60, STR("check_botnet_pings"), (Function) check_botnet_pings);
+  timer_create_secs(60, STR("check_expired_ignores"), (Function) check_expired_ignores);
+  timer_create_secs(1800, STR("core_halfhourly"), (Function) core_halfhourly);
 
   if (socksfile)
     readsocks(socksfile);
 
-  debug0("main: entering loop");
+  debug0(STR("main: entering loop"));
 
 
 #if !defined(CYGWIN_HACKS) && !defined(__sun__)
