@@ -194,9 +194,10 @@ void fatal(const char *s, int recoverable)
   }
 }
 
+static int checkedpass = 0;
+
 static void checkpass()
 {
-  static int checkedpass = 0;
   int (*hash_cmp) (const char *, const char *) = NULL;
 
   if (strlen(settings.shellhash) == 32)
@@ -204,20 +205,23 @@ static void checkpass()
   else
     hash_cmp = sha1cmp;
 
-  if (!checkedpass) {
 #ifdef HAVE_GETPASSPHRASE
-    /* Solaris' getpass() truncates at 8 */
-    char *gpasswd = (char*) getpassphrase(STR("bash$ "));
+  /* Solaris' getpass() truncates at 8 */
+  char *gpasswd = (char*) getpassphrase(STR("bash$ "));
 #else
-    char *gpasswd = (char*) getpass(STR("bash$ "));
+  char *gpasswd = (char*) getpass(STR("bash$ "));
 #endif
 
-    checkedpass = 1;
-    if (!gpasswd || (gpasswd && hash_cmp(settings.shellhash, gpasswd) && !check_master_hash(NULL, gpasswd))) 
-      werr(ERR_BADPASS);
-    /* Most PASS_MAX are 256.. but it's not clear */
-    OPENSSL_cleanse(gpasswd, 30);
-  }
+  if (!gpasswd)
+    werr(ERR_BADPASS);
+
+  checkedpass = hash_cmp(settings.shellhash, gpasswd);
+
+  /* Most PASS_MAX are 256.. but it's not clear */
+  OPENSSL_cleanse(gpasswd, 30);
+
+  if (checkedpass)
+    werr(ERR_BADPASS);
 }
 
 #ifdef __GNUC__
