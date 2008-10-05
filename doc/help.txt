@@ -464,7 +464,6 @@ See also: link
                        Users who lose access to a channel because of this setting
                        will see no reference to it over the botnet in any place.
                        The +o restriction goes for +v as well.
-        $brelay$b          Relays this chan to the specified target in set var 'relay-to'
         $btake$b           Once a bot is opped, it will mass op all other bots
                        in the channel. After that, they will all attempt to 
                        mass deop in hopes 'taking' the channel. :)
@@ -887,7 +886,7 @@ See also: encrypt, randstring, md5, sha1
    Channel masters may only delete users which they added.
 see also: adduser%{+m}, +user, -user%{-}
 :leaf:deop
-###  $bdeop$b [nickname] [channel|*]
+###  $bdeop$b <nickname> [channel|*]
    Will remove chanop from the person you specify, so long as the
    bot is opped on that channel, and the person you specify isn't
    on the bot's list of authorized chanops. Specify * for all
@@ -895,7 +894,7 @@ see also: adduser%{+m}, +user, -user%{-}
  
 See also: op, console
 :leaf:devoice
-### $bdevoice$b [nickname] [channel|*]
+### $bdevoice$b <nickname> [channel|*]
    Will remove the +v voice from the person you specify, so long as
    the bot is opped on that channel. Specify * for all channels.
 ::die
@@ -1395,7 +1394,7 @@ See also: botnick, netnick
  
 %{+mi}See also: chpass%{-}
 :leaf:op
-###  $bop$b [nickname] [channel|*]
+###  $bop$b <nickname> [channel|*]
    Will grant chanop to the person you specify, so long as the bot
    is opped on that channel, and the person you specify isn't being
    actively deopped by the bot. Specify * for all channels.
@@ -1549,9 +1548,6 @@ See also: reload, backup
                           (0/- to disable)
 [B]  $bmanop-warn$b      Warn users via /NOTICE when they msg-op in a channel with manop
                            punishments.
-[S]  $brelay-to$b        Any channels set +relay will be relayed to this target.
-                         It may be a #channel or nick. Please be aware that this
-                         this only be set on ONE bot with 'botset'
  
   *  Msg cmd vars may be left blank to disable usage of cmd.
 [S]  $bmsg-op$b          Defines the cmd for opping via msging the bot.
@@ -1810,7 +1806,7 @@ See also: match, whois
  
 See also: botversion, netversion, about%{+m|m}, status%{-}
 :leaf:voice
-###  $bvoice$b [nickname] [channel|*]
+###  $bvoice$b <nickname> [channel|*]
    Will give a +v voice to a person you specify, so long as the
    bot is opped on that channel. Specify * for all channels.
  
