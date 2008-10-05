@@ -92,6 +92,17 @@ void resolve_to_member(struct chanset_t *chan, char *nick, char *host)
  */
 #define CHANNEL_ID_LEN 5
 
+#ifdef NO
+static void print_memberlist(memberlist *toprint)
+{
+  memberlist *m = NULL;
+
+  for (m = toprint; m && m->nick[0]; m = m->next) {
+    sdprintf("%s!%s user: %s tried: %d hops: %d", m->nick, m->userhost, m->user ? m->user->handle : "", m->tried_getuser, m->hops);
+  }
+}
+#endif
+
 /* Returns a pointer to a new channel member structure.
  */
 static Member *newmember(struct chanset_t *chan, char *nick)

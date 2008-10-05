@@ -105,6 +105,7 @@ static int detach(void *client_data, int idx)
         free(connect_info);
         return(0);
 }
+
 /*
 int egg_client(int idx, const char *host, int port, const char *vip, int vport, int timeout)
 {
