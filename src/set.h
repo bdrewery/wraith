@@ -35,8 +35,14 @@
 #define VAR_NOGHUB	BIT17
 /* (short) number */
 #define VAR_SHORT 	BIT18
+
+#define VAR_JUPENICK    BIT19
+
 /* Do not allow to be set by users (internal use only) */
-#define VAR_INTERNAL	BIT19
+#define VAR_INTERNAL	BIT20
+
+
+#define VAR_NOHUB       VAR_NOLHUB|VAR_NOGHUB
 
 #define VAR_LDATA 	1
 #define VAR_GDATA	2
