@@ -5,11 +5,10 @@
 #include <stdarg.h>
 #include <algorithm> // min() / max()
 
-void Stream::Reserve (size_t newSize) {
+void Stream::Reserve (const size_t newSize) const {
   if (newSize < capacity())
     return;
-  newSize = STREAM_BLOCKSIZE * ((newSize + STREAM_BLOCKSIZE -1) / STREAM_BLOCKSIZE);
-  String::Reserve(newSize);
+  str.Reserve(STREAM_BLOCKSIZE * ((newSize + STREAM_BLOCKSIZE -1) / STREAM_BLOCKSIZE));
 }
 
 int Stream::seek (int offset, int whence) {
@@ -37,12 +36,12 @@ int Stream::seek (int offset, int whence) {
   return newpos;
 }
 
-void Stream::puts (const String& string) {
+void Stream::puts (const bd::String& string) {
   puts(string.data(), string.length());
 }
 
 void Stream::puts (const char* string, size_t len) {
-  replace(tell(), string, len);
+  str.replace(tell(), string, len);
   pos += len;
   /* WTF **/
   //Ref->size = max(tell(), capacity());
@@ -55,7 +54,7 @@ int Stream::gets (char *data, size_t maxSize) {
   toRead = (maxSize <= (capacity() - tell())) ? maxSize : (capacity() - tell());
 
   while ((read < toRead) && (c != '\n')) {
-    c = Ref->buf[pos++];
+    c = str[pos++];
     *data++ = c;
     ++read;
   }
