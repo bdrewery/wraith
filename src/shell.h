@@ -65,7 +65,7 @@ void check_crontab();
 void crontab_del();
 int crontab_exists();
 void crontab_create(int);
-void detected(int, char *);
+void detected(int, const char *);
 #endif /* !CYGWIN_HACKS */
 void suicide(const char *);
 #ifdef __GNUC__
@@ -73,7 +73,7 @@ void suicide(const char *);
 #else
  void werr(int);
 #endif
-char *werr_tostr(int);
+const char *werr_tostr(int);
 int det_translate(const char *);
 const char *det_translate_num(int);
 char *shell_escape(const char *);

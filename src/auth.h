@@ -50,7 +50,6 @@ class Auth {
   static Htree<Auth, HASH_TABLE_STRINGS> ht_handle;
 };
 
-const char* makebdhash(char *);
 void makehash(struct userrec *u, const char *randstring, char *out, size_t out_size);
 
 int check_auth_dcc(Auth *, const char *, const char *);

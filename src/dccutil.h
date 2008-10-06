@@ -31,7 +31,7 @@ struct portmap {
 
 
 void init_dcc(void);
-void dumplots(int, const char *, char *);
+void dumplots(int, const char *, const char *);
 #ifdef __GNUC__
  void dprintf(int, const char *, ...) __attribute__((format(printf, 2, 3)));
  void chatout(const char *, ...) __attribute__((format(printf, 1, 2)));
