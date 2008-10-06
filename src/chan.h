@@ -140,19 +140,19 @@ struct chanset_t {
   uint32_t status;
   uint32_t ircnet_status;
   int flood_pub_thr;
-  time_t flood_pub_time;
+  interval_t flood_pub_time;
   int flood_join_thr;
-  time_t flood_join_time;
+  interval_t flood_join_time;
   int flood_deop_thr;
-  time_t flood_deop_time;
+  interval_t flood_deop_time;
   int flood_kick_thr;
-  time_t flood_kick_time;
+  interval_t flood_kick_time;
   int flood_ctcp_thr;
-  time_t flood_ctcp_time;
+  interval_t flood_ctcp_time;
   int flood_nick_thr;
-  time_t flood_nick_time;
-  time_t flood_lock_time;
-  time_t flood_mjoin_time;
+  interval_t flood_nick_time;
+  interval_t flood_lock_time;
+  interval_t flood_mjoin_time;
   int flood_mjoin_thr;
   int limitraise;
   int checklimit;
@@ -164,7 +164,7 @@ struct chanset_t {
   int mdop;
   int mop;
   int voice_non_ident;
-  int auto_delay;
+  interval_t auto_delay;
 /* Chanint template 
  *int temp;
  */
@@ -172,9 +172,9 @@ struct chanset_t {
 #ifdef REVENGE
   int revenge_mode;
 #endif
-  time_t ban_time;
-  time_t invite_time;
-  time_t exempt_time;
+  interval_t ban_time;
+  interval_t invite_time;
+  interval_t exempt_time;
 
   /* desired channel modes: */
   int mode_pls_prot;		/* modes to enforce			*/

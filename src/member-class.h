@@ -43,7 +43,7 @@ class Member {
     time_t joined;
     time_t split;
     time_t last;
-    time_t delay;
+    interval_t delay;
     unsigned short flags;
 
     char *nick;
