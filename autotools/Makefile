@@ -12,7 +12,7 @@ autoheader:
 	@autoheader
 	@echo "" >> config.h.in
 	@echo "/* Defines for pack features */" >> config.h.in
-	@(for define in `gsed -n -e 's/^[\+|\-] \([^ ]*\) .*/\1/ p' ../pack/pack.cfg`; do \
+	@(for define in `sed -n -e 's/^[\+|\-] \([^ ]*\) .*/\1/ p' ../pack/pack.cfg`; do \
 	echo "#undef S_$$define" >> config.h.in; \
 	done)
 	@mv -f config.h.in ../config.h.in
@@ -23,7 +23,7 @@ autoconf:
 	@echo "Autoconf...."
 	@autoconf
 	@echo "Fixing configure for cache_file"
-	@(if ! gsed configure -e "s/^cache_file=\/dev\/null/cache_file=\.\/config.cache/" \
+	@(if ! sed configure -e "s/^cache_file=\/dev\/null/cache_file=\.\/config.cache/" \
 	-e "s/&& echo \"updating cache .cache_file\"//" > ../configure; then \
 	cp configure ../configure; \
 	rm configure; \
