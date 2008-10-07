@@ -521,7 +521,7 @@ void update_mod(char *handle, char *nick, char *cmd, char *par)
 {
   char tmp[100] = "";
 
-  egg_snprintf(tmp, sizeof tmp, "%li, %s (%s %s)", now, nick, cmd, (par && par[0]) ? par : "");
+  egg_snprintf(tmp, sizeof tmp, "%li, %s (%s %s)", (long) now, nick, cmd, (par && par[0]) ? par : "");
   set_user(&USERENTRY_MODIFIED, get_user_by_handle(userlist, handle), tmp);
 }
 
@@ -691,7 +691,7 @@ static void laston_write_userfile(Stream& stream, const struct userrec *u, const
 {
   struct laston_info *li = (struct laston_info *) e->u.extra;
 
-  stream.printf("--LASTON %lu %s\n", li->laston, li->lastonplace ? li->lastonplace : "");
+  stream.printf("--LASTON %li %s\n", (long) li->laston, li->lastonplace ? li->lastonplace : "");
 }
 
 static bool laston_kill(struct user_entry *e)

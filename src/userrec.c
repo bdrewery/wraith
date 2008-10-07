@@ -372,7 +372,7 @@ static void write_user(const struct userrec *u, Stream& stream, int idx)
       fr.match = FR_CHAN;
       fr.chan = ch->flags;
       build_flags(s, &fr, NULL);
-      stream.printf("! %-20s %lu %-10s %s\n", ch->channel, ch->laston, s, ch->info ? ch->info : "");
+      stream.printf("! %-20s %li %-10s %s\n", ch->channel, (long) ch->laston, s, ch->info ? ch->info : "");
     }
   }
   for (struct user_entry *ue = u->entries; ue; ue = ue->next) {

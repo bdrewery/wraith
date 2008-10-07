@@ -384,13 +384,13 @@ bool u_addmask(char type, struct chanset_t *chan, char *who, char *from, char *n
 
     if (mask) {
       if (!chan)
-	shareout("+m %c %s %lu %s%s %s %s\n",
-                 type, mask, expire_time - now,
+	shareout("+m %c %s %d %s%s %s %s\n",
+                 type, mask, (int) (expire_time - now),
 		 (flags & MASKREC_STICKY) ? "s" : "",
 		 (flags & MASKREC_PERM) ? "p" : "-", from, note);
       else
-	shareout("+mc %c %s %lu %s %s%s %s %s\n",
-		 type, mask, expire_time - now, chan->dname, 
+	shareout("+mc %c %s %d %s %s%s %s %s\n",
+		 type, mask, (int) (expire_time - now), chan->dname, 
                  (flags & MASKREC_STICKY) ? "s" : "",
 		 (flags & MASKREC_PERM) ? "p" : "-", from, note);
       free(mask);
@@ -579,9 +579,9 @@ void write_bans(Stream& stream, int idx)
   for (struct igrec *i = global_ign; i; i = i->next) {
     mask = str_escape(i->igmask, ':', '\\');
     if (mask) {
-      stream.printf("- %s:%s%lu:%s:%lu:%s\n", mask,
-		(i->flags & IGREC_PERM) ? "+" : "", i->expire,
-		i->user ? i->user : conf.bot->nick, i->added,
+      stream.printf("- %s:%s%li:%s:%li:%s\n", mask,
+		(i->flags & IGREC_PERM) ? "+" : "", (long) i->expire,
+		i->user ? i->user : conf.bot->nick, (long) i->added,
 		i->msg ? i->msg : "");
       free(mask);
     }
@@ -594,10 +594,10 @@ void write_bans(Stream& stream, int idx)
   for (b = global_bans; b; b = b->next) {
     mask = str_escape(b->mask, ':', '\\');
     if (mask) {
-      stream.printf("- %s:%s%lu%s:+%lu:%lu:%s:%s\n", mask,
-		(b->flags & MASKREC_PERM) ? "+" : "", b->expire,
-		(b->flags & MASKREC_STICKY) ? "*" : "", b->added,
-		b->lastactive, b->user ? b->user : conf.bot->nick,
+      stream.printf("- %s:%s%li%s:+%li:%li:%s:%s\n", mask,
+		(b->flags & MASKREC_PERM) ? "+" : "", (long) b->expire,
+		(b->flags & MASKREC_STICKY) ? "*" : "", (long) b->added,
+		(long) b->lastactive, b->user ? b->user : conf.bot->nick,
 		b->desc ? b->desc : "requested");
       free(mask);
     }
@@ -608,10 +608,10 @@ void write_bans(Stream& stream, int idx)
     for (b = chan->bans; b; b = b->next) {
       mask = str_escape(b->mask, ':', '\\');
       if (mask) {
-        stream.printf("- %s:%s%lu%s:+%lu:%lu:%s:%s\n", mask,
-	        (b->flags & MASKREC_PERM) ? "+" : "", b->expire,
-	        (b->flags & MASKREC_STICKY) ? "*" : "", b->added,
-	        b->lastactive, b->user ? b->user : conf.bot->nick,
+        stream.printf("- %s:%s%li%s:+%li:%li:%s:%s\n", mask,
+	        (b->flags & MASKREC_PERM) ? "+" : "", (long) b->expire,
+	        (b->flags & MASKREC_STICKY) ? "*" : "", (long) b->added,
+	        (long) b->lastactive, b->user ? b->user : conf.bot->nick,
 	        b->desc ? b->desc : "requested");
         free(mask);
       }
@@ -631,10 +631,10 @@ void write_exempts(Stream& stream, int idx)
   for (e = global_exempts; e; e = e->next) {
     mask = str_escape(e->mask, ':', '\\');
     if (mask) {
-      stream.printf("%s %s:%s%lu%s:+%lu:%lu:%s:%s\n", "%", mask,
-		(e->flags & MASKREC_PERM) ? "+" : "", e->expire,
-		(e->flags & MASKREC_STICKY) ? "*" : "", e->added,
-		e->lastactive, e->user ? e->user : conf.bot->nick,
+      stream.printf("%s %s:%s%li%s:+%li:%li:%s:%s\n", "%", mask,
+		(e->flags & MASKREC_PERM) ? "+" : "", (long) e->expire,
+		(e->flags & MASKREC_STICKY) ? "*" : "", (long) e->added,
+		(long) e->lastactive, e->user ? e->user : conf.bot->nick,
 		e->desc ? e->desc : "requested");
       free(mask);
     }
@@ -644,10 +644,10 @@ void write_exempts(Stream& stream, int idx)
     for (e = chan->exempts; e; e = e->next) {
       mask = str_escape(e->mask, ':', '\\');
       if (mask) {
-        stream.printf("%s %s:%s%lu%s:+%lu:%lu:%s:%s\n","%", mask,
-		(e->flags & MASKREC_PERM) ? "+" : "", e->expire,
-		(e->flags & MASKREC_STICKY) ? "*" : "", e->added,
-		e->lastactive, e->user ? e->user : conf.bot->nick,
+        stream.printf("%s %s:%s%li%s:+%li:%li:%s:%s\n","%", mask,
+		(e->flags & MASKREC_PERM) ? "+" : "", (long) e->expire,
+		(e->flags & MASKREC_STICKY) ? "*" : "", (long) e->added,
+		(long) e->lastactive, e->user ? e->user : conf.bot->nick,
 		e->desc ? e->desc : "requested");
         free(mask);
       }
@@ -668,10 +668,10 @@ void write_invites(Stream& stream, int idx)
   for (ir = global_invites; ir; ir = ir->next)  {
     mask = str_escape(ir->mask, ':', '\\');
     if (mask) {
-      stream.printf("@ %s:%s%lu%s:+%lu:%lu:%s:%s\n", mask,
-		(ir->flags & MASKREC_PERM) ? "+" : "", ir->expire,
-		(ir->flags & MASKREC_STICKY) ? "*" : "", ir->added,
-		ir->lastactive, ir->user ? ir->user : conf.bot->nick,
+      stream.printf("@ %s:%s%li%s:+%li:%li:%s:%s\n", mask,
+		(ir->flags & MASKREC_PERM) ? "+" : "", (long) ir->expire,
+		(ir->flags & MASKREC_STICKY) ? "*" : "", (long) ir->added,
+		(long) ir->lastactive, ir->user ? ir->user : conf.bot->nick,
 		ir->desc ? ir->desc : "requested");
       free(mask);
     }
@@ -682,10 +682,10 @@ void write_invites(Stream& stream, int idx)
     for (ir = chan->invites; ir; ir = ir->next) {
       mask = str_escape(ir->mask, ':', '\\');
       if (mask) {
-        stream.printf("@ %s:%s%lu%s:+%lu:%lu:%s:%s\n", mask,
-		      (ir->flags & MASKREC_PERM) ? "+" : "", ir->expire,
-		      (ir->flags & MASKREC_STICKY) ? "*" : "", ir->added,
-		      ir->lastactive, ir->user ? ir->user : conf.bot->nick,
+        stream.printf("@ %s:%s%li%s:+%li:%li:%s:%s\n", mask,
+		      (ir->flags & MASKREC_PERM) ? "+" : "", (long) ir->expire,
+		      (ir->flags & MASKREC_STICKY) ? "*" : "", (long) ir->added,
+		      (long) ir->lastactive, ir->user ? ir->user : conf.bot->nick,
 		      ir->desc ? ir->desc : "requested");
         free(mask);
       }
@@ -717,7 +717,7 @@ void write_chans(Stream& stream, int idx)
       inactive = PLSMNS(channel_inactive(chan));
 
     stream.printf("\
-+ channel add %s { chanmode { %s } addedby %s addedts %lu \
++ channel add %s { chanmode { %s } addedby %s addedts %li \
 bad-cookie %d manop %d mdop %d mop %d limit %d \
 flood-chan %d:%d flood-ctcp %d:%d flood-join %d:%d \
 flood-kick %d:%d flood-deop %d:%d flood-nick %d:%d flood-mjoin %d:%d \
@@ -731,7 +731,7 @@ flood-exempt %d flood-lock-time %d \
 	chan->dname,
 	w,
         chan->added_by,
-        chan->added_ts,
+        (long)chan->added_ts,
 /* Chanchar template
  *      temp,
  * also include temp %s in dprintf.
@@ -818,7 +818,7 @@ void write_chans_compat(Stream& stream, int idx)
       inactive = PLSMNS(channel_inactive(chan));
 
     stream.printf("\
-+ channel add %s { chanmode { %s } addedby %s addedts %lu \
++ channel add %s { chanmode { %s } addedby %s addedts %li \
 bad-cookie %d manop %d mdop %d mop %d limit %d \
 flood-chan %d:%d flood-ctcp %d:%d flood-join %d:%d \
 flood-kick %d:%d flood-deop %d:%d flood-nick %d:%d \
@@ -831,7 +831,7 @@ exempt-time %d invite-time %d voice-non-ident %d auto-delay %d \
 	chan->dname,
 	w,
         chan->added_by,
-        chan->added_ts,
+        (long)chan->added_ts,
 /* Chanchar template
  *      temp,
  * also include temp %s in dprintf.

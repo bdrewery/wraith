@@ -435,7 +435,7 @@ void load_internal_users()
             userlist = adduser(userlist, hand, "none", "-", USER_OP, 1);
             u = get_user_by_handle(userlist, hand);
 
-            egg_snprintf(tmp, sizeof(tmp), "%li [internal]", now);
+            egg_snprintf(tmp, sizeof(tmp), "%li [internal]", (long)now);
             set_user(&USERENTRY_ADDED, u, tmp);
 
             bi = (struct bot_addr *) my_calloc(1, sizeof(struct bot_addr));
@@ -492,7 +492,7 @@ void load_internal_users()
             userlist = adduser(userlist, hand, "none", "-", USER_ADMIN | USER_OWNER | USER_MASTER | USER_OP | USER_PARTY | USER_HUBA | USER_CHUBA, 0);
             u = get_user_by_handle(userlist, hand);
             set_user(&USERENTRY_PASS, u, pass);
-            egg_snprintf(tmp, sizeof(tmp), "%li [internal]", now);
+            egg_snprintf(tmp, sizeof(tmp), "%li [internal]", (long)now);
             set_user(&USERENTRY_ADDED, u, tmp);
             while (hosts) {
               char x[1024] = "";
