@@ -8,7 +8,7 @@
 
 Htree < Client, HASH_TABLE_RFCSTRINGS > clients;
 
-void Client::_init(const char *nick)
+void Client::_init(const char *_nick)
 {
   u = NULL;
   hops = -1;
@@ -25,18 +25,18 @@ void Client::_init(const char *nick)
   userip[0] = 0;
   user[0] = 0;
   gecos[0] = 0;
-  strlcpy(this->nick, nick, sizeof(this->nick));
+  strlcpy(this->nick, _nick, sizeof(this->nick));
 }
 
-Client::Client(const char *nick)
+Client::Client(const char *_nick)
 {
-  _init(nick);
+  _init(_nick);
   clients.add(this);
 }
 
-Client::Client(const char *nick, struct chanset_t *chan)
+Client::Client(const char *_nick, struct chanset_t *chan)
 {
-  _init(nick);
+  _init(_nick);
   AddChan(chan);
   clients.add(this);
 }
@@ -102,11 +102,11 @@ void Client::NewNick(const char *newnick)
     simple_snprintf(fuip, sizeof(fuip), "%s!%s", nick, userip);
 }
 
-Client *Client::Find(const char *nick)
+Client *Client::Find(const char *_nick)
 {
   Client *client = NULL;
 
-  client = clients.find(nick);
+  client = clients.find(_nick);
 
   return client;
 }

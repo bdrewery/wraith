@@ -7,15 +7,15 @@
 #include <stdarg.h>
 #include "compat/compat.h"
 
-int EncryptedStream::gets (char *data, size_t maxSize) {
-  size_t size = Stream::gets(data, maxSize);
+int EncryptedStream::gets (char *_data, size_t maxSize) {
+  size_t size = Stream::gets(_data, maxSize);
   if (key.length()) {
-    bd::String tmp(data, size);
+    bd::String tmp(_data, size);
     if (tmp[tmp.length() - 1] == '\n')
       --tmp;
     bd::String decrypted(decrypt_string(key, broken_base64Decode(tmp)));
     decrypted += '\n';
-    strlcpy(data, decrypted.c_str(), maxSize);
+    strlcpy(_data, decrypted.c_str(), maxSize);
     return decrypted.length();
   }
   return size;

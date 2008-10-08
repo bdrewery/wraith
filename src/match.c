@@ -69,9 +69,11 @@ int _wild_match(register unsigned char *m, register unsigned char *n)
   register int sofar = 0;
 
   /* find the end of each string */
-  while (*(++m));
+  while (*(++m))
+    ;
   m--;
-  while (*(++n));
+  while (*(++n))
+    ;
   n--;
 
   while (n >= na) {

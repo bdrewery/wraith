@@ -149,9 +149,9 @@ flush_cookies(struct chanset_t *chan, int pri)
   *p = 0;
 
   if (post[0]) {
-    Member* me = ismember(chan, botname);
+    Member* me_mem = ismember(chan, botname);
     /* Am I even on the channel? */
-    if (!me)
+    if (!me_mem)
       return;
 
     /* remove the trailing space... */
@@ -167,7 +167,7 @@ flush_cookies(struct chanset_t *chan, int pri)
     egg_strcatn(&out[myindex + 1], " ", sizeof(out));
     
     myindex += (p - out) + 2;  //(p-out)=outlen + 2 spaces
-    makecookie(&out[myindex], sizeof(out) - myindex, chan->dname, me, nicks[0], nicks[1], nicks[2]);
+    makecookie(&out[myindex], sizeof(out) - myindex, chan->dname, me_mem, nicks[0], nicks[1], nicks[2]);
   }
   if (out[0]) {
     if (pri == QUICK) {

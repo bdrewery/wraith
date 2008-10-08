@@ -1059,7 +1059,7 @@ fill_conf_bot(bool fatal)
     return;
 
   char *mynick = NULL;
-  conf_bot *me = NULL;
+  conf_bot *me_bot = NULL;
 
   /* This first clause should actually be obsolete */
   if (!used_B && conf.bots && conf.bots->nick) {
@@ -1070,22 +1070,22 @@ fill_conf_bot(bool fatal)
 
   sdprintf(STR("mynick: %s"), mynick);
 
-  for (me = conf.bots; me && me->nick; me = me->next)
-    if (!egg_strcasecmp(me->nick, mynick))
+  for (me_bot = conf.bots; me_bot && me_bot->nick; me_bot = me_bot->next)
+    if (!egg_strcasecmp(me_bot->nick, mynick))
       break;
 
-  if (fatal && (!me || (me->nick && egg_strcasecmp(me->nick, mynick))))
+  if (fatal && (!me_bot || (me_bot->nick && egg_strcasecmp(me_bot->nick, mynick))))
     werr(ERR_BADBOT);
 
   free(mynick);
 
-  if (me) {
-    if (!me->hub && me->localhub)
+  if (me_bot) {
+    if (!me_bot->hub && me_bot->localhub)
       sdprintf(STR("I am localhub!"));
 
     /* for future, we may just want to make this a pointer to ->bots if we do an emech style currentbot-> */
     conf.bot = (conf_bot *) my_calloc(1, sizeof(conf_bot));
-    conf_bot_dup(conf.bot, me);
+    conf_bot_dup(conf.bot, me_bot);
   }
 }
 

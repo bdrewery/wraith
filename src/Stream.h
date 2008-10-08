@@ -20,7 +20,7 @@ class Stream {
         Stream() : str(), pos(0) {};
         Stream(Stream &stream) : str(stream.str), pos(stream.pos) {};
         Stream(const char* string) : str(string), pos(0) {};
-        Stream(const char* string, size_t length) : str(string, length), pos(0) {};
+        Stream(const char* string, size_t len) : str(string, len), pos(0) {};
         Stream(const char ch) : str(ch), pos(0) {};
         Stream(const int newSize) : str(), pos(0) { if (newSize > 0) Reserve(newSize); };
         ~Stream() {};
@@ -32,7 +32,7 @@ class Stream {
          * @brief Returns the position of the Stream.
          * @return Position of the Stream.
         */
-        const size_t tell() const { return pos; };
+        size_t tell() const { return pos; };
 
         /**
          * @brief Truncates the stream at the current position.
@@ -49,8 +49,8 @@ class Stream {
         int loadFile(const char*);
 
         inline const char* data() const { return str.data(); };
-        inline const size_t length() const { return str.length(); };
-        inline const size_t capacity() const { return str.capacity(); };
+        inline size_t length() const { return str.length(); };
+        inline size_t capacity() const { return str.capacity(); };
         inline bool operator ! () const { return str.isEmpty(); };
 };
 #endif

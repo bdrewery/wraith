@@ -489,10 +489,10 @@ void var_set(variable_t *var, const char *target, const char *datain)
 //  }
 
   if (target) {
-    bool me = 0;
+    bool isme = 0;
 
     if (!egg_strcasecmp(conf.bot->nick, target)) {
-      me = 1;
+      isme = 1;
       domem = 1;				/* always set the mem if it's local */
       if (var->ldata)
         free(var->ldata);
@@ -545,14 +545,14 @@ void var_set_by_name(const char *target, const char *name, const char *data)
 void var_set_userentry(const char *target, const char *name, const char *data)
 {
   struct userrec *u = NULL;
-  bool me = 0;
+  bool isme = 0;
 
   if (!egg_strcasecmp(conf.bot->nick, target))
-    me = 1;
+    isme = 1;
 
-  if (me && conf.bot)
+  if (isme && conf.bot)
     u = conf.bot->u;
-  else if (!me)
+  else if (!isme)
     u = get_user_by_handle(userlist, (char *) target);
 
   if (u) {

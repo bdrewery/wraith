@@ -353,7 +353,7 @@ static void cmd_voice(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
-  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+  } else if (nick[0] == '*' && (!nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*"))) {
     all = 1;
     nick = getnick(dcc[idx].nick, NULL);
   } else {
@@ -424,7 +424,7 @@ static void cmd_devoice(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
-  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+  } else if (nick[0] == '*' && (!nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*"))) {
     all = 1;
     nick = getnick(dcc[idx].nick, NULL);
   } else {
@@ -495,7 +495,7 @@ static void cmd_op(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
-  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+  } else if (nick[0] == '*' && (!nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*"))) {
     all = 1;
     nick = getnick(dcc[idx].nick, NULL);
   } else {
@@ -818,10 +818,10 @@ static void cmd_mmode(int idx, char *par)
 
   int overlap = (force_overlap ? force_overlap : 1);
   int needed_modes = (overlap * targetcount);
-  int max_modes = ((force_bots ? force_bots : chanbotcount) * (force_alines ? force_alines : default_alines) * modesperline);
+  int my_max_modes = ((force_bots ? force_bots : chanbotcount) * (force_alines ? force_alines : default_alines) * modesperline);
 
-  if (needed_modes > max_modes) {
-    dprintf(idx, "Need to make %d modes, but the max is %d.\n", needed_modes, max_modes);
+  if (needed_modes > my_max_modes) {
+    dprintf(idx, "Need to make %d modes, but the max is %d.\n", needed_modes, my_max_modes);
     dprintf(idx, "Try increasing [alines] or decreasing [overlap].\n");
     if (overlap == 1)
       dprintf(idx, "Not enough bots.\n");
@@ -947,7 +947,7 @@ static void cmd_mmode(int idx, char *par)
   /* QUEUE *ALL*, then dump */
 
   while (bots) {
-    char *work = work_list[bpos];
+    work = work_list[bpos];
 
     if (simul)
       dprintf(idx, "%-10s MODE %s %s\n", local ? botname : chanbots[bpos]->nick, mode, work);
@@ -981,7 +981,7 @@ static void cmd_deop(int idx, char *par)
   if (par[0] == '*' && !par[1]) {
     all = 1;
     newsplit(&par);
-  } else if (nick[0] == '*' && !nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*")) {
+  } else if (nick[0] == '*' && (!nick[1] || !strcmp(dcc[idx].u.chat->con_chan, "*"))) {
     all = 1;
     nick = getnick(dcc[idx].nick, NULL);
   } else {

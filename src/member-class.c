@@ -9,16 +9,16 @@
 #include "main.h"
 #include "socket.h"
 
-Member::Member(struct chanset_t *chan, const char *nick) 
+Member::Member(struct chanset_t *chan, const char *_nick) 
 {
   if (!chan) {
     delete this;
     return;
   }
 
-  client = clients.find(nick);
+  client = clients.find(_nick);
   if (!client)
-    client = new Client(nick, chan);
+    client = new Client(_nick, chan);
   else
     client->AddChan(chan);
 
@@ -47,9 +47,9 @@ Member::~Member()
 //  my_chan->channel.members--;
 }
 
-void Member::Remove(struct chanset_t *chan, const char *nick)
+void Member::Remove(struct chanset_t *chan, const char *_nick)
 {
-  Member *m = Find(chan, nick);
+  Member *m = Find(chan, _nick);
 
   if (m)
     m->Remove();
@@ -79,15 +79,15 @@ void Member::UpdateIdle()
   last = now;
 }
 
-void Member::UpdateIdle(struct chanset_t *chan, const char *nick)
+void Member::UpdateIdle(struct chanset_t *chan, const char *_nick)
 {
-  Member *m = Find(chan, nick);
+  Member *m = Find(chan, _nick);
 
   if (m) 
     m->UpdateIdle();
 }
 
-Member *Member::Find(struct chanset_t *chan, const char *nick) 
+Member *Member::Find(struct chanset_t *chan, const char *_nick) 
 {
   if (!chan->status || !chan->channel.hmember)
     return NULL;
@@ -95,7 +95,7 @@ Member *Member::Find(struct chanset_t *chan, const char *nick)
 //  sdprintf("FIND chan - %s", chan->dname);
 //  Member m = Member(chan, nick);
 //  Member *ret = chan->channel.hmember->find(m.nick);
-  Member *ret = chan->channel.hmember->find(nick);
+  Member *ret = chan->channel.hmember->find(_nick);
 
 //  if (!ret)
 //    sdprintf("%s not found", nick);
@@ -143,8 +143,8 @@ void Member::dump_idx(int idx)
   dprintf(idx, "  user: %s\n", user ? user->handle : "");
   dprintf(idx, "  userhost: %s\n", client->GetUHost());
   dprintf(idx, "  userip: %s\n", client->GetUIP());
-  dprintf(idx, "  split: %d\n", split);
-  dprintf(idx, "  joined: %d\n", joined);
-  dprintf(idx, "  last: %d\n", last);
+  dprintf(idx, "  split: %li\n", (long)split);
+  dprintf(idx, "  joined: %li\n", (long)joined);
+  dprintf(idx, "  last: %li\n", (long)last);
   dprintf(idx, "  delay: %d\n", delay);
 }

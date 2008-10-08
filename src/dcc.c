@@ -1177,10 +1177,10 @@ dcc_chat(int idx, char *buf, int len)
       rmspace(buf);
       check_bind_dcc(v, idx, buf);
     } else if (buf[0] == ',') {
-      int me = 0;
+      bool isme = 0;
 
       if ((buf[1] == 'm') && (buf[2] == 'e') && buf[3] == ' ')
-        me = 1;
+        isme = 1;
       for (i = 0; i < dcc_total; i++) {
        if (dcc[i].type) {
         int ok = 0;
@@ -1194,7 +1194,7 @@ dcc_chat(int idx, char *buf, int len)
           struct userrec *u = get_user_by_handle(userlist, dcc[i].nick);
 
           if (u && (u->flags & USER_MASTER)) {
-            if (me)
+            if (isme)
               dprintf(i, "-> %s%s\n", dcc[idx].nick, buf + 3);
             else
               dprintf(i, "-%s-> %s\n", dcc[idx].nick, buf + 1);
@@ -1203,13 +1203,13 @@ dcc_chat(int idx, char *buf, int len)
        }
       }
     } else if (buf[0] == '\'') {
-      int me = 0;
+      bool isme = 0;
 
       if ((buf[1] == 'm') && (buf[2] == 'e') && ((buf[3] == ' ') || (buf[3] == '\'') || (buf[3] == ',')))
-        me = 1;
+        isme = 1;
       for (i = 0; i < dcc_total; i++) {
         if (dcc[i].type && dcc[i].type->flags & DCT_CHAT) {
-          if (me)
+          if (isme)
             dprintf(i, "=> %s%s\n", dcc[idx].nick, buf + 3);
           else
             dprintf(i, "=%s=> %s\n", dcc[idx].nick, buf + 1);

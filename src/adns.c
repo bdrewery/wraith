@@ -477,7 +477,7 @@ int egg_dns_lookup(const char *host, interval_t timeout, dns_callback_t callback
 	cache_id = cache_find(host);
 	if (cache_id >= 0) {
 		shuffleArray(cache[cache_id].answer.list, cache[cache_id].answer.len);
-                sdprintf("egg_dns_lookup(%s, %d) -> [cached (%ds)] -> %s", host, timeout, cache[cache_id].expiretime - now, cache[cache_id].answer.list[0]);
+                sdprintf("egg_dns_lookup(%s, %d) -> [cached (%ds)] -> %s", host, timeout, (int) (cache[cache_id].expiretime - now), cache[cache_id].answer.list[0]);
 		callback(-1, client_data, host, cache[cache_id].answer.list);
 		return(-1);
 	}

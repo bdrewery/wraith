@@ -467,7 +467,7 @@ struct user_entry_type USERENTRY_ARCH = {
  "ARCH"
 };
 
-void stats_add(struct userrec *u, int login, int op)
+void stats_add(struct userrec *u, int islogin, int op)
 {
   if (!u || u->bot)
     return;
@@ -486,7 +486,7 @@ void stats_add(struct userrec *u, int login, int op)
   } else
     so = 0;
   sl = atoi(s2);
-  if (login)
+  if (islogin)
     sl++;
   if (op)
     so++;
@@ -1012,7 +1012,8 @@ struct user_entry_type USERENTRY_HOSTS =
 
 bool list_append(struct list_type **h, struct list_type *i)
 {
-  for (; *h; h = &((*h)->next));
+  for (; *h; h = &((*h)->next))
+    ;
   *h = i;
   return 1;
 }

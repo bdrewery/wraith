@@ -1639,7 +1639,6 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   char userhost[UHOSTLEN] = "";
   Member *m = NULL;	/* in my channel list copy? */
 //  bool waschanop = 0;
-  bool me = 0;
 
   m = ismember(chan, nick);
   
@@ -1682,10 +1681,10 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 
   simple_snprintf(userhost, sizeof(userhost), "%s!%s", nick, m->client->GetUHost());
 
-  me = match_my_nick(nick);
+  bool isme = match_my_nick(nick);
 
 
-  if (me) {			/* Is it me? */
+  if (isme) {			/* Is it me? */
 //    strcpy(botuserhost, m->client->GetUHost());		/* Yes, save my own userhost */
     m->joined = now;				/* set this to keep the whining masses happy */
   }
@@ -1715,7 +1714,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
   if (me_op(chan)) {
     /* are they a chanop, and me too */
         /* are they a channel or global de-op */
-    if (chan_hasop(m) && chk_deop(fr, chan) && !me)
+    if (chan_hasop(m) && chk_deop(fr, chan) && !isme)
         /* && target_priority(chan, m, 1) */
       add_mode(chan, '-', 'o', nick);
 
@@ -1725,7 +1724,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
         /* and user matches a ban */
         (u_match_mask(global_bans, userhost) || u_match_mask(chan->bans, userhost)) &&
         /* and it's not me, and i'm an op */
-        !me) {
+        !isme) {
       /*  && target_priority(chan, m, 0) */
       dprintf(DP_SERVER, "KICK %s %s :%s%s\n", chan->name, nick, bankickprefix, r_banned(chan));
       m->flags |= SENTKICK;
@@ -1735,7 +1734,7 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
            !chan_sentkick(m) &&
            /* and it's not me :) who'd set me +k anyway, a sicko? */
            /* and if im an op */
-           !me) {
+           !isme) {
            /* && target_priority(chan, m, 0) */
       /* cya later! */
       quickban(chan, userhost);

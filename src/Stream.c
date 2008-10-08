@@ -47,7 +47,7 @@ void Stream::puts (const char* string, size_t len) {
   //Ref->size = max(tell(), capacity());
 }
 
-int Stream::gets (char *data, size_t maxSize) {
+int Stream::gets (char *_data, size_t maxSize) {
   size_t toRead, read = 0;
   char c = 0;
 
@@ -55,12 +55,12 @@ int Stream::gets (char *data, size_t maxSize) {
 
   while ((read < toRead) && (c != '\n')) {
     c = str[pos++];
-    *data++ = c;
+    *_data++ = c;
     ++read;
   }
 
   if ( (read < toRead) || (toRead < maxSize))
-    *data = 0;
+    *_data = 0;
 
   return read;
 }
