@@ -157,8 +157,8 @@ static char *getfullbinname(const char *argv_zero)
       if (p)
         *p = 0;
     } else if (strcmp(p, ".")) {
-      strcat(cwd, "/");
-      strcat(cwd, p);
+      strlcat(cwd, "/", sizeof(cwd));
+      strlcat(cwd, p, sizeof(cwd));
     }
     p = p2;
     if (p)
@@ -271,9 +271,7 @@ static void show_help() __attribute__((noreturn));
 
 static void show_help()
 {
-  char format[81] = "";
-
-  egg_snprintf(format, sizeof format, "%%-30s %%-30s\n");
+  const char format[] = "%-30s %-30s\n";
 
   printf(STR("%s\n\n"), version);
   printf(STR("%s [options] [botnick[.conf]]\n"));
@@ -723,7 +721,7 @@ int main(int argc, char **argv)
 
   /* Version info! */
   simple_snprintf(ver, sizeof ver, STR("[%s] Wraith %s"), settings.packname, egg_version);
-  egg_snprintf(version, sizeof version, STR("[%s] Wraith %s (%lu:%d)"), settings.packname, egg_version, buildts, revision);
+  simple_snprintf(version, sizeof version, STR("[%s] Wraith %s (%lu:%d)"), settings.packname, egg_version, buildts, revision);
 
   egg_memcpy(&nowtm, gmtime(&now), sizeof(struct tm));
   lastmin = nowtm.tm_min;
@@ -761,7 +759,7 @@ int main(int argc, char **argv)
   console_init();
   chanprog();
 
-  strcpy(botuser, conf.username ? conf.username : origbotname);
+  strlcpy(botuser, conf.username ? conf.username : origbotname, sizeof(botuser));
 
 #ifndef CYGWIN_HACKS
   if (conf.autocron && (conf.bot->hub || conf.bot->localhub))

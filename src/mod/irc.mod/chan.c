@@ -439,33 +439,33 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
   case FLOOD_NOTICE:
     thr = chan->flood_pub_thr;
     lapse = chan->flood_pub_time;
-    strcpy(ftype, "pub");
+    strlcpy(ftype, "pub", sizeof(ftype));
     break;
   case FLOOD_CTCP:
     thr = chan->flood_ctcp_thr;
     lapse = chan->flood_ctcp_time;
-    strcpy(ftype, "pub");
+    strlcpy(ftype, "pub", sizeof(ftype));
     break;
   case FLOOD_NICK:
     thr = chan->flood_nick_thr;
     lapse = chan->flood_nick_time;
-    strcpy(ftype, "nick");
+    strlcpy(ftype, "nick", sizeof(ftype));
     break;
   case FLOOD_JOIN:
   case FLOOD_PART:
     thr = chan->flood_join_thr;
     lapse = chan->flood_join_time;
-      strcpy(ftype, "join");
+    strlcpy(ftype, "join", sizeof(ftype));
     break;
   case FLOOD_DEOP:
     thr = chan->flood_deop_thr;
     lapse = chan->flood_deop_time;
-    strcpy(ftype, "deop");
+    strlcpy(ftype, "deop", sizeof(ftype));
     break;
   case FLOOD_KICK:
     thr = chan->flood_kick_thr;
     lapse = chan->flood_kick_time;
-    strcpy(ftype, "kick");
+    strlcpy(ftype, "kick", sizeof(ftype));
     break;
   }
   if ((thr == 0) || (lapse == 0))
@@ -499,7 +499,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
     if (!rfc_casecmp(chan->deopd, victim))
       return 0;
     else
-      strcpy(chan->deopd, victim);
+      strlcpy(chan->deopd, victim, sizeof(chan->deopd));
   }
   chan->floodnum[which]++;
   if (chan->floodnum[which] >= thr) {	/* FLOOD */
@@ -540,7 +540,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
 	putlog(LOG_MISC | LOG_JOIN, chan->dname, "JOIN flood from @%s!  Banning.", p);
       else
 	putlog(LOG_MISC | LOG_JOIN, chan->dname, "NICK flood from @%s!  Banning.", p);
-      strcpy(ftype + 4, " flood");
+      strlcpy(ftype + 4, " flood", sizeof(ftype) - 4);
       u_addmask('b', chan, h, conf.bot->nick, ftype, now + (60 * chan->ban_time), 0);
       if (which == FLOOD_PART)
         add_mode(chan, '+', 'b', h);
@@ -1086,8 +1086,9 @@ void enforce_closed(struct chanset_t *chan) {
 inline static char *
 take_massopline(char *op, char **to_op)
 {
-  char *nicks = (char *) my_calloc(1, 151),
-       *modes = (char *) my_calloc(1, 31),
+  const size_t modes_len = 31, nicks_len = 151;
+  char *nicks = (char *) my_calloc(1, nicks_len),
+       *modes = (char *) my_calloc(1, modes_len),
        *nick = NULL;
   register bool useop = 0;
   static char ret[182] = "";
@@ -1102,17 +1103,17 @@ take_massopline(char *op, char **to_op)
       } else if (*to_op[0])
         nick = newsplit(to_op);
       if (nick) {
-        strcat(modes, "+o");
-        strcat(nicks, nick);
+        strlcat(modes, "+o", modes_len);
+        strlcat(nicks, nick, nicks_len);
         if (i != modesperline - 1)
-          strcat(nicks, " "); 
+          strlcat(nicks, " ", nicks_len);
       }
     }
   }
   
-  strcat(ret, modes);
-  strcat(ret, " ");
-  strcat(ret, nicks);
+  strlcat(ret, modes, sizeof(ret));
+  strlcat(ret, " ", sizeof(ret));
+  strlcat(ret, nicks, sizeof(ret));
   free(modes);
   free(nicks);
   
@@ -1130,21 +1131,21 @@ take_makeline(char *op, char *deops, unsigned int deopn, size_t deops_len)
   egg_memset(ret, 0, sizeof(ret));
   for (i = 0; i < n; i++) {
     if (opn && i == pos)
-      strcat(ret, "+o");
+      strlcat(ret, "+o", sizeof(ret));
     else if (deopn)
-      strcat(ret, "-o");
+      strlcat(ret, "-o", sizeof(ret));
   }
 
-  strcat(ret, " ");
+  strlcat(ret, " ", sizeof(ret));
 
   for (i = 0; i < n; i++) {
     if (opn && i == pos)
-      strcat(ret, op);
+      strlcat(ret, op, sizeof(ret));
     else if (deopn)
-      strcat(ret, newsplit(&deops));
+      strlcat(ret, newsplit(&deops), sizeof(ret));
 
     if (i != n - 1)
-      strcat(ret, " ");
+      strlcat(ret, " ", sizeof(ret));
   }
   return ret;  
 }
@@ -1173,8 +1174,8 @@ do_take(struct chanset_t *chan)
       }
     }
   }
-//  shuffle(to_op, " ");
-//  shuffle(to_deop, " ");
+//  shuffle(to_op, " ", sizeof(to_op));
+//  shuffle(to_deop, " ", sizeof(to_deop));
 
   size_t deops_len = 0;
   size_t work_len = 0;
@@ -1398,7 +1399,7 @@ static int got302(char *from, char *msg)
 #ifdef CACHE
   if ((cache = cache_find(nick))) {
     if (!cache->uhost[0])
-    strcpy(cache->uhost, uhost);
+    strlcpy(cache->uhost, uhost, sizeof(cache->uhost));
 
     if (!cache->handle[0]) {
       char s[UHOSTLEN] = "";
@@ -1406,7 +1407,7 @@ static int got302(char *from, char *msg)
 
       simple_snprintf(s, sizeof(s), "%s!%s", nick, uhost);
       if ((u = get_user_by_host(s)))
-        strcpy(cache->handle, u->handle);
+        strlcpy(cache->handle, u->handle, sizeof(cache->handle));
     }
     cache->timeval = now;
  
@@ -2236,8 +2237,9 @@ static void set_topic(struct chanset_t *chan, char *k)
   if (chan->channel.topic)
     free(chan->channel.topic);
   if (k && k[0]) {
-    chan->channel.topic = (char *) my_calloc(1, strlen(k) + 1);
-    strcpy(chan->channel.topic, k);
+    size_t tlen = strlen(k) + 1;
+    chan->channel.topic = (char *) my_calloc(1, tlen);
+    strlcpy(chan->channel.topic, k, tlen);
   } else
     chan->channel.topic = NULL;
 }
@@ -2349,7 +2351,7 @@ static int gotjoin(char *from, char *chname)
 
   char *nick = NULL, buf[UHOSTLEN] = "", *uhost = buf;
 
-  strcpy(uhost, from);
+  strlcpy(uhost, from, sizeof(buf));
   nick = splitnick(&uhost);
 
   if (!chan || (chan && !shouldjoin(chan))) {
@@ -2571,7 +2573,7 @@ static int gotpart(char *from, char *msg)
   fixcolon(msg);
   chan = findchan(chname);
 
-  strcpy(uhost, from);
+  strlcpy(uhost, from, sizeof(buf));
   nick = splitnick(&uhost);
 
   if (chan && !shouldjoin(chan) && match_my_nick(nick)) {
@@ -2651,7 +2653,7 @@ static int gotkick(char *from, char *origmsg)
     chan->channel.fighting++;
     fixcolon(msg);
     u = get_user_by_host(from);
-    strcpy(uhost, from);
+    strlcpy(uhost, from, sizeof(buf));
     whodid = splitnick(&uhost);
     detect_chan_flood(whodid, uhost, from, chan, FLOOD_KICK, nick);
 
@@ -2706,7 +2708,7 @@ static int gotnick(char *from, char *msg)
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   Client *client = NULL;
 
-  strcpy(uhost, from);
+  strlcpy(uhost, from, sizeof(buf));
   nick = splitnick(&uhost);
   fixcolon(msg);
   irc_log(NULL, "[%s] Nick change: %s -> %s", samechans(nick, ","), nick, msg);
@@ -2822,7 +2824,7 @@ static int gotquit(char *from, char *msg)
   char from2[NICKMAX + UHOSTMAX + 1] = "";
   struct userrec *u = NULL;
 
-  strcpy(from2,from);
+  strlcpy(from2, from, sizeof(from2));
   u = get_user_by_host(from2);
   nick = splitnick(&from);
   fixcolon(msg);
@@ -2914,7 +2916,7 @@ static int gotmsg(char *from, char *msg)
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
   fixcolon(msg);
-  strcpy(uhost, from);
+  strlcpy(uhost, from, sizeof(buf));
   nick = splitnick(&uhost);
 
   Member *m = ismember(chan, nick);
@@ -2965,7 +2967,7 @@ static int gotmsg(char *from, char *msg)
     if (*p == 1) {
       *p = 0;
       ctcp = buf2;
-      strcpy(ctcp, p1);
+      strlcpy(ctcp, p1, sizeof(buf2));
       strcpy(p1 - 1, p + 1);
       detect_chan_flood(nick, uhost, from, chan,
 			strncmp(ctcp, "ACTION ", 7) ?
@@ -3074,7 +3076,7 @@ static int gotnotice(char *from, char *msg)
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
 
   fixcolon(msg);
-  strcpy(uhost, from);
+  strlcpy(uhost, from, sizeof(buf));
   nick = splitnick(&uhost);
   u = get_user_by_host(from);
   if (flood_ctcp.count && detect_avalanche(msg)) {
@@ -3112,7 +3114,7 @@ static int gotnotice(char *from, char *msg)
     if (*p == 1) {
       *p = 0;
       ctcp = buf2;
-      strcpy(ctcp, p1);
+      strlcpy(ctcp, p1, sizeof(buf2));
       strcpy(p1 - 1, p + 1);
       p = strchr(msg, 1);
       detect_chan_flood(nick, uhost, from, chan,

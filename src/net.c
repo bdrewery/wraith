@@ -1702,24 +1702,24 @@ void tell_netdebug(int idx)
     if (!(socklist[i].flags & SOCK_UNUSED)) {
       simple_snprintf(s, sizeof(s), " %d", socklist[i].sock);
       if (socklist[i].flags & SOCK_BINARY)
-	strcat(s, " (binary)");
+	strlcat(s, " (binary)", sizeof(s));
       if (socklist[i].flags & SOCK_LISTEN)
-	strcat(s, " (listen)");
+	strlcat(s, " (listen)", sizeof(s));
       if (socklist[i].flags & SOCK_PASS)
-	strcat(s, " (passed on)");
+	strlcat(s, " (passed on)", sizeof(s));
       if (socklist[i].flags & SOCK_CONNECT)
-	strcat(s, " (connecting)");
+	strlcat(s, " (connecting)", sizeof(s));
       if (socklist[i].flags & SOCK_STRONGCONN)
-	strcat(s, " (strong)");
+	strlcat(s, " (strong)", sizeof(s));
       if (socklist[i].flags & SOCK_NONSOCK)
-	strcat(s, " (file)");
+	strlcat(s, " (file)", sizeof(s));
       if (socklist[i].inbuf != NULL)
 	sprintf(&s[strlen(s)], " (inbuf: %04X)", strlen(socklist[i].inbuf));
       if (socklist[i].outbuf != NULL)
 	sprintf(&s[strlen(s)], " (outbuf: %06lX)", (unsigned long) socklist[i].outbuflen);
       if (socklist[i].host)
-        sprintf(&s[strlen(s)], " (%s:%d)", socklist[i].host, socklist[i].port);
-      strcat(s, ",");
+        simple_sprintf(&s[strlen(s)], " (%s:%d)", socklist[i].host, socklist[i].port);
+      strlcat(s, ",", sizeof(s));
       dprintf(idx, "%s", s);
     }
   }

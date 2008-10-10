@@ -433,7 +433,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
         if (!chan->ccmode[i].op) {
           chan->ccmode[i].op = (char *) my_calloc(1, len);
           chan->cbytes += len;    /* Add 1 for safety */
-          strcpy(chan->ccmode[i].op, op);
+          strlcpy(chan->ccmode[i].op, op, len);
           break;
         }
     } else {
@@ -448,7 +448,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
           chan->cmode[i].type = type;
           chan->cmode[i].op = (char *) my_calloc(1, len);
           chan->bytes += len;     /* Add 1 for safety */
-          strcpy(chan->cmode[i].op, op);
+          strlcpy(chan->cmode[i].op, op, len);
           break;
         }
     }
@@ -458,15 +458,17 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
   else if (plus == '+' && mode == 'k') {
     if (chan->key)
       free(chan->key);
-    chan->key = (char *) my_calloc(1, strlen(op) + 1);
-    strcpy(chan->key, op);
+    len = strlen(op) + 1;
+    chan->key = (char *) my_calloc(1, len);
+    strlcpy(chan->key, op, len);
   }
   /* -k ? store removed key */
   else if (plus == '-' && mode == 'k') {
     if (chan->rmkey)
       free(chan->rmkey);
-    chan->rmkey = (char *) my_calloc(1, strlen(op) + 1);
-    strcpy(chan->rmkey, op);
+    len = strlen(op) + 1;
+    chan->rmkey = (char *) my_calloc(1, len);
+    strlcpy(chan->rmkey, op, len);
   }
   /* +l ? store limit */
   else if (plus == '+' && mode == 'l')

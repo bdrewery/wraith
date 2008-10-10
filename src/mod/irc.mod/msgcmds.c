@@ -194,9 +194,9 @@ static int msg_ident(char *nick, char *host, struct userrec *u, char *par)
 
   pass = newsplit(&par);
   if (!par[0])
-    strcpy(who, nick);
+    strlcpy(who, nick, sizeof(nick));
   else {
-    strncpy(who, par, NICKMAX);
+    strlcpy(who, par, sizeof(who));
     who[NICKMAX] = 0;
   }
   u2 = get_user_by_handle(userlist, who);
@@ -635,9 +635,9 @@ static int msgc_channels(Auth *a, char *chname, char *par)
     get_user_flagrec(a->user, &fr, chan->dname, chan);
     if (chk_op(fr, chan)) {
       if (me_op(chan)) 
-        strcat(list, "@");
-      strcat(list, chan->dname);
-      strcat(list, " ");
+        strlcat(list, "@", sizeof(list));
+      strlcat(list, chan->dname, sizeof(list));
+      strlcat(list, " ", sizeof(list));
     }
   }
 
@@ -701,7 +701,7 @@ static int msgc_help(Auth *a, char *chname, char *par)
     table = bind_table_lookup("dcc");
   }
 
-  strncat(outbuf, "\n", sizeof(outbuf));
+  strlcat(outbuf, "\n", sizeof(outbuf));
 
   reply(a->nick, NULL, outbuf);
   return BIND_RET_BREAK;
