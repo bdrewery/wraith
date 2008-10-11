@@ -173,7 +173,7 @@ template <class T, int HF> class Htree {
     }
 
     void dump_idx(int idx) {
-      hash_table_walk(table, (int (*)(const void*, void*, void*)) walk_idx, (void *) idx);
+      hash_table_walk(table, (int (*)(const void*, void*, void*)) walk_idx, (void *) (long) idx);
     }
 };
 #endif /* !_HASH_TABLE_H_ */

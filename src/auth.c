@@ -251,8 +251,10 @@ sdprintf(STR("GETIDX: auth: %s, idx: %d"), nick, idx);
   return 0;
 }
 
-static int auth_tell_walk(Auth *auth, void *data)
+static int auth_tell_walk(Auth *auth, void *auth_data)
 {
+  //64bit hacks
+  long data = (long) auth_data;
   int idx = (int) data;
 
 //  dprintf(idx, "%s(%s!%s) [%s] authtime: %li, atime: %li, Status: %d\n", auth->bd ? "x " : "", auth->nick, 

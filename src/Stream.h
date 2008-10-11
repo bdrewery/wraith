@@ -23,7 +23,7 @@ class Stream {
         Stream(const char* string, size_t len) : str(string, len), pos(0) {};
         Stream(const char ch) : str(ch), pos(0) {};
         Stream(const int newSize) : str(), pos(0) { if (newSize > 0) Reserve(newSize); };
-        ~Stream() {};
+        virtual ~Stream() {};
 
         virtual void printf(const char*, ...);
         virtual void Reserve(const size_t) const;
