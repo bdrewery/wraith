@@ -9,7 +9,7 @@
 #define VAR_INT		BIT0
 #define VAR_STRING	BIT1
 #define VAR_RATE	BIT2
-#define VAR_BOOL	BIT3
+#define VAR_BOOL	(BIT3|VAR_INT)
 /* Hide from viewing */
 #define VAR_HIDE	BIT4
 #define VAR_DETECTED	BIT5
@@ -42,7 +42,7 @@
 #define VAR_INTERNAL	BIT20
 
 
-#define VAR_NOHUB       VAR_NOLHUB|VAR_NOGHUB
+#define VAR_NOHUB       (VAR_NOLHUB|VAR_NOGHUB)
 
 #define VAR_LDATA 	1
 #define VAR_GDATA	2
