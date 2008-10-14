@@ -17,7 +17,6 @@
 * Many botnet signals are now passed onto to other bots before being parsed. (Affects botcmd)
 * Re-enabled hops sharing between member lists.
 * Disabled +take nick list randomizing as the new member list should do this already.
-* Fixed countless buffer overflows. (fixes #226)
 * Userfile transfer is now made over botlink (no extra ports needed) (works behind NAT/firewall)
 * New botlink encryption.
 
@@ -37,6 +36,7 @@
 * Added 'jupenick'. Jupenick is preferred over 'nick' but only 'nick' will be rotated with altchars. Ie, nick_, nick-, etc. (fixes #421)
 * Added 'link_cleartext' which allows disabling of cleartext bot linking (needed for upgrades)
 * Fixed bug where salts were not written to binary when first generating them
+* Fixed countless buffer overflows. (fixes #226)
 
 1.2.15 - http://wraith.botpack.net/milestone/1.2.15
 * Fix a possible segfault when binaries compiled wrong
