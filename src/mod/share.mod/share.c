@@ -77,6 +77,8 @@ static void share_read_stream(int, Stream&);
 #else
  static void shareout_but(int, const char *, ...);
 #endif
+
+static bool cancel_user_xfer_staylinked = 0;
 static void cancel_user_xfer(int, void *);
 
 #include "share.h"
@@ -1019,8 +1021,10 @@ hook_read_userfile()
       if (dcc[i].type && (dcc[i].type->flags & DCT_BOT) && (dcc[i].status & STAT_SHARE) && !(dcc[i].status & STAT_AGGRESSIVE)
           && (1)) {
         /* Cancel any existing transfers */
-        if (dcc[i].status & STAT_SENDING)
-          cancel_user_xfer(-i, 0);
+        if (dcc[i].status & STAT_SENDING) {
+          cancel_user_xfer_staylinked = 1;
+          cancel_user_xfer(i, 0);
+        }
         dprintf(i, "s u?\n");
         dcc[i].status |= STAT_OFFERED;
       }
@@ -1045,7 +1049,8 @@ static void
 share_end(int idx, char *par)
 {
   putlog(LOG_BOTS, "*", "Ending sharing with %s (%s).", dcc[idx].nick, par);
-  cancel_user_xfer(-idx, 0);
+  cancel_user_xfer_staylinked = 1;
+  cancel_user_xfer(idx, 0);
   dcc[idx].status &= ~(STAT_SHARE | STAT_GETTING | STAT_SENDING | STAT_OFFERED | STAT_AGGRESSIVE);
   dcc[idx].u.bot->uff_flags = 0;
 }
@@ -1528,11 +1533,8 @@ static void (*def_dcc_bot_kill) (int, void *) = 0;
 static void
 cancel_user_xfer(int idx, void *x)
 {
-  int i, j = -1, k = 0;
-
-  if (idx < 0) {
-    idx = -idx;
-    k = 1;
+  int i, j = -1;
+  if (cancel_user_xfer_staylinked) {
     /* turn off sharing flag */
     updatebot(-1, dcc[idx].nick, '-', 0, 0, 0, NULL);
   }
@@ -1570,8 +1572,10 @@ cancel_user_xfer(int idx, void *x)
       putlog(LOG_BOTS, "*", "(Userlist transmit aborted.)");
     }
   }
-  if (!k)
+  if (!cancel_user_xfer_staylinked)
     def_dcc_bot_kill(idx, x);
+ 
+  cancel_user_xfer_staylinked = 0;
 }
 
 void
