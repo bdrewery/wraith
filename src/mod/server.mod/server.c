@@ -432,7 +432,7 @@ static bool fast_deq(int which)
   }
   to = newsplit(&msg);
   len = strlen(to);
-  simple_snprintf(victims, sizeof(victims), "%s", to);
+  strlcpy(victims, to, sizeof(victims));
   while (m) {
     nm = m->next;
     if (!nm)
@@ -449,9 +449,11 @@ static bool fast_deq(int which)
         && (!stack_limit || cmd_count < stack_limit - 1)) {
       cmd_count++;
       if (stack_method == 1)
-      	simple_snprintf(victims, sizeof(victims), "%s,%s", victims, nextto);
+        strlcat(victims, ",", sizeof(victims));
       else
-      	simple_snprintf(victims, sizeof(victims), "%s %s", victims, nextto);
+        strlcat(victims, " ", sizeof(victims));
+      strlcat(victims, nextto, sizeof(victims));
+
       doit = 1;
       m->next = nm->next;
       if (!nm->next)

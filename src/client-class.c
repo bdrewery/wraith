@@ -81,8 +81,10 @@ void
 
   simple_snprintf(buf, sizeof(buf), "nick: %s username: %s uhost: %s realname: %s chans: ", nick, u ? u->handle : "-", userhost, gecos);
 
-  for (chan = chans.begin(); chan; chan++)
-    simple_snprintf(buf, sizeof(buf), "%s%s,", buf, chan->dname);
+  for (chan = chans.begin(); chan; chan++) {
+    strlcat(buf, chan->dname, sizeof(buf));
+    strlcat(buf, ",", sizeof(buf));
+  }
 
   dprintf(idx, "%s\n", buf);
 }
