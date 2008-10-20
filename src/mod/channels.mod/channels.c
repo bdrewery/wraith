@@ -213,7 +213,7 @@ void rcmd_chans(char *fbot, char *fhand, char *fidx) {
       if (!channel_active(chan) && (shouldjoin(chan) || chan->channel.jointime)) {
         if (buf[0])
           strlcat(buf, " ", sizeof(buf));
-        strlcat(buf, chan->dname, chan->dlen);
+        strlcat(buf, chan->dname, sizeof(buf));
       }
     }
 
