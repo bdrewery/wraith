@@ -23,7 +23,9 @@ char *encrypt_string(const char *keydata, char *in)
   len = strlen(in);
   bdata = encrypt_binary(keydata, (unsigned char *) in, &len);
   if (keydata && *keydata) {
+    const size_t blen = len;
     res = b64enc(bdata, &len);
+    OPENSSL_cleanse(bdata, blen);
     free(bdata);
     return res;
   } else {
@@ -41,7 +43,9 @@ bd::String encrypt_string(const bd::String& key, const bd::String& data) {
   if (!key) return data;
   size_t len = data.length();
   char *bdata = (char*) encrypt_binary(key.c_str(), (unsigned char*) data.c_str(), &len);
+  const size_t blen = len;
   bd::String encrypted(bdata, len);
+  OPENSSL_cleanse(bdata, blen);
   free(bdata);
   return encrypted;
 }
@@ -53,7 +57,9 @@ char *decrypt_string(const char *keydata, char *in)
 
   if (keydata && *keydata) {
     buf = b64dec((const unsigned char *) in, &len);
+    const size_t blen = len;
     res = (char *) decrypt_binary(keydata, (unsigned char *) buf, &len);
+    OPENSSL_cleanse(buf, blen);
     free(buf);
     return res;
   } else {
@@ -73,7 +79,9 @@ bd::String decrypt_string(const bd::String& key, const bd::String& data) {
   if (!key) return data;
   size_t len = data.length();
   char *bdata = (char*) decrypt_binary(key.c_str(), (unsigned char*) data.c_str(), &len);
+  const size_t blen = len;
   bd::String decrypted(bdata, len);
+  OPENSSL_cleanse(bdata, blen);
   free(bdata);
   return decrypted;
 }

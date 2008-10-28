@@ -177,6 +177,7 @@ static int ghost_Prand_read(int snum, char *src, size_t *len)
   strlcpy(src, p, *len + 1);
 #else
   strlcpy(src, line, *len + 1);
+  OPENSSL_cleanse(line, *len + 1);
 #endif
   free(line);
 
