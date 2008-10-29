@@ -694,7 +694,8 @@ int main(int argc, char **argv)
   
   /* Find a temporary tempdir until we load binary data */
   /* setup initial tempdir as /tmp until we read in tmpdir from conf */
-  Tempfile::FindDir();
+  if (Tempfile::FindDir() == ERROR)
+    werr(ERR_TMPSTAT);
 
   /* This allows -2/-0 to be used without an initialized binary */
 //  if (!(argc == 2 && (!strcmp(argv[1], "-2") || !strcmp(argv[1], "0")))) {
