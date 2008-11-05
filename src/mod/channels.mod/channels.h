@@ -30,7 +30,7 @@ void get_handle_chaninfo(char *, char *, char *);
 void set_handle_chaninfo(struct userrec *, char *, char *, char *);
 struct chanuserrec *get_chanrec(struct userrec *u, char *);
 struct chanuserrec *add_chanrec(struct userrec *u, char *);
-void del_chanrec(struct userrec *, char *);
+bool del_chanrec(struct userrec *, char *);
 void write_bans(Stream&, int);
 void write_exempts (Stream&, int);
 void write_chans (Stream&, int);

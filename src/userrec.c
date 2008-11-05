@@ -269,21 +269,12 @@ struct userrec *get_user_by_host(char *host)
 
 bool user_has_host(const char *handle, struct userrec *u, char *host)
 {
-  if (host == NULL)
-    return 0;
-  rmspace(host);
-  if (!host[0])
-    return 0;
+  if (!host || !host[0])
 
   if (!u && handle)
-    get_user_by_handle(userlist, (char *) handle);
+    u = get_user_by_handle(userlist, (char *) handle);
 
-  if (!u)
-    return 0;
-
-  struct list_type *q = NULL;
-
-  for (q = (struct list_type *) get_user(&USERENTRY_HOSTS, u); q; q = q->next)
+  for (struct list_type* q = (struct list_type *) get_user(&USERENTRY_HOSTS, u); q; q = q->next)
     if (!egg_strcasecmp(q->extra, host))
       return 1;
 
@@ -754,12 +745,8 @@ void addhost_by_handle(char *handle, char *host)
 
   set_user(&USERENTRY_HOSTS, u, host);
   /* u will be cached, so really no overhead, even tho this looks dumb: */
-  if (!noshare) {
-    if (u->bot)
-      shareout("+bh %s %s\n", handle, host);
-    else
-      shareout("+h %s %s\n", handle, host);
-  }
+  if (!noshare)
+    shareout("+h %s %s\n", handle, host);
   clear_chanlist();
 }
 

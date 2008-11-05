@@ -309,17 +309,14 @@ share_stick_mask(int idx, char *par)
     char *types = newsplit(&par);
     const char type = types[0];
     const char *str_type = (type == 'b' ? "ban" : type == 'e' ? "exempt" : "invite");
-    char *host = NULL, *val = NULL;
-    bool yn = 0;
+    char *host = newsplit(&par), *val = newsplit(&par);
+    bool yn = (bool) atoi(val);
     struct chanset_t *chan = NULL;
     maskrec *channel_list = NULL;
 
-    host = newsplit(&par);
-    val = newsplit(&par);
-    yn = atoi(val);
     noshare = 1;
 
-    if (!par[0]) {              /* Global ban */
+    if (!par[0]) {              /* Global */
       channel_list = (type == 'b' ? global_bans : type == 'e' ? global_exempts : global_invites);
 
       if (u_setsticky_mask(NULL, channel_list, host, yn, type) > 0) {
@@ -353,17 +350,13 @@ static void
 share_chhand(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *hand = NULL;
-    struct userrec *u = NULL;
+    char *hand = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, hand);
 
-    hand = newsplit(&par);
-    u = get_user_by_handle(userlist, hand);
     if (u) {
-      int value = 0;
-
       shareout_but(idx, "h %s %s\n", hand, par);
       noshare = 1;
-      value = change_handle(u, par);
+      int value = change_handle(u, par);
       noshare = 0;
       if (value && conf.bot->hub)
         putlog(LOG_CMDS, "@", "%s: handle %s->%s", dcc[idx].nick, hand, par);
@@ -375,64 +368,91 @@ static void
 share_chattr(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *hand = NULL, *atr = NULL, s[100] = "";
-    struct chanset_t *chan = NULL;
-    struct userrec *u = NULL;
-    struct flag_record fr2;
+    char *hand = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, hand);
 
-    hand = newsplit(&par);
-    u = get_user_by_handle(userlist, hand);
     if (u) {
-      atr = newsplit(&par);
-      chan = findchan_by_dname(par);
-      if (!par[0] || chan) {
-        if (!(dcc[idx].status & STAT_GETTING))
-          shareout_but(idx, "a %s %s %s\n", hand, atr, par);
-        noshare = 1;
-        if (par[0] && chan) {
-          fr.match = FR_CHAN;
-          fr2.match = FR_CHAN;
-          if (u->bot) {
-            fr.match |= FR_BOT; 
-            fr2.match |= FR_BOT;
-          }
-          break_down_flags(atr, &fr, 0);
-          get_user_flagrec(u, &fr2, par);
-          set_user_flagrec(u, &fr, par);
-          noshare = 0;
-          check_dcc_chanattrs(u, par, fr.chan, fr2.chan);
-          build_flags(s, &fr, 0);
-          if (conf.bot->hub) {
-            if (!(dcc[idx].status & STAT_GETTING))
-              putlog(LOG_CMDS, "@", "%s: chattr %s %s %s", dcc[idx].nick, hand, s, par);
-          } else
-            recheck_channel(chan, 0);
-        } else {
-          fr.match = FR_GLOBAL;
-          get_user_flagrec(dcc[idx].user, &fr, 0);
-          /* Don't let bot flags be altered */
-          fr2.global = fr.global;
-          if (u->bot)
-            fr.match |= FR_BOT;
-          break_down_flags(atr, &fr, 0);
-          fr.global = sanity_check(fr.global, u->bot);
-          set_user_flagrec(u, &fr, 0);
-          noshare = 0;
-          check_dcc_attrs(u, fr2.global);
-          build_flags(s, &fr, 0);
-          fr.match = FR_CHAN;
-          if (conf.bot->hub) {
-            if (!(dcc[idx].status & STAT_GETTING))
-              putlog(LOG_CMDS, "@", "%s: chattr %s %s", dcc[idx].nick, hand, s);
-          } else {
-            for (chan = chanset; chan; chan = chan->next)
-              recheck_channel(chan, 0);
-          }
+      char *atr = newsplit(&par);
+      struct chanset_t *chan = findchan_by_dname(par);
+      struct flag_record fr2;
+
+      noshare = 1;
+      if (par[0] && chan) {
+        /* fr2 will hold the old flags */
+        fr.match = fr2.match = FR_CHAN;
+        if (u->bot) {
+          fr.match |= FR_BOT; 
+          fr2.match |= FR_BOT;
         }
+
+        /* Grab the old user flags (and for the channel) */
+        get_user_flagrec(u, &fr2, chan->dname);
+
+        /* Fill fr with the flags from the string */
+        break_down_flags(atr, &fr, 0);
+
+        fr.chan = chan_sanity_check(fr.chan, u->bot);        
+
+        /* Was there even any change? */
+        if (fr.chan == fr2.chan) {
+          noshare = 0;
+          return;
+        }
+
+        set_user_flagrec(u, &fr, chan->dname);
+
         noshare = 0;
+
+        /* Alert possible user on partyline */
+        check_dcc_chanattrs(u, chan->dname, fr.chan, fr2.chan);
+
+        if (conf.bot->hub) {
+          if (!(dcc[idx].status & STAT_GETTING))
+            putlog(LOG_CMDS, "@", "%s: chattr %s %s %s", dcc[idx].nick, hand, atr, chan->dname);
+        } else
+          recheck_channel(chan, 0);
+      } else {
+        fr.match = fr2.match = FR_GLOBAL;
+
+        if (u->bot) {
+          fr.match |= FR_BOT;
+          fr2.match |= FR_BOT;
+        }
+
+        /* Get the old global flags */
+        get_user_flagrec(u, &fr2, NULL);
+
+        /* Fill fr with the new flag string */
+        break_down_flags(atr, &fr, 0);
+
+        fr.global = sanity_check(fr.global, u->bot);
+
+        /* Was there even any change? */
+        if (fr.global == fr2.global) {
+          noshare = 0;
+          return;
+        } else
+
+        set_user_flagrec(u, &fr, 0);
+
+        noshare = 0;
+
+        /* Alert possible user on partyline */
+        check_dcc_attrs(u, fr2.global);
+
+        if (conf.bot->hub) {
+          if (!(dcc[idx].status & STAT_GETTING))
+            putlog(LOG_CMDS, "@", "%s: chattr %s %s", dcc[idx].nick, hand, atr);
+        } else {
+          for (chan = chanset; chan; chan = chan->next)
+            recheck_channel(chan, 0);
+        }
       }
-      if (conf.bot->hub)
-        write_userfile(-1);
+      noshare = 0;
+
+      /* Forward the change on */
+      if (!(dcc[idx].status & STAT_GETTING))
+        shareout_but(idx, "a %s %s %s\n", hand, atr, par);
     }
   }
 }
@@ -441,21 +461,23 @@ static void
 share_pls_chrec(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *user = NULL;
-    struct chanset_t *chan = NULL;
-    struct userrec *u = NULL;
+    char *user = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, user);
 
-    user = newsplit(&par);
-    if ((u = get_user_by_handle(userlist, user))) {
-      chan = findchan_by_dname(par);
-      noshare = 1;
-      shareout_but(idx, "+cr %s %s\n", user, par);
-      if (!get_chanrec(u, par)) {
-        add_chanrec(u, par);
-        if (conf.bot->hub)
-          putlog(LOG_CMDS, "@", "%s: +chrec %s %s", dcc[idx].nick, user, par);
+    if (u) {
+      struct chanset_t *chan = findchan_by_dname(par);
+
+      if (chan) {
+        noshare = 1;
+        if (!get_chanrec(u, par)) {
+          if (!(dcc[idx].status & STAT_GETTING))
+            shareout_but(idx, "+cr %s %s\n", user, par);
+          add_chanrec(u, par);
+          if (conf.bot->hub)
+            putlog(LOG_CMDS, "@", "%s: +chrec %s %s", dcc[idx].nick, user, par);
+        }
+        noshare = 0;
       }
-      noshare = 0;
     }
   }
 }
@@ -464,22 +486,29 @@ static void
 share_mns_chrec(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *user = NULL;
-    struct chanset_t *chan = NULL;
-    struct userrec *u = NULL;
+    char *user = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, user);
 
-    user = newsplit(&par);
-    if ((u = get_user_by_handle(userlist, user))) {
-      chan = findchan_by_dname(par);
-      noshare = 1;
-      del_chanrec(u, par);
-      shareout_but(idx, "-cr %s %s\n", user, par);
-      noshare = 0;
-      if (conf.bot->hub)
-        putlog(LOG_CMDS, "@", "%s: -chrec %s %s", dcc[idx].nick, user, par);
-      else
-        recheck_channel(chan, 0);
+    if (u) {
+      struct chanset_t *chan = findchan_by_dname(par);
 
+      if (chan) {
+        noshare = 1;
+
+        if (!del_chanrec(u, par)) { /* Wasn't even added */
+          noshare = 0;
+          return;
+        }
+
+        if (!(dcc[idx].status & STAT_GETTING))
+          shareout_but(idx, "-cr %s %s\n", user, par);
+        noshare = 0;
+        if (conf.bot->hub)
+          putlog(LOG_CMDS, "@", "%s: -chrec %s %s", dcc[idx].nick, user, par);
+        else
+          recheck_channel(chan, 0);
+ 
+      }
     }
   }
 }
@@ -488,20 +517,17 @@ static void
 share_newuser(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *nick = NULL, *host = NULL, *pass = NULL;
-    bool isbot = 0;
-    struct userrec *u = NULL;
+    char *nick = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, nick);
 
-    nick = newsplit(&par);
-    host = newsplit(&par);
-    pass = newsplit(&par);
-    
-    if (nick[0] == '-') {
-      isbot = 1;
-      nick++;
-    }    
-    if (!(u = get_user_by_handle(userlist, nick))) {
-      char s[100] = "";
+    if (!u) {
+      char *host = newsplit(&par), *pass = newsplit(&par);
+      bool isbot = 0;
+
+      if (nick[0] == '-') {
+        isbot = 1;
+        ++nick;
+      }
 
       fr.global = 0;
 
@@ -510,14 +536,12 @@ share_newuser(int idx, char *par)
         fr.match |= FR_BOT;
       break_down_flags(par, &fr, NULL);
 
-      /* If user already exists, ignore command */
-      shareout_but(idx, "n %s%s %s %s %s\n", isbot ? "-" : "", nick, host, pass, par);
+      if (!(dcc[idx].status & STAT_GETTING))
+        shareout_but(idx, "n %s%s %s %s %s\n", isbot ? "-" : "", nick, host, pass, par);
 
-      if (strlen(nick) > HANDLEN)
-        nick[HANDLEN] = 0;
+      nick[HANDLEN] = 0;
 
       fr.match = FR_GLOBAL;
-      build_flags(s, &fr, 0);
 
       noshare = 1;
       userlist = adduser(userlist, nick, host, pass, 0, isbot);
@@ -527,7 +551,7 @@ share_newuser(int idx, char *par)
       set_user_flagrec(u, &fr, 0);
       noshare = 0;
       if (conf.bot->hub)
-        putlog(LOG_CMDS, "@", "%s: newuser %s %s", dcc[idx].nick, nick, s);
+        putlog(LOG_CMDS, "@", "%s: newuser %s %s", dcc[idx].nick, nick, par);
     }
   }
 }
@@ -535,19 +559,20 @@ share_newuser(int idx, char *par)
 static void
 share_killuser(int idx, char *par)
 {
-  struct userrec *u = NULL;
+  if (dcc[idx].status & STAT_SHARE) {
+    struct userrec *u = get_user_by_handle(userlist, par);;
 
-  /* If user is a share bot, ignore command */
-  if ((dcc[idx].status & STAT_SHARE) && (u = get_user_by_handle(userlist, par))) {
-
-    noshare = 1;
-    check_this_user(u->handle, 1, NULL);
-    if (deluser(par)) {
-      shareout_but(idx, "k %s\n", par);
-      if (conf.bot->hub)
-        putlog(LOG_CMDS, "@", "%s: killuser %s", dcc[idx].nick, par);
+    if (u) {
+      noshare = 1;
+      check_this_user(u->handle, 1, NULL);
+      if (deluser(par)) {
+        if (!(dcc[idx].status & STAT_GETTING))
+          shareout_but(idx, "k %s\n", par);
+        if (conf.bot->hub)
+          putlog(LOG_CMDS, "@", "%s: killuser %s", dcc[idx].nick, par);
+      }
+      noshare = 0;
     }
-    noshare = 0;
   }
 }
 
@@ -555,43 +580,20 @@ static void
 share_pls_host(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *hand = NULL;
-    struct userrec *u = NULL;
+    char *hand = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, hand);
 
-    hand = newsplit(&par);
-    if ((u = get_user_by_handle(userlist, hand))) {
-      shareout_but(idx, "+h %s %s\n", hand, par);
+    if (u && !user_has_host(NULL, u, par)) {
+      if (!(dcc[idx].status & STAT_GETTING))
+        shareout_but(idx, "+h %s %s\n", hand, par);
       set_user(&USERENTRY_HOSTS, u, par);
       if (conf.bot->hub)
         putlog(LOG_CMDS, "@", "%s: +host %s %s", dcc[idx].nick, hand, par);
-      else
+      else if (!u->bot)
         check_this_user(u->handle, 0, NULL);
+      else if (u->bot)
+        clear_chanlist();
     }
-  }
-}
-
-static void
-share_pls_bothost(int idx, char *par)
-{
-  if (dcc[idx].status & STAT_SHARE) {
-    char *hand = NULL;
-    struct userrec *u = NULL;
-
-    hand = newsplit(&par);
-    u = get_user_by_handle(userlist, hand);
-    if (!(dcc[idx].status & STAT_GETTING))
-      shareout_but(idx, "+bh %s %s\n", hand, par);
-    /* Add bot to userlist if not there */
-    if (u) {
-      if (!u->bot)
-        return;                 /* ignore */
-      set_user(&USERENTRY_HOSTS, u, par);
-      clear_chanlist();
-    } else {
-      userlist = adduser(userlist, hand, par, "-", 0, 1);
-    }
-    if (conf.bot->hub && !(dcc[idx].status & STAT_GETTING))
-      putlog(LOG_CMDS, "@", "%s: +host %s %s", dcc[idx].nick, hand, par);
   }
 }
 
@@ -599,12 +601,12 @@ static void
 share_mns_host(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *hand = NULL;
-    struct userrec *u = NULL;
+    char *hand = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, hand);
 
-    hand = newsplit(&par);
-    if ((u = get_user_by_handle(userlist, hand))) {
-      shareout_but(idx, "-h %s %s\n", hand, par);
+    if (u && user_has_host(NULL, u, par)) {
+      if (!(dcc[idx].status & STAT_GETTING))
+        shareout_but(idx, "-h %s %s\n", hand, par);
       noshare = 1;
       delhost_by_handle(hand, par);
       noshare = 0;
@@ -620,50 +622,45 @@ static void
 share_change(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *key = NULL, *hand = NULL;
-    struct userrec *u = NULL;
-    struct user_entry_type *uet = NULL;
-    struct user_entry *e = NULL;
+    char *key = newsplit(&par);
+    struct user_entry_type *uet = find_entry_type(key);
 
-    key = newsplit(&par);
-    hand = newsplit(&par);
-
-    u = get_user_by_handle(userlist, hand);
-
-    if (!(uet = find_entry_type(key)))
+    if (!uet) {
       /* If it's not a supported type, forget it */
       putlog(LOG_ERROR, "*", "Ignore ch %s from %s (unknown type)", key, dcc[idx].nick);
-    else {
-      if (!(dcc[idx].status & STAT_GETTING))
-        shareout_but(idx, "c %s %s %s\n", key, hand, par);
-      noshare = 1;
-      if (!u && (uet == &USERENTRY_BOTADDR)) {
-        char pass[30] = "";
+      return;
+    }
 
-        makepass(pass);
-        userlist = adduser(userlist, hand, "none", pass, 0, 1);
-        u = get_user_by_handle(userlist, hand);
-      } else if (!u) {
-        noshare = 0;
-        return;
-      }
+    char *hand = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, hand);
 
+    if (u) {
       if (uet->got_share) {
-        if (!(e = find_user_entry(uet, u))) {
-          e = (struct user_entry *) my_calloc(1, sizeof(struct user_entry));
+        noshare = 1;
 
+        if (!(dcc[idx].status & STAT_GETTING))
+          shareout_but(idx, "c %s %s %s\n", key, hand, par);
+
+        struct user_entry *e = find_user_entry(uet, u);
+
+        if (!e) {
+          e = (struct user_entry *) my_calloc(1, sizeof(struct user_entry));
+ 
           e->type = uet;
           e->name = NULL;
           e->u.list = NULL;
           list_insert((&(u->entries)), e);
         }
+
         uet->got_share(u, e, par, idx);
+
         if (!e->u.list) {
           list_delete((struct list_type **) &(u->entries), (struct list_type *) e);
           free(e);
         }
+
+        noshare = 0;
       }
-      noshare = 0;
     }
   }
 }
@@ -689,20 +686,20 @@ static void
 share_chchinfo(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    char *hand = NULL, *chan = NULL;
-    struct chanset_t *cst = NULL;
-    struct userrec *u = NULL;
+    char *hand = newsplit(&par);
+    struct userrec *u = get_user_by_handle(userlist, hand);
 
-    hand = newsplit(&par);
-    if ((u = get_user_by_handle(userlist, hand))) {
-      chan = newsplit(&par);
-      cst = findchan_by_dname(chan);
-      shareout_but(idx, "chchinfo %s %s %s\n", hand, chan, par);
+    if (u) {
+      char *chname = newsplit(&par);
+      struct chanset_t *chan = findchan_by_dname(chname);
+
+      if (!(dcc[idx].status & STAT_GETTING))
+        shareout_but(idx, "ch %s %s %s\n", hand, chan->dname, par);
       noshare = 1;
-      set_handle_chaninfo(userlist, hand, chan, par);
+      set_handle_chaninfo(userlist, hand, chan->dname, par);
       noshare = 0;
       if (conf.bot->hub)
-        putlog(LOG_CMDS, "@", "%s: change info %s %s", dcc[idx].nick, chan, hand);
+        putlog(LOG_CMDS, "@", "%s: change info %s %s", dcc[idx].nick, chan->dname, hand);
     }
   }
 }
@@ -713,17 +710,18 @@ static void share_mns_mask(int idx, char *par)
     char *types = newsplit(&par);
     const char type = types[0];
 
-    shareout_but(idx, "-m %c %s\n", type, par);
+    if (!(dcc[idx].status & STAT_GETTING))
+      shareout_but(idx, "-m %c %s\n", type, par);
     if (conf.bot->hub)
       putlog(LOG_CMDS, "@", "%s: cancel %s %s", dcc[idx].nick, type == 'b' ? "ban" : type == 'e' ? "exempt" : "invite", par);
     str_unescape(par, '\\');
+
     noshare = 1;
     if (u_delmask(type, NULL, par, 1) > 0) {
       if (!conf.bot->hub) {
-        struct chanset_t *chan = NULL;
         masklist *channel_list = NULL;
         
-        for (chan = chanset; chan; chan = chan->next) {
+        for (struct chanset_t* chan = chanset; chan; chan = chan->next) {
           channel_list = (type == 'b' ? chan->channel.ban : type == 'e' ? 
                           chan->channel.exempt : chan->channel.invite);
 
@@ -742,19 +740,17 @@ static void share_mns_maskchan(int idx, char *par)
     char *types = newsplit(&par);
     const char type = types[0];
 
-    char *chname = NULL;
-    struct chanset_t *chan = NULL;
-    int value = 0;
+    char *chname = newsplit(&par);
+    struct chanset_t *chan = findchan_by_dname(chname);
 
-    chname = newsplit(&par);
-    chan = findchan_by_dname(chname);
-    shareout_but(idx, "-mc %c %s %s\n", type, chname, par);
+    if (!(dcc[idx].status & STAT_GETTING))
+      shareout_but(idx, "-mc %c %s %s\n", type, chname, par);
     if (conf.bot->hub)
       putlog(LOG_CMDS, "@", "%s: cancel %s %s on %s", dcc[idx].nick, 
                             type == 'b' ? "ban" : type == 'e' ? "exempt" : "invite", par, chname);
     str_unescape(par, '\\');
     noshare = 1;
-    value = u_delmask(type, chan, par, 1);
+    int value = u_delmask(type, chan, par, 1);
     noshare = 0;
     if (!conf.bot->hub && value > 0)
       add_delay(chan, '-', type, par);
@@ -773,7 +769,9 @@ static void share_pls_mask(int idx, char *par)
     int flags = 0;
     bool stick = 0;
 
-    shareout_but(idx, "+m %c %s\n", type, par);
+    if (!(dcc[idx].status & STAT_GETTING))
+      shareout_but(idx, "+m %c %s\n", type, par);
+
     mask = newsplit(&par);
     str_unescape(mask, '\\');
     tm = newsplit(&par);
@@ -809,15 +807,14 @@ static void share_pls_maskchan(int idx, char *par)
     const char *str_type = (type == 'b' ? "ban" : type == 'e' ? "exempt" : "invite");
     time_t expire_time;
     int flags = 0;
-    char *mask = NULL, *tm = NULL, *chname = NULL, *from = NULL;
+    char *mask = newsplit(&par), *tm = newsplit(&par), *chname = newsplit(&par), *from = NULL;
     bool stick = 0;
-    struct chanset_t *chan = NULL;
+    struct chanset_t *chan = findchan_by_dname(chname);
 
-    mask = newsplit(&par);
-    tm = newsplit(&par);
-    chname = newsplit(&par);
-    chan = findchan_by_dname(chname);
-    shareout_but(idx, "+mc %c %s %s %s %s\n", type, mask, tm, chname, par);
+
+    if (!(dcc[idx].status & STAT_GETTING))
+      shareout_but(idx, "+mc %c %s %s %s %s\n", type, mask, tm, chname, par);
+
     str_unescape(mask, '\\');
     from = newsplit(&par);
     if (strchr(from, 's')) {
@@ -844,7 +841,8 @@ static void
 share_mns_ignore(int idx, char *par)
 {
   if (dcc[idx].status & STAT_SHARE) {
-    shareout_but(idx, "-i %s\n", par);
+    if (!(dcc[idx].status & STAT_GETTING))
+      shareout_but(idx, "-i %s\n", par);
     str_unescape(par, '\\');
     if (conf.bot->hub)
       putlog(LOG_CMDS, "@", "%s: cancel ignore %s", dcc[idx].nick, par);
@@ -863,7 +861,9 @@ share_pls_ignore(int idx, char *par)
     time_t expire_time;
     char *ign = NULL, *from = NULL, *ts = NULL;
 
-    shareout_but(idx, "+i %s\n", par);
+    if (!(dcc[idx].status & STAT_GETTING))
+      shareout_but(idx, "+i %s\n", par);
+
     ign = newsplit(&par);
     str_unescape(ign, '\\');
     ts = newsplit(&par);
@@ -1100,7 +1100,7 @@ static void share_userfile_end(int idx, char *par) {
 /* Note: these MUST be sorted. */
 static botcmd_t C_share[] = {
   {"!", share_endstartup, 0},
-  {"+bh", share_pls_bothost, 0},
+  {"+bh", share_pls_host, 0}, /* FIXME: Remove after 1.2.14 - forwards to +h */
   {"+cr", share_pls_chrec, 0},
   {"+h", share_pls_host, 0},
   {"+i", share_pls_ignore, 0},
@@ -1114,7 +1114,7 @@ static botcmd_t C_share[] = {
   {"a", share_chattr, 0},
   {"c", share_change, 0},
   {"ch", share_clearhosts, 0},
-  {"chchinfo", share_chchinfo, 0},
+  {"ci", share_chchinfo, 0},
   {"e", share_end, 0},
   {"h", share_chhand, 0},
   {"k", share_killuser, 0},

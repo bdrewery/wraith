@@ -112,11 +112,11 @@ void set_handle_chaninfo(struct userrec *bu, char *handle, char *chname, char *i
     ch->info = NULL;
 
   if ((!noshare) && (bu == userlist)) {
-    shareout("chchinfo %s %s %s\n", handle, chname, info ? info : "");
+    shareout("ch %s %s %s\n", handle, chname, info ? info : "");
   }
 }
 
-void del_chanrec(struct userrec *u, char *chname)
+bool del_chanrec(struct userrec *u, char *chname)
 {
   struct chanuserrec *ch = u->chanrec, *lst = NULL;
 
@@ -131,11 +131,12 @@ void del_chanrec(struct userrec *u, char *chname)
       free(ch);
       if (!noshare)
 	shareout("-cr %s %s\n", u->handle, chname);
-      return;
+      return 1;
     }
     lst = ch;
     ch = ch->next;
   }
+  return 0;
 }
 
 void set_handle_laston(char *chan, struct userrec *u, time_t n)
