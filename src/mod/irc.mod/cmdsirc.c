@@ -1301,7 +1301,7 @@ static void cmd_mop(int idx, char *par)
 static void cmd_find(int idx, char *par)
 {
   if (!par[0]) {
-    dprintf(idx, "Usage: find <nick!ident@host.com>|<user> (wildcard * allowed)\n");
+    dprintf(idx, "Usage: find [-r] <nick!ident@host.com>|<user>|<realname> (wildcard * allowed)\n");
     return;
   }
 
@@ -1309,19 +1309,33 @@ static void cmd_find(int idx, char *par)
 
   struct chanset_t *chan = NULL, **cfound = NULL;
   Member *m = NULL, **found = NULL;
-  int fcount = 0;
+  int fcount = 0, count = 0;
   bool tr = 0, lookup_user = 0;
   struct userrec *u = NULL;
   ptrlist<Member>::iterator _p;
+  bool gecos = 0;
 
-  if (!strchr(par, '!')) {
+  if (par[0] == '-') { /* options! */
+    switch (par[1]) {
+      case 'g':
+      case 'r':
+        gecos = 1;
+        break;
+      default:
+        dprintf(idx, "Invalid flag: %c\n", par[1]);
+        return;
+    }
+    newsplit(&par);
+  } else if (!strchr(par, '!')) {
     lookup_user = 1;
     u = get_user_by_handle(userlist, par);
     if (!u) {
       dprintf(idx, "No such user: %s\n", par);
       return;
     }
-  }    
+  }
+
+/* FIXME: this should be looping CLIENTS, then listing channels. */
   /* make a list of members in found[] */
   for (chan = chanset; chan; chan = chan->next) {
     get_user_flagrec(dcc[idx].user, &user, chan->dname);
@@ -1338,7 +1352,17 @@ static void cmd_find(int idx, char *par)
           }
           m->tried_getuser = 1;
         }
-        if ((!lookup_user && wild_match(par, s)) || (lookup_user && m->user == u)) {
+
+        bool ismatch = 0;
+
+        if (gecos && m->client->GetGecos()[0] && wild_match(par, m->client->GetGecos()))
+          ismatch = 1;
+        else if (!lookup_user && wild_match(par, s))
+          ismatch = 1;
+        else if (lookup_user && m->user == u)
+          ismatch = 1;
+
+        if (ismatch) {
           fcount++;
           if (!found) {
             found = (Member **) my_calloc(1, sizeof(Member *) * 100);
@@ -1375,6 +1399,7 @@ static void cmd_find(int idx, char *par)
           }
         }
         dprintf(idx, "%s\n", tmp);
+        ++count;
       }
     }
     free(found);
@@ -1384,7 +1409,7 @@ static void cmd_find(int idx, char *par)
   }
   if (tr)
     dprintf(idx, "(more than 100 matches; list truncated)\n");
-  dprintf(idx, "--- Found %d matches.\n", fcount);
+  dprintf(idx, "--- Found %d matches.\n", count);
 }
 
 static void do_invite(int idx, char *par, bool op)
