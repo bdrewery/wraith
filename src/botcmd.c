@@ -698,12 +698,15 @@ static void bot_nlinked(int idx, char *par)
     vversion = newsplit(&par);
   botnet_send_nlinked(idx, newbot, next, x, vlocalhub, vbuildts, vcommit, vversion);
   
-  if (x == '!') {
+  // ! is trusted
+  // ? is untrusted
+  if (x == '!' || x == '?') {
     if (conf.bot->hub)
-      chatout("*** (%s) %s %s.\n", next, "Linked to", newbot);
+      chatout("*** (%s) Linked to %s.\n", next, newbot);
     else
       chatout("*** %s linked to botnet.\n", newbot);
-    x = '-';
+    if (x == '!')
+      x = '-';
   }
   addbot(newbot, dcc[idx].nick, next, x, vlocalhub, vbuildts, vcommit, vversion ? vversion : (char *) "");
 }
@@ -1197,44 +1200,44 @@ static void bot_versions(int sock, char *par)
  */
 botcmd_t C_bot[] =
 {
-  {"a",			bot_actchan, 0},
-  {"aw",		bot_away, 0},
-  {"bye",		bot_bye, 0},
-  {"c",			bot_chan2, 0},
-  {"cp", 		bot_cmdpass, 0},
-  {"ct",		bot_chat, 0},
-  {"e",			bot_error, 0},
-  {"el",		bot_endlink, 0},
-  {"i",			bot_idle, 0},
-  {"j",			bot_join, 0},
-  {"l",			bot_link, 0},
-  {"lo",                bot_log, 0},
-  {"n",			bot_nlinked, 0},
-  {"nc",		bot_nickchange, 0},
-  {"p",			bot_priv, 0},
-  {"pi",		bot_ping, 0},
-  {"po",		bot_pong, 0},
-  {"pt",		bot_part, 0},
-  {"r",			bot_reject, 0},
-  {"rc", 		bot_remotecmd, 0},
-  {"rr", 		bot_remotereply, 0},
-  {"s",			bot_share, 0},
-  {"sb",		bot_shareupdate, 0},
-  {"si",		bot_shellinfo, 0},
-  {"t",			bot_trace, 0},
-  {"tb",		bot_thisbot, 0},
-  {"td",		bot_traced, 0},
-  {"ts", 		bot_timesync, 0},
-  {"u",			bot_update, 0},
-  {"ul",		bot_unlink, 0},
-  {"un",		bot_unlinked, 0},
-  {"v",			bot_versions, 0},
-  {"va",                bot_set, 0},
-  {"vab",		bot_setbroad, 0},
-  {"w",			bot_who, 0},
-  {"z",			bot_zapf, 0},
-  {"zb",		bot_zapfbroad, 0},
-  {NULL,		NULL, 0}
+  {"a",			bot_actchan, 		0, TRUSTED},
+  {"aw",		bot_away, 		0, TRUSTED},
+  {"bye",		bot_bye, 		0, UNTRUSTED},
+  {"c",			bot_chan2,	 	0, TRUSTED},
+  {"cp", 		bot_cmdpass, 		0, TRUSTED},	/* only from a hub */
+  {"ct",		bot_chat, 		0, TRUSTED},
+  {"e",			bot_error, 		0, UNTRUSTED}, /* This seems obsolete */
+  {"el",		bot_endlink, 		0, UNTRUSTED},
+  {"i",			bot_idle, 		0, TRUSTED},
+  {"j",			bot_join, 		0, TRUSTED},
+  {"l",			bot_link, 		0, TRUSTED}, /* only from a hub */
+  {"lo",                bot_log, 		0, UNTRUSTED},
+  {"n",			bot_nlinked, 		0, TRUSTED}, /* only from a hub */
+  {"nc",		bot_nickchange, 	0, TRUSTED},
+  {"p",			bot_priv, 		0, TRUSTED},
+  {"pi",		bot_ping, 		0, UNTRUSTED},
+  {"po",		bot_pong, 		0, UNTRUSTED},
+  {"pt",		bot_part, 		0, TRUSTED},
+  {"r",			bot_reject, 		0, TRUSTED},
+  {"rc", 		bot_remotecmd, 		0, TRUSTED}, /* only from a hub */
+  {"rr", 		bot_remotereply,	0, UNTRUSTED},
+  {"s",			bot_share, 		0, TRUSTED}, /* share info msg, ie 'I have you marked for x' */
+  {"sb",		bot_shareupdate, 	0, TRUSTED},
+  {"si",		bot_shellinfo, 		0, UNTRUSTED},
+  {"t",			bot_trace, 		0, TRUSTED},
+  {"tb",		bot_thisbot, 		0, UNTRUSTED},
+  {"td",		bot_traced, 		0, TRUSTED},
+  {"ts", 		bot_timesync, 		0, TRUSTED}, /* only from a hub */
+  {"u",			bot_update, 		0, TRUSTED}, /* only from a hub */
+  {"ul",		bot_unlink, 		0, TRUSTED},
+  {"un",		bot_unlinked, 		0, TRUSTED}, /* only from a hub? */
+  {"v",			bot_versions, 		0, UNTRUSTED},
+  {"va",                bot_set, 		0, TRUSTED},
+  {"vab",		bot_setbroad, 		0, TRUSTED},
+  {"w",			bot_who, 		0, TRUSTED},
+  {"z",			bot_zapf, 		0, TRUSTED},
+  {"zb",		bot_zapfbroad, 		0, TRUSTED},
+  {NULL,		NULL,			0, 0}
 };
 
 static int comp_botcmd_t(const void *m1, const void *m2) {
@@ -1254,8 +1257,14 @@ void parse_botcmd(int idx, const char* code, const char* msg) {
 
   if (cmd) {
     /* Found a match */
-    if (have_cmd(NULL, cmd->type))
-      (cmd->func) (idx, (char*)msg);
+    /* If this is a hub cmd and we are a hub, or this is a leaf cmd and this is a leaf
+       AND this bot's trust level matches the cmd's trust level */
+    if (have_cmd(NULL, cmd->type)) {
+      if (dcc[idx].trust_level >= cmd->trust_level)
+        (cmd->func) (idx, (char*)msg);
+      else
+        putlog(LOG_WARN, "*", "UNTRUSTED REQUEST FROM '%s': %s %s", dcc[idx].nick, code, msg);
+    }
   }
 }
 

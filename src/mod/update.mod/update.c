@@ -203,14 +203,14 @@ static void update_stream_end(int idx, char *par) {
 /* Note: these MUST be sorted. */
 static botcmd_t C_update[] =
 {
-  {"l", 	update_stream_line, 0},
-  {"le", 	update_stream_end, 0},
-  {"ls", 	update_stream_start, 0},
-  {"u?",	update_fileq, 0},
-  {"un",	update_ufno, 0},
-  {"us",	update_ufsend, 0},
-  {"uy",	update_ufyes, 0},
-  {NULL,	NULL, 0}
+  {"l", 	update_stream_line,  0, UNTRUSTED},
+  {"le", 	update_stream_end,   0, UNTRUSTED},
+  {"ls", 	update_stream_start, 0, UNTRUSTED},
+  {"u?",	update_fileq,        0, UNTRUSTED},
+  {"un",	update_ufno,         0, UNTRUSTED},
+  {"us",	update_ufsend,       0, UNTRUSTED},
+  {"uy",	update_ufyes,        0, UNTRUSTED},
+  {NULL,	NULL,                0, UNTRUSTED}
 };
 
 static void got_nu(char *botnick, char *code, char *par)
@@ -264,7 +264,8 @@ void updatein(int idx, char *msg)
   const botcmd_t *cmd = search_botcmd_t((const botcmd_t*)&C_update, code, lengthof(C_update) - 1);
   if (cmd) {
     /* Found a match */
-    (cmd->func)(idx, msg);
+    if (dcc[idx].trust_level >= cmd->trust_level)
+      (cmd->func)(idx, msg);
   }
 }
 

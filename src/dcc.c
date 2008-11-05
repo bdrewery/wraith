@@ -290,7 +290,7 @@ bot_version(int idx, char *par)
   }
 #endif
 
-  char x[1024] = "", *vversion = NULL, *vcommit = NULL;
+  char *vversion = NULL, *vcommit = NULL;
   int vlocalhub = -1;
   time_t vbuildts = 0;
 
@@ -332,24 +332,86 @@ bot_version(int idx, char *par)
         //have_linked_to_hub = 1;
       }
       dcc[idx].hub = 1;
+      /* FIXME: Always trust other hubs we're linking to */
+      dcc[idx].trust_level = TRUSTED;
+    } else {
+    /* leaf */
+      /* Start off by not trusting new leaf bots connecting */
+      dcc[idx].trust_level = UNTRUSTED;
     }
 
-    botnet_send_nlinked(idx, dcc[idx].nick, conf.bot->nick, '!', vlocalhub, vbuildts, vcommit, vversion);
   } else {
         // This is now done in share_endstartup
         //have_linked_to_hub = 1;
     uplink_idx = idx;
     dcc[idx].hub = 1;
+    /* FIXME: Trust the hub/uplink we're linking to */
+    dcc[idx].trust_level = TRUSTED;
   }
 
-  dump_links(idx);
-
-  touch_laston(dcc[idx].user, "linked", now);
   dcc[idx].type = &DCC_BOT;
-  addbot(dcc[idx].nick, dcc[idx].nick, conf.bot->nick, '-', vlocalhub, vbuildts, vcommit, vversion);
-  simple_snprintf(x, sizeof x, "v 1001500");
+
+  /* FIXME: Need to duplicate this elsewhere for when the bot is considered trusted */
+  if (dcc[idx].trust_level == TRUSTED) {
+    sdprintf("TRUSTING %s", dcc[idx].nick);
+
+    // --- Updates to this code probably need to update grant_trust() as well ---
+    //Let botnet know this bot is linking in as TRUSTED
+    if (conf.bot->hub)
+      botnet_send_nlinked(idx, dcc[idx].nick, conf.bot->nick, '!', vlocalhub, vbuildts, vcommit, vversion);
+
+    //Share botnet info with bot
+    dump_links(idx);
+    touch_laston(dcc[idx].user, "linked", now);
+    addbot(dcc[idx].nick, dcc[idx].nick, conf.bot->nick, '-', vlocalhub, vbuildts, vcommit, vversion);
+
+    //Offer sharing
+    char x[20] = "";
+    simple_snprintf(x, sizeof(x), "v 1001500");
+    bot_share(idx, x);
+
+    //End the link
+    dprintf(idx, "el\n");
+  } else {
+    //Let botnet know this bot is linking in as UNTRUSTED
+    if (conf.bot->hub)
+      botnet_send_nlinked(idx, dcc[idx].nick, conf.bot->nick, '?', vlocalhub, vbuildts, vcommit, vversion);
+    touch_laston(dcc[idx].user, "limbo", now);
+    addbot(dcc[idx].nick, dcc[idx].nick, conf.bot->nick, '?', vlocalhub, vbuildts, vcommit, vversion);
+  }
+
+}
+
+void grant_trust(int idx) {
+  putlog(LOG_BOTS, "*", "Granted trust to %s.", dcc[idx].nick);
+
+  //Grant trust
+  dcc[idx].trust_level = TRUSTED;
+
+  //Share botnet info with bot
+  dump_links(idx, true);
+  touch_laston(dcc[idx].user, "linked", now);
+  updatebot(-1, dcc[idx].nick, '-', 0, 0, 0, NULL);
+
+  //Offer sharing
+  char x[20] = "";
+  simple_snprintf(x, sizeof(x), "v 1001500");
   bot_share(idx, x);
-  dprintf(idx, "el\n");
+}
+
+void revoke_trust(int idx) {
+  putlog(LOG_BOTS, "*", "Revoked trust from %s.", dcc[idx].nick);
+
+  dcc[idx].trust_level = UNTRUSTED;
+  touch_laston(dcc[idx].user, "revoked", now);
+  updatebot(-1, dcc[idx].nick, '!', 0, 0, 0, NULL);
+
+  //Discontinue sharing (Will reset share flags since this is UNTRUSTED)
+  char x[20] = "";
+  simple_snprintf(x, sizeof(x), "v 1001500");
+  bot_share(idx, x);
+
+  //Alert botnet that this bot should be kick banned
 }
 
 void
@@ -480,8 +542,6 @@ struct dcc_table DCC_BOT_NEW = {
 static void
 dcc_bot(int idx, char *code, int i)
 {
-  char *msg = NULL;
-
   strip_telnet(dcc[idx].sock, code, &i);
   if (debug_output) {
 /*    if (code[0] != 'z' && code[1] != 'b' && code[2] != ' ') { */
@@ -491,7 +551,7 @@ dcc_bot(int idx, char *code, int i)
       putlog(LOG_BOTNET, "@", "<-[%s] %s", dcc[idx].nick, code);
 /*     } */
   }
-  msg = strchr(code, ' ');
+  char* msg = strchr(code, ' ');
   if (msg) {
     *msg = 0;
     msg++;

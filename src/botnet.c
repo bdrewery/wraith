@@ -782,7 +782,7 @@ void tell_bottree(int idx)
 
 /* Dump list of links to a new bot
  */
-void dump_links(int z)
+void dump_links(int z, bool excludeTarget)
 {
   register int i;
   register size_t l;
@@ -797,6 +797,10 @@ void dump_links(int z)
         p = conf.bot->nick;
       else
         p = bot->uplink->bot;
+
+      // Exclude the target bot (for when trust is granted)
+      if (excludeTarget && !strcmp(dcc[z].nick, bot->bot))
+        continue;
 
       l = simple_snprintf(x, sizeof(x), "n %s %s %cD0gc %d %d %s %s\n", bot->bot, p, bot->share, bot->localhub,
                                                         (int) bot->buildts, bot->commit, bot->version ? bot->version : "");
@@ -819,6 +823,11 @@ void dump_links(int z)
     }
   }
   for (i = 0; i < parties; i++) {
+
+    // Exclude target bot (for when trust is granted)
+    if (excludeTarget && !strcmp(dcc[z].nick, party[i].bot))
+        continue;
+
     l = simple_snprintf2(x, sizeof(x), "j %s %s %D %c%D %s\n", party[i].bot, party[i].nick, 
                           party[i].chan, party[i].flag, party[i].sock, party[i].from);
     tputs(dcc[z].sock, x, l);

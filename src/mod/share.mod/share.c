@@ -1052,7 +1052,7 @@ share_version(int idx, char *par)
   /* Cleanup any share flags */
   dcc[idx].status &= ~(STAT_SHARE | STAT_GETTING | STAT_SENDING | STAT_OFFERED | STAT_AGGRESSIVE);
   dcc[idx].u.bot->uff_flags |= (UFF_OVERRIDE | UFF_INVITE | UFF_EXEMPT);
-  if (bot_aggressive_to(dcc[idx].user)) {
+  if (bot_aggressive_to(dcc[idx].user) && dcc[idx].trust_level == TRUSTED) {
     dprintf(idx, "s u?\n");
     dcc[idx].status |= STAT_OFFERED;
   }
@@ -1065,7 +1065,7 @@ hook_read_userfile()
   if (!noshare) {
     for (int i = 0; i < dcc_total; i++) {
       if (dcc[i].type && (dcc[i].type->flags & DCT_BOT) && (dcc[i].status & STAT_SHARE) && !(dcc[i].status & STAT_AGGRESSIVE)
-          && (1)) {
+          && dcc[i].trust_level == TRUSTED) {
         /* Cancel any existing transfers */
         if (dcc[i].status & STAT_SENDING) {
           cancel_user_xfer_staylinked = 1;
@@ -1145,39 +1145,39 @@ static void share_userfile_end(int idx, char *par) {
 }
 
 /* Note: these MUST be sorted. */
+/* Only accept sharing cmds from TRUSTED bots */
 static botcmd_t C_share[] = {
-  {"!", share_endstartup, 0},
-  {"+bh", share_pls_bothost, 0},
-  {"+cr", share_pls_chrec, 0},
-  {"+h", share_pls_host, 0},
-  {"+i", share_pls_ignore, 0},
-  {"+m", share_pls_mask, 0},
-  {"+mc", share_pls_maskchan, 0},
-  {"-cr", share_mns_chrec, 0},
-  {"-h", share_mns_host, 0},
-  {"-i", share_mns_ignore, 0},
-  {"-m", share_mns_mask, 0},
-  {"-mc", share_mns_maskchan, 0},
-  {"a", share_chattr, 0},
-  {"c", share_change, 0},
-  {"ch", share_clearhosts, 0},
-  {"chchinfo", share_chchinfo, 0},
-  {"e", share_end, 0},
-  {"h", share_chhand, 0},
-  {"k", share_killuser, 0},
-  {"l", share_userfile_line, 0},
-  {"le", share_userfile_end, 0},
-  {"ls", share_userfile_start, 0},
-  {"ms", share_stick_mask, 0},
-  {"n", share_newuser, 0},
-  {"u?", share_userfileq, 0},
-  {"un", share_ufno, HUB},
-  {"us", share_ufsend, 0},
-  {"uy", share_ufyes, HUB},
-  {"v", share_version, 0},
-  {NULL, NULL, 0}
+  {"!",		share_endstartup, 	HUB, 	TRUSTED},
+  {"+bh",	share_pls_bothost, 	0, 	TRUSTED},
+  {"+cr",	share_pls_chrec, 	0, 	TRUSTED},
+  {"+h",	share_pls_host, 	0, 	TRUSTED},
+  {"+i",	share_pls_ignore, 	0, 	TRUSTED},
+  {"+m",	share_pls_mask, 	0, 	TRUSTED},
+  {"+mc",	share_pls_maskchan, 	0, 	TRUSTED},
+  {"-cr",	share_mns_chrec, 	0, 	TRUSTED},
+  {"-h",	share_mns_host, 	0, 	TRUSTED},
+  {"-i",	share_mns_ignore, 	0, 	TRUSTED},
+  {"-m",	share_mns_mask, 	0, 	TRUSTED},
+  {"-mc",	share_mns_maskchan, 	0, 	TRUSTED},
+  {"a",		share_chattr, 		0, 	TRUSTED},
+  {"c",		share_change, 		0, 	TRUSTED},
+  {"ch",	share_clearhosts, 	0, 	TRUSTED},
+  {"chchinfo",	share_chchinfo, 	0, 	TRUSTED},
+  {"e",		share_end, 		HUB, 	TRUSTED},
+  {"h",		share_chhand, 		0, 	TRUSTED},
+  {"k",		share_killuser, 	0, 	TRUSTED},
+  {"l",         share_userfile_line,    0,      TRUSTED},
+  {"le",        share_userfile_end,     0,      TRUSTED},
+  {"ls",        share_userfile_start,   0,      TRUSTED},
+  {"ms",	share_stick_mask, 	0, 	TRUSTED},
+  {"n",		share_newuser, 		0, 	TRUSTED},
+  {"u?",	share_userfileq, 	HUB, 	TRUSTED},
+  {"un",	share_ufno, 		HUB, 	TRUSTED},
+  {"us",	share_ufsend, 		0, 	TRUSTED},
+  {"uy",	share_ufyes, 		HUB, 	TRUSTED},
+  {"v",		share_version, 		0, 	TRUSTED},
+  {NULL, 	NULL, 			0,	0}
 };
-
 
 void
 sharein(int idx, char *msg)
@@ -1186,7 +1186,8 @@ sharein(int idx, char *msg)
   const botcmd_t *cmd = search_botcmd_t((const botcmd_t*)&C_share, code, lengthof(C_share) - 1);
   if (cmd) {
     /* Found a match */
-    (cmd->func) (idx, msg);
+    if (dcc[idx].trust_level >= cmd->trust_level)
+      (cmd->func) (idx, msg);
   }
 }
 
@@ -1281,7 +1282,7 @@ check_expired_tbufs()
  
   /* Resend userfile requests */
   for (int i = 0; i < dcc_total; i++) {
-    if (dcc[i].type && dcc[i].type->flags & DCT_BOT) {
+    if (dcc[i].type && dcc[i].type->flags & DCT_BOT && dcc[i].trust_level == TRUSTED) {
       if (dcc[i].status & STAT_OFFERED) {
         if (now - dcc[i].timeval > 120) {
           if (dcc[i].user && bot_aggressive_to(dcc[i].user))

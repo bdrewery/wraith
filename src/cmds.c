@@ -4689,6 +4689,17 @@ static void cmd_quit(int idx, char *text)
 void cmd_test(int idx, char *par)
 {
   putlog(LOG_CMDS, "*", "#%s# test", dcc[idx].nick);
+
+  int i;
+  for (i = 0; i < dcc_total; ++i) {
+    if (dcc[i].type && (dcc[i].type == &DCC_BOT) && !strcasecmp(dcc[i].nick, par)) {
+      if (dcc[i].trust_level == UNTRUSTED)
+        grant_trust(i);
+      else
+        revoke_trust(i);
+      break;
+    }
+  }
 }
 
 #ifdef USE_SCRIPT_TCL

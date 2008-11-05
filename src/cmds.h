@@ -26,11 +26,16 @@ typedef struct {
         int type;
 } mycmds;
 
+
+#define UNTRUSTED 0
+#define TRUSTED 1
+
 typedef struct {
   const char *name;
 //  Function func;
   void (*func) (int, char *);
   int type;
+  short trust_level;
 } botcmd_t;
 
 const botcmd_t *search_botcmd_t(const botcmd_t *table, const char* key, size_t elements);

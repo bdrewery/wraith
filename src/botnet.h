@@ -18,7 +18,7 @@ int nextbot(const char *);
 int in_chain(char *);
 void tell_bots(int, int, const char *);
 void tell_bottree(int);
-void dump_links(int);
+void dump_links(int, bool = false);
 int botlink(char *, int, char *);
 int botunlink(int, const char *, const char *);
 void addbot(char *, char *, char *, char, int, time_t, char *, char *);

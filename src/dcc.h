@@ -56,6 +56,7 @@ struct dcc_t {
   int simul;                    /* this will hold the idx on the remote bot to return result. */
   bool irc;			/* forward the output back to irc? */
   bool hub;			// is this bot a hub?
+  short trust_level;		// Trust level (0 = untrusted, 1 = trusted)
   bool wrong_pass;		// auth obscure hack
   bool bot;
 //  int auth;
@@ -241,5 +242,8 @@ void failed_link(int);
 void dupwait_notify(const char *);
 void send_sysinfo();
 int ansi_len(char *);
+
+void grant_trust(int);
+void revoke_trust(int);
 
 #endif /* !_DCC_H */
