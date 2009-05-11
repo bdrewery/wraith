@@ -639,7 +639,7 @@ static void bot_update(int idx, char *par)
 static void bot_nlinked(int idx, char *par)
 {
   char *newbot = NULL, *next = NULL, *p = NULL, s[1024] = "", x = 0, *vversion = NULL, *vcommit = NULL;
-  int i, vlocalhub = 0;
+  int i = -1, vlocalhub = 0;
   time_t vbuildts = 0L;
   bool bogus = 0;
 
@@ -655,12 +655,20 @@ static void bot_nlinked(int idx, char *par)
       if (bot_aggressive_to(dcc[idx].user)) {	/* wait, we have one too, ignore theirs! ... it should be disconnected soon. */
         return;
       } else {					/* We need to collide ours */
-        simple_snprintf(s, sizeof(s), "Duplicate bot collision: %s", newbot);
-        dprintf(idx, "error Collision (%s)\n", newbot);
+        i = nextbot(newbot);
+        // Unlink it if it is directly linked
+        if (i >= 0 && !egg_strcasecmp(dcc[i].nick, newbot)) {
+          putlog(LOG_BOTS, "*", "Detected duplicate bot '%s' via '%s': colliding local version.", newbot, dcc[idx].nick);
+          simple_snprintf(s, sizeof(s), "Duplicate bot collision via '%s'", dcc[idx].nick);
+          botunlink(DP_STDOUT, newbot, s);
+          // Duplicate bot collided and other bots are ignoring it. Don't break the link.
+          return;
+        }
       }
     }
     /* Loop! */
-    putlog(LOG_BOTS, "*", "Loop detected %s (mutual: %s)", dcc[idx].nick, newbot);
+    if (i == -1)
+      putlog(LOG_BOTS, "*", "Loop detected %s (mutual: %s)", dcc[idx].nick, newbot);
     simple_snprintf(s, sizeof(s), "Detected loop: two bots exist named %s: disconnecting %s", newbot, dcc[idx].nick);
     dprintf(idx, "error Loop (%s)\n", newbot);
   }
