@@ -662,15 +662,16 @@ static void bot_nlinked(int idx, char *par)
           simple_snprintf(s, sizeof(s), "Duplicate bot collision via '%s'", dcc[idx].nick);
           botunlink(-2, newbot, s, false);
           // Duplicate bot collided and other bots are ignoring it. Don't break the link.
-          return;
+          s[0] = 0;
         }
       }
     }
     /* Loop! */
-    if (i == -1)
+    if (i == -1) {
       putlog(LOG_BOTS, "*", "Loop detected %s (mutual: %s)", dcc[idx].nick, newbot);
-    simple_snprintf(s, sizeof(s), "Detected loop: two bots exist named %s: disconnecting %s", newbot, dcc[idx].nick);
-    dprintf(idx, "error Loop (%s)\n", newbot);
+      simple_snprintf(s, sizeof(s), "Detected loop: two bots exist named %s: disconnecting %s", newbot, dcc[idx].nick);
+      dprintf(idx, "error Loop (%s)\n", newbot);
+    }
   }
   if (!s[0]) {
     for (p = newbot; *p; p++)
