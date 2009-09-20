@@ -870,7 +870,7 @@ int users_in_subtree(tand_t *bot)
 
 /* Break link with a tandembot
  */
-int botunlink(int idx, const char *nick, const char *reason)
+int botunlink(int idx, const char *nick, const char *reason, bool announce)
 {
   register int i;
   int bots, users;
@@ -925,7 +925,8 @@ int botunlink(int idx, const char *nick, const char *reason)
 	  dprintf(i, "bye No reason\n");
 	}
 	chatout("*** %s\n", s);
-	botnet_send_unlinked(i, dcc[i].nick, s);
+        if (announce)
+	  botnet_send_unlinked(i, dcc[i].nick, s);
 	killsock(dcc[i].sock);
 	lostdcc(i);
 	if (nick[0] != '*')

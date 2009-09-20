@@ -660,7 +660,7 @@ static void bot_nlinked(int idx, char *par)
         if (i >= 0 && !egg_strcasecmp(dcc[i].nick, newbot)) {
           putlog(LOG_BOTS, "*", "Detected duplicate bot '%s' via '%s': colliding local version.", newbot, dcc[idx].nick);
           simple_snprintf(s, sizeof(s), "Duplicate bot collision via '%s'", dcc[idx].nick);
-          botunlink(DP_STDOUT, newbot, s);
+          botunlink(-2, newbot, s, false);
           // Duplicate bot collided and other bots are ignoring it. Don't break the link.
           return;
         }
