@@ -741,6 +741,7 @@ got_ban(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
             simple_snprintf(resn, sizeof resn, "banned: %s", b->desc);
           else
             resn[0] = 0;
+          break;
         }
       }
     }
