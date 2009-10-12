@@ -293,7 +293,7 @@ static char *getchanmode(struct chanset_t *chan)
   return s;
 }
 
-static void check_exemptlist(struct chanset_t *chan, char *from)
+static void check_exemptlist(struct chanset_t *chan, const char *from)
 {
   if (!use_exempts)
     return;
@@ -710,7 +710,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
 }
 
 /* Given a chan/m do all necesary exempt checks and ban. */
-static void refresh_ban_kick(struct chanset_t*, memberlist *, char *);
+static void refresh_ban_kick(struct chanset_t*, memberlist *, const char *);
 static void do_closed_kick(struct chanset_t *chan, memberlist *m)
 {
   if (!chan || !m) return;
@@ -734,7 +734,7 @@ static void do_closed_kick(struct chanset_t *chan, memberlist *m)
 
 /* Given a [nick!]user@host, place a quick ban on them on a chan.
  */
-static char *quickban(struct chanset_t *chan, char *uhost)
+static char *quickban(struct chanset_t *chan, const char *uhost)
 {
   static char s1[512] = "";
 
@@ -780,7 +780,7 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
 
 /* If any bans match this wildcard expression, refresh them on the channel.
  */
-static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, char *user)
+static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, const char *user)
 {
   if (!m || chan_sentkick(m))
     return;
@@ -836,7 +836,7 @@ static void refresh_exempt(struct chanset_t *chan, char *user)
   }
 }
 
-static void refresh_invite(struct chanset_t *chan, char *user)
+static void refresh_invite(struct chanset_t *chan, const char *user)
 {
   maskrec *i = NULL;
 
