@@ -87,7 +87,8 @@ static void my_setkey(struct chanset_t *, char *);
 static bool detect_chan_flood(char *, char *, char *, struct chanset_t *, int,
 			     char *);
 static bool new_mask(masklist *, char *, char *);
-static void do_closed_kick(struct chanset_t *, memberlist *);
+static void refresh_ban_kick(struct chanset_t*, memberlist *, const char *);
+static void kick_ban(struct chanset_t *chan, memberlist *m, const char *reason);
 static char *quickban(struct chanset_t *, const char*);
 static bool killmember(struct chanset_t *chan, char *nick);
 static void check_lonely_channel(struct chanset_t *chan);

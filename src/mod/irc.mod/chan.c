@@ -386,7 +386,7 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
             actions++;
             sent++;
             if (chan->closed_ban)
-              do_closed_kick(chan, m);
+              kick_ban(chan, m, "joined closed chan");
             dprintf(DP_MODE, "KICK %s %s :%s%s\n", chan->name, m->nick, kickprefix, response(RES_CLOSED));
             m->flags |= SENTKICK;
             if (actions >= ct)
@@ -428,7 +428,7 @@ void priority_do(struct chanset_t * chan, bool opsonly, int action)
           } else if ((action == PRIO_KICK) && !chan_sentkick(m)) {
             actions++;
             if (chan->closed_ban)
-              do_closed_kick(chan, m);
+              kick_ban(chan, m, "joined closed chan");
             dprintf(DP_MODE, "KICK %s %s :%s%s\n", chan->name, m->nick, kickprefix, response(RES_CLOSED));
             m->flags |= SENTKICK;
             if ((actions >= ct) || (sent > 5))
@@ -709,11 +709,10 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
   return 0;
 }
 
-/* Given a chan/m do all necesary exempt checks and ban. */
-static void refresh_ban_kick(struct chanset_t*, memberlist *, const char *);
-static void do_closed_kick(struct chanset_t *chan, memberlist *m)
+/* Kick and ban a given client with the given reason */
+static void kick_ban(struct chanset_t *chan, memberlist *m, const char *reason)
 {
-  if (!chan || !m) return;
+  if (chan_sentkick(m)) return;
 
   char s[UHOSTLEN] = "", *s1 = NULL;
 
@@ -728,7 +727,7 @@ static void do_closed_kick(struct chanset_t *chan, memberlist *m)
 
     check_exemptlist(chan, s);
     s1 = quickban(chan, m->userhost);
-    u_addmask('b', chan, s1, conf.bot->nick, "joined closed chan", now + (60 * chan->ban_time), 0);
+    u_addmask('b', chan, s1, conf.bot->nick, reason, now + (60 * chan->ban_time), 0);
   }
   return;
 }
@@ -788,7 +787,8 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
   }
 }
 
-/* If any bans match this wildcard expression, refresh them on the channel.
+/* Given a chan/m do all necesary exempt checks and ban. */
+/* If any internal bans match this wildcard expression, refresh them on the channel.
  */
 static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, const char *user)
 {
