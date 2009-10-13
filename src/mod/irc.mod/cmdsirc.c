@@ -299,7 +299,7 @@ static void cmd_kickban(int idx, char *par)
     }
     if (m->flags & CHANOP)
       add_mode(chan, '-', 'o', m->nick);
-    check_exemptlist(chan, s);
+    clear_matching_exempts(chan, s);
     switch (bantype) {
       case '@':
         s1 = strchr(s, '@');

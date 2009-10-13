@@ -293,7 +293,8 @@ static char *getchanmode(struct chanset_t *chan)
   return s;
 }
 
-static void check_exemptlist(struct chanset_t *chan, const char *from)
+/* Removes all matching exempts for the given nick!user@host */
+static void clear_matching_exempts(struct chanset_t *chan, const char *from)
 {
   if (!use_exempts)
     return;
@@ -653,7 +654,7 @@ static bool detect_chan_flood(char *floodnick, char *floodhost, char *from,
 	return 1;
       simple_snprintf(h, sizeof(h), "*!*@%s", p);
       if (!isbanned(chan, h) && me_op(chan)) {
-	check_exemptlist(chan, from);
+	clear_matching_exempts(chan, from);
 	do_mask(chan, chan->channel.ban, h, 'b');
       }
       if ((u_match_mask(global_bans, from))
@@ -725,7 +726,7 @@ static void kick_ban(struct chanset_t *chan, memberlist *m, const char *reason)
         u_match_mask(chan->bans, s))
       refresh_ban_kick(chan, m, s);
 
-    check_exemptlist(chan, s);
+    clear_matching_exempts(chan, s);
     s1 = quickban(chan, m->userhost);
     u_addmask('b', chan, s1, conf.bot->nick, reason, now + (60 * chan->ban_time), 0);
   }
@@ -804,7 +805,7 @@ static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, const char *
       if (wild_match(b->mask, user) || match_cidr(b->mask, user)) {
         if (role == 1)
   	  add_mode(chan, '-', 'o', m->nick);	/* Guess it can't hurt.	*/
-	check_exemptlist(chan, user);
+	clear_matching_exempts(chan, user);
 	do_mask(chan, chan->channel.ban, b->mask, 'b');
 	b->lastactive = now;
         if (role == 2) {
@@ -2506,7 +2507,7 @@ static int check_member_bans(struct chanset_t* chan, memberlist* m, const char* 
     /* Likewise for kick'ees */
     } else if (!chan_sentkick(m) && (glob_kick(*fr) || chan_kick(*fr))) {
       char *p = (char *) get_user(&USERENTRY_COMMENT, m->user);
-      check_exemptlist(chan, from);
+      clear_matching_exempts(chan, from);
       quickban(chan, from);
       dprintf(DP_MODE, "KICK %s %s :%s%s\n", chan->name[0] ? chan->name : chan->dname, m->nick, bankickprefix, p ? p : response(RES_KICKBAN));
       m->flags |= SENTKICK;
@@ -3115,7 +3116,7 @@ static int gotmsg(char *from, char *msg)
 	  (u_match_mask(global_exempts, from) ||
 	   u_match_mask(chan->exempts, from)))) {
       if (ban_fun) {
-	check_exemptlist(chan, from);
+	clear_matching_exempts(chan, from);
 	u_addmask('b', chan, quickban(chan, uhost), conf.bot->nick,
                "that was fun, let's do it again!", now + (60 * chan->ban_time), 0);
       }
@@ -3272,7 +3273,7 @@ static int gotnotice(char *from, char *msg)
 	  (u_match_mask(global_exempts,from) ||
 	   u_match_mask(chan->exempts, from)))) {
       if (ban_fun) {
-	check_exemptlist(chan, from);
+	clear_matching_exempts(chan, from);
 	u_addmask('b', chan, quickban(chan, uhost), conf.bot->nick,
                "that was fun, let's do it again!", now + (60 * chan->ban_time), 0);
       }
