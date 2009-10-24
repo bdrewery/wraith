@@ -719,9 +719,12 @@ static void kick_ban(struct chanset_t *chan, memberlist *m, const char *reason)
 
   simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userhost);
 
-  if (!(use_exempts &&
+  // FIXME: userip
+  if (!(use_exempts && // Make sure they aren't exempted in the internal list
         (u_match_mask(global_exempts,s) ||
          u_match_mask(chan->exempts, s)))) {
+
+    // If they're banned in the internal list, refresh the ban on the channel
     if (u_match_mask(global_bans, s) ||
         u_match_mask(chan->bans, s))
       refresh_ban_kick(chan, m, s);
@@ -788,7 +791,7 @@ static void kick_all(struct chanset_t *chan, char *hostmask, const char *comment
   }
 }
 
-/* Given a chan/m do all necesary exempt checks and ban. */
+/* Given a chan and member do all necesary exempt checks and ban. */
 /* If any internal bans match this wildcard expression, refresh them on the channel.
  */
 static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, const char *user)
@@ -802,6 +805,7 @@ static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, const char *
      in second cycle. */
   for (int cycle = 0; cycle < 2; cycle++) {
     for (register maskrec* b = cycle ? chan->bans : global_bans; b; b = b->next) {
+      //FIXME: userip?
       if (wild_match(b->mask, user) || match_cidr(b->mask, user)) {
         if (role == 1)
   	  add_mode(chan, '-', 'o', m->nick);	/* Guess it can't hurt.	*/
@@ -991,6 +995,8 @@ static void resetmasks(struct chanset_t *chan, masklist *m, maskrec *mrec, maskr
   }
 }
 
+// Called from cmd_pls_ban, cmd_stick, sharein (+mask, stick)
+// Adds the ban in the given chan, and enforces it on matching clients
 void check_this_ban(struct chanset_t *chan, char *banmask, bool sticky)
 {
   if (!me_op(chan))
@@ -998,12 +1004,17 @@ void check_this_ban(struct chanset_t *chan, char *banmask, bool sticky)
 
   char user[UHOSTLEN] = "";
 
+  // FIXME: maybe just call kick_all(..., 0)?
   for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
     simple_snprintf(user, sizeof(user), "%s!%s", m->nick, m->userhost);
+    //FIXME: userip + match_cidr
     if (wild_match(banmask, user) &&
         !(use_exempts &&
           (u_match_mask(global_exempts, user) ||
            u_match_mask(chan->exempts, user))))
+      // FIXME
+      // This loops all internal bans, adds to chan, then loops all members looking for a match
+      // Already found a match though??
       refresh_ban_kick(chan, m, user);
   }
   if (!isbanned(chan, banmask) &&
@@ -1145,10 +1156,7 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
     }
   }
 
-  char s[UHOSTLEN] = "";
-
-  simple_snprintf(s, sizeof(s), "%s!%s", m->nick, m->userhost);
-  check_member_bans(chan, m, s, fr);
+  check_member_bans(chan, m, fr);
 }
 
 
@@ -2468,10 +2476,14 @@ static int got332(char *from, char *msg)
 }
 
 /*
+ * @brief Check if this member is banned, and if not exempted, kick them out
  * @pre Must be opped in the chan
  */
-static int check_member_bans(struct chanset_t* chan, memberlist* m, const char* from, struct flag_record *fr)
+static int check_member_bans(struct chanset_t* chan, memberlist* m, struct flag_record *fr)
 {
+  char from[UHOSTLEN] = "";
+
+  simple_snprintf(from, sizeof(from), "%s!%s", m->nick, m->userhost);
   /* Check for and reset exempts and invites.
    *
    * This will require further checking to account for when to use the
@@ -2491,6 +2503,7 @@ static int check_member_bans(struct chanset_t* chan, memberlist* m, const char* 
     if (channel_enforcebans(chan) && !chan_sentkick(m) && !chk_op(*fr, chan) &&
         !(use_exempts && (isexempted(chan, from) || (chan->ircnet_status & CHAN_ASKED_EXEMPTS)))) {
       for (masklist* b = chan->channel.ban; b->mask[0]; b = b->next) {
+        //FIXME: userip
         if (wild_match(b->mask, from) ||
             match_cidr(b->mask, from)) {
           dprintf(DP_SERVER, "KICK %s %s :%s%s\n", chan->name[0] ? chan->name : chan->dname, m->nick, bankickprefix, r_banned(chan));
@@ -2502,7 +2515,7 @@ static int check_member_bans(struct chanset_t* chan, memberlist* m, const char* 
 
     /* Do they match an internal ban? */
     if (u_match_mask(global_bans, from) ||
-        u_match_mask(chan->bans, from)) {
+        u_match_mask(chan->bans, from)) { //FIXME: Why not just kick?
       refresh_ban_kick(chan, m, from);
     /* Likewise for kick'ees */
     } else if (!chan_sentkick(m) && (glob_kick(*fr) || chan_kick(*fr))) {
@@ -2686,7 +2699,7 @@ static int gotjoin(char *from, char *chname)
         }
 
         /* Check bans for this member */
-        if (check_member_bans(chan, m, from, &fr))
+        if (check_member_bans(chan, m, &fr))
           return 0;
 
         bool op = 0;

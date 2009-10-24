@@ -104,7 +104,7 @@ void resolve_to_member(struct chanset_t *chan, char *nick, char *host);
 typedef struct resolvstruct resolv_member;
 void resolve_to_rbl(struct chanset_t *chan, char *host, struct resolvstruct *r = NULL);
 static void do_mask(struct chanset_t *chan, masklist *m, char *mask, char Mode);
-static int check_member_bans(struct chanset_t* chan, memberlist* m, const char* from, struct flag_record *fr);
+static int check_member_bans(struct chanset_t* chan, memberlist* m, struct flag_record *fr);
 
 #endif /* MAKING_IRC */
 
