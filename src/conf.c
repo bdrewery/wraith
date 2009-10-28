@@ -1135,6 +1135,8 @@ void conf_add_userlist_bots()
         set_user(&USERENTRY_BOTADDR, u, bi);
 
       }
+      // If oidentd?
+      // Should clearhosts which are obsolete as well
       if (bot->net.ip) {
         simple_snprintf(uhost, sizeof(uhost), "*!%s@%s", conf.username, bot->net.ip);
         if (!user_has_host(NULL, u, uhost) && !host_conflicts(uhost))
