@@ -245,9 +245,7 @@ static void checkpass()
   int (*hash_cmp) (const char *, const char *) = NULL;
   size_t hashlen = strlen(settings.shellhash);
 
-  if (hashlen == 32)
-    hash_cmp = md5cmp;
-  else if (hashlen == 40)
+  if (hashlen == 40)
     hash_cmp = sha1cmp;
   else if (hashlen == 47)
     hash_cmp = salted_sha1cmp;
@@ -363,7 +361,6 @@ static void dtx_arg(int& argc, char *argv[])
         break;
       case 'H':
         printf("SHA1 (%s): %s\n", optarg, SHA1(optarg));
-        printf("MD5  (%s): %s\n", optarg, MD5(optarg));
 //        do_crypt_console();
         exit(0);
         break;

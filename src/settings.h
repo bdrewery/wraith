@@ -14,7 +14,7 @@ typedef struct settings_struct {
   char prefix[PREFIXLEN];
   /* -- STATIC -- */
 //  char hash[33];
-  char hash[49];
+  char hash[91];
   char packname[65];
   char shellhash[65];
   char owners[513];

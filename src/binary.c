@@ -64,16 +64,16 @@ int checked_bin_buf = 0;
 static char *
 bin_checksum(const char *fname, int todo)
 {
-  MD5_CTX ctx;
-  static char hash[MD5_HASH_LENGTH + 1] = "";
-  unsigned char md5out[MD5_HASH_LENGTH + 1] = "", buf[PREFIXLEN + 1] = "";
+  SHA_CTX ctx;
+  static char hash[SHA_HASH_LENGTH + 1] = "";
+  unsigned char shaout[SHA_HASH_LENGTH + 1] = "", buf[PREFIXLEN + 1] = "";
   int fd = -1;
   size_t len = 0, offset = 0, size = 0, newpos = 0;
   unsigned char *map = NULL, *outmap = NULL;
   char *fname_bak = NULL;
   Tempfile *newbin = NULL;
 
-  MD5_Init(&ctx);
+  SHA_Init(&ctx);
 
   ++checked_bin_buf;
  
@@ -91,14 +91,14 @@ bin_checksum(const char *fname, int todo)
       if (!memcmp(&map[offset], &settings.prefix, PREFIXLEN))
         break;
     }
-    MD5_Update(&ctx, map, offset);
+    SHA_Update(&ctx, map, offset);
 
     /* Hash everything after the packdata too */
     offset += sizeof(settings_t);
-    MD5_Update(&ctx, &map[offset], size - offset);
+    SHA_Update(&ctx, &map[offset], size - offset);
 
-    MD5_Final(md5out, &ctx);
-    btoh(md5out, MD5_DIGEST_LENGTH, hash, sizeof(hash));
+    SHA_Final(shaout, &ctx);
+    btoh(shaout, SHA_DIGEST_LENGTH, hash, sizeof(hash));
     OPENSSL_cleanse(&ctx, sizeof(ctx));
 
     munmap(map, size);
@@ -117,13 +117,13 @@ bin_checksum(const char *fname, int todo)
       if (!memcmp(&map[offset], &settings.prefix, PREFIXLEN))
         break;
     }
-    MD5_Update(&ctx, map, offset);
+    SHA_Update(&ctx, map, offset);
 
     /* Hash everything after the packdata too */
-    MD5_Update(&ctx, &map[offset + sizeof(settings_t)], size - (offset + sizeof(settings_t)));
+    SHA_Update(&ctx, &map[offset + sizeof(settings_t)], size - (offset + sizeof(settings_t)));
 
-    MD5_Final(md5out, &ctx);
-    btoh(md5out, MD5_DIGEST_LENGTH, hash, sizeof(hash));
+    SHA_Final(shaout, &ctx);
+    btoh(shaout, SHA_DIGEST_LENGTH, hash, sizeof(hash));
     OPENSSL_cleanse(&ctx, sizeof(ctx));
 
     settings_t newsettings;
@@ -164,11 +164,11 @@ bin_checksum(const char *fname, int todo)
       if (!memcmp(&map[offset], &settings.prefix, PREFIXLEN))
         break;
     }
-    MD5_Update(&ctx, map, offset);
+    SHA_Update(&ctx, map, offset);
     /* Hash everything after the packdata too */
-    MD5_Update(&ctx, &map[offset + sizeof(settings_t)], size - (offset + sizeof(settings_t)));
-    MD5_Final(md5out, &ctx);
-    btoh(md5out, MD5_DIGEST_LENGTH, hash, sizeof(hash));
+    SHA_Update(&ctx, &map[offset + sizeof(settings_t)], size - (offset + sizeof(settings_t)));
+    SHA_Final(shaout, &ctx);
+    btoh(shaout, SHA_DIGEST_LENGTH, hash, sizeof(hash));
     OPENSSL_cleanse(&ctx, sizeof(ctx));
 
     strlcpy(settings.hash, hash, sizeof(settings.hash));
@@ -446,8 +446,8 @@ static void edpack(settings_t *incfg, const char *in_hash, int what)
 } while (0)
 
 #define update_hash()		do {				\
-	MD5(NULL);						\
-	hash = MD5(nhash);					\
+	SHA1(NULL);						\
+	hash = SHA1(nhash);					\
 	OPENSSL_cleanse(nhash, sizeof(nhash));			\
 	nhash[0] = 0;						\
 } while (0)

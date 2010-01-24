@@ -1612,17 +1612,6 @@ static void cmd_randstring(int idx, char *par)
     dprintf(idx, "Too long, must be <= 300\n");
 }
 
-static void cmd_md5(int idx, char *par)
-{
-  if (!par[0]) {
-    dprintf(idx, "Usage: md5 <string>\n");
-    return;
-  }
-
-  putlog(LOG_CMDS, "*", "#%s# md5 ...", dcc[idx].nick);
-  dprintf(idx, "MD5(%s) = %s\n", par, MD5(par));
-}
-
 static void cmd_sha1(int idx, char *par)
 {
   if (!par[0]) {
@@ -4567,7 +4556,6 @@ cmd_t C_dcc[] =
   {"test",		"",	(Function) cmd_test,		NULL, 0},
   {"botlink",		"a",	(Function) cmd_botlink,		NULL, 0},
   {"randstring", 	"", 	(Function) cmd_randstring, 	NULL, AUTH_ALL},
-  {"md5",		"",	(Function) cmd_md5,		NULL, AUTH_ALL},
   {"sha1",		"",	(Function) cmd_sha1,		NULL, AUTH_ALL},
   {"conf",		"a",	(Function) cmd_conf,		NULL, 0},
   {"encrypt",		"",	(Function) cmd_encrypt,		NULL, AUTH_ALL},

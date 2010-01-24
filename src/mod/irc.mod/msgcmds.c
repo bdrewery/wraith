@@ -629,18 +629,6 @@ static int msgc_help(Auth *a, char *chname, char *par)
   return BIND_RET_BREAK;
 }
 
-static int msgc_md5(Auth *a, char *chname, char *par)
-{
-  struct chanset_t *chan = NULL;
-
-  LOGC("MD5");
-  if (chname && chname[0])
-    chan = findchan_by_dname(chname);  
-
-  reply(a->nick, chan, "MD5(%s) = %s\n", par, MD5(par));
-  return BIND_RET_BREAK;
-}
-
 static int msgc_sha1(Auth *a, char *chname, char *par)
 {
   struct chanset_t *chan = NULL;
@@ -710,7 +698,6 @@ static cmd_t C_msgc[] =
   {"getkey",		"",	(Function) msgc_getkey,		NULL, LEAF|AUTH_MSG},
   {"help",		"",	(Function) msgc_help,		NULL, LEAF|AUTH_CHAN|AUTH_MSG},
   {"invite",		"",	(Function) msgc_invite,		NULL, LEAF|AUTH_MSG},
-  {"md5",		"",	(Function) msgc_md5,		NULL, LEAF|AUTH_MSG|AUTH_CHAN},
   {"op",		"",	(Function) msgc_op,		NULL, LEAF|AUTH_CHAN|AUTH_MSG},
   {"sha1",		"",	(Function) msgc_sha1,		NULL, LEAF|AUTH_CHAN|AUTH_MSG},
   {"voice",		"",	(Function) msgc_voice,		NULL, LEAF|AUTH_CHAN|AUTH_MSG},

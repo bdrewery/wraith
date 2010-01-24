@@ -37,7 +37,7 @@ class Auth {
   time_t authtime;              /* what time they authed at */
   time_t atime;                 /* when they last were active */
   int idx;			/* do they have an associated idx? */
-  char hash[MD5_HASH_LENGTH + 1];       /* used for dcc authing */
+  char hash[SHA_HASH_LENGTH + 1];       /* used for dcc authing */
   char rand[51];
   char nick[NICKLEN];
   char host[UHOSTLEN];

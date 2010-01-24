@@ -256,7 +256,7 @@ void makehash(struct userrec *u, const char *randstring, char *out, size_t out_s
   if (secpass)
     free(secpass);
 
-  strlcpy(out, MD5(hash), out_size);
+  strlcpy(out, SHA1(hash), out_size);
   OPENSSL_cleanse(hash, sizeof(hash));
 }
 

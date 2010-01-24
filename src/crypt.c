@@ -174,38 +174,6 @@ void Decrypt_File(char *infile, char *outfile)
   stream_out.writeFile(outfile);
 }
 
-
-char *MD5(const char *string) 
-{
-  static int n = 0;
-  static char ret[5][MD5_HASH_LENGTH + 1];
-  //Cleanse the current buffer
-  if (!string) {
-    OPENSSL_cleanse(ret[n], MD5_HASH_LENGTH + 1);
-    return NULL;
-  }
-
-  char* md5string = ret[n++];
-  unsigned char   md5out[MD5_HASH_LENGTH + 1] = "";
-  MD5_CTX ctx;
-
-  MD5_Init(&ctx);
-  MD5_Update(&ctx, string, strlen(string));
-  MD5_Final(md5out, &ctx);
-  btoh(md5out, MD5_DIGEST_LENGTH, md5string, MD5_HASH_LENGTH + 1);
-  OPENSSL_cleanse(&ctx, sizeof(ctx));
-
-  if (n == 5) n = 0;
-
-  return md5string;
-}
-
-int md5cmp(const char *hash, const char *string) {
-  int n = strcmp(hash, MD5(string));
-  MD5(NULL);
-  return n;
-}
-
 char *SHA1(const char *string)
 {
   static int n = 0;

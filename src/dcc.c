@@ -671,7 +671,7 @@ dcc_chat_secpass(int idx, char *buf, int atr)
   atr = dcc[idx].user ? dcc[idx].user->flags : 0;
 
   if (dccauth) {
-    char check[MD5_HASH_LENGTH + 7] = "";
+    char check[SHA_HASH_LENGTH + 7] = "";
 
     simple_snprintf(check, sizeof check, STR("+Auth %s"), dcc[idx].hash);
     badauth = strcmp(check, buf);
@@ -1057,7 +1057,7 @@ dcc_chat_pass(int idx, char *buf, int atr)
       char randstr[51] = "";
 
       make_rand_str(randstr, 50);
-      makehash(dcc[idx].user, randstr, dcc[idx].hash, MD5_HASH_LENGTH + 1);
+      makehash(dcc[idx].user, randstr, dcc[idx].hash, SHA_HASH_LENGTH + 1);
 
       dcc[idx].type = &DCC_CHAT_SECPASS;
       dcc[idx].timeval = now;
