@@ -1345,6 +1345,7 @@ take_makeline(char *op, char *deops, unsigned int deopn, size_t deops_len)
   return ret;  
 }
 
+// This code is so bad
 static void
 do_take(struct chanset_t *chan)
 {
@@ -1357,13 +1358,12 @@ do_take(struct chanset_t *chan)
     if (!m->is_me) {
       register const bool isbot = m->user && m->user->bot ? 1 : 0;
 
-      /* Avoid countless unneeded operations from strcat/strlen */
       if (isbot && !(m->flags & CHANOP)) {
         to_op_len += strlcpy(to_op + to_op_len, m->nick, sizeof(to_op) - to_op_len);
-        *(to_op + to_op_len++) = ' ';
+        to_op_len += strlcpy(to_op + to_op_len, " ", sizeof(to_op) - to_op_len);
       } else if (!isbot && (m->flags & CHANOP)) {
         to_deop_len += strlcpy(to_deop + to_deop_len, m->nick, sizeof(to_deop) - to_deop_len);
-        *(to_deop + to_deop_len++) = ' ';
+        to_deop_len += strlcpy(to_deop + to_deop_len, " ", sizeof(to_deop) - to_deop_len);
       }
     }
   }
@@ -1393,17 +1393,13 @@ do_take(struct chanset_t *chan)
         ++deopn; 
         const char *deop_nick = newsplit(&to_deop_ptr);
         deops_len += strlcpy(deops + deops_len, deop_nick, sizeof(deops) - deops_len);
-        *(deops + deops_len++) = ' ';
+        deops_len += strlcpy(deops + deops_len, " ", sizeof(deops) - deops_len);
       }
     }
     deops[deops_len] = 0;
-    *(work + work_len++) = 'M';
-    *(work + work_len++) = 'O';
-    *(work + work_len++) = 'D';
-    *(work + work_len++) = 'E';
-    *(work + work_len++) = ' ';
+    work_len += strlcpy(work + work_len, "MODE ", sizeof(work) - work_len);
     work_len += strlcpy(work + work_len, chan->name, sizeof(work) - work_len);
-    *(work + work_len++) = ' ';
+    work_len += strlcpy(work + work_len, " ", sizeof(work) - work_len);
 
     if (deops[0])
       modeline = take_makeline(op, deops, deopn, deops_len);
@@ -1411,22 +1407,22 @@ do_take(struct chanset_t *chan)
       modeline = take_massopline(op, &to_op_ptr);
 
     work_len += strlcpy(work + work_len, modeline, sizeof(work) - work_len);
-    *(work + work_len++) = '\r';
-    *(work + work_len++) = '\n';
     work[work_len] = 0;
+    dprintf_real(DP_MODE, work, work_len, sizeof(work));
 
-    // Prevent excess flood
-    if (!HAVE_F1) usleep(1000 * 500);
-    if (++lines >= max_lines) {
-      tputs(serv, work, work_len);
+//    *(work + work_len++) = '\r';
+//    *(work + work_len++) = '\n';
+
+//    if (++lines >= max_lines) {
+//      tputs(serv, work, work_len);
       work[0] = 0;
       work_len = 0;
       lines = 0;
-    }
+//    }
   }
 
-  if (work[0])
-    tputs(serv, work, work_len);
+//  if (work[0])
+//    tputs(serv, work, work_len);
 
   if (channel_closed(chan))
     enforce_closed(chan);
