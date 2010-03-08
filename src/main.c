@@ -330,7 +330,7 @@ static void show_help()
 }
 
 // leaf: BkLP
-#define PARSE_FLAGS STR("0234:aB:cCd:De:EH:k:hnr:tu:U:v")
+#define PARSE_FLAGS STR("0234:aB:cCd:De:Ek:hnr:tu:U:v")
 #define FLAGS_CHECKPASS STR("cCdDeEhknrtuUv")
 static void dtx_arg(int& argc, char *argv[])
 {
@@ -362,12 +362,6 @@ static void dtx_arg(int& argc, char *argv[])
         used_B = 1;
         strlcpy(origbotname, optarg, sizeof(origbotname));
         strlcpy(origbotnick, optarg, sizeof(origbotnick));
-        break;
-      case 'H':
-        printf("SHA1 (%s): %s\n", optarg, SHA1(optarg));
-        printf("MD5  (%s): %s\n", optarg, MD5(optarg));
-//        do_crypt_console();
-        exit(0);
         break;
       case 'c':
         do_confedit = 2;
