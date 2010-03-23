@@ -31,7 +31,7 @@ bd::String encrypt_string(const bd::String& key, const bd::String& data) {
  * @brief Encrypt a string with AES 256 CBC
  * @param key The key to encrypt with
  * @param data The string to encrypt
- * @param IV The IV to use (WARNING: This is modified inplace)
+ * @param[optional] IV The 16byte IV to use
  * @return A new, encrypted string
  */
 bd::String encrypt_string_cbc(const bd::String& key, bd::String data, bd::String IV) {
@@ -71,7 +71,7 @@ bd::String decrypt_string(const bd::String& key, const bd::String& data) {
  * @brief Decrypt anAES 256 CBC ciphered string
  * @param key The key to decrypt with
  * @param data The string to decrypt
- * @param IV The IV to use (WARNING: This is modified inplace)
+ * @param[optional] IV The 16byte IV to use
  * @return A new, decrypted string
  */
 bd::String decrypt_string_cbc(const bd::String& key, bd::String data, bd::String IV) {
