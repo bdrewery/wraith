@@ -55,7 +55,6 @@ void init_userent()
   add_entry_type(&USERENTRY_ARCH);
   add_entry_type(&USERENTRY_OSVER);
   add_entry_type(&USERENTRY_PASS);
-  add_entry_type(&USERENTRY_PASS1);
   add_entry_type(&USERENTRY_SECPASS);
   add_entry_type(&USERENTRY_HOSTS);
   add_entry_type(&USERENTRY_STATS);
@@ -598,10 +597,6 @@ static bool pass_set(struct userrec *u, struct user_entry *e, void *buf)
   if (newpass)
     free(newpass);
 
-  /* clear old records */
-  noshare = 1;
-  set_user(&USERENTRY_PASS1, u, NULL);
-  noshare = 0;
   return 1;
 }
 
@@ -617,46 +612,6 @@ struct user_entry_type USERENTRY_PASS =
   NULL,
   "PASS2"
 };
-
-static bool pass1_set(struct userrec *u, struct user_entry *e, void *buf)
-{
-  register char *pass = (char *) buf;
-
-  if (e->u.extra)
-    free(e->u.extra);
-  if (!pass || !pass[0] || (pass[0] == '-'))
-    e->u.extra = NULL;
-  else {
-    unsigned char *p = (unsigned char *) pass;
-
-    while (*p) {
-      if ((*p <= 32) || (*p == 127))
-	*p = '?';
-      p++;
-    }
-    if (u->bot || (pass[0] == '+'))
-      e->u.extra = strdup(pass);
-    else
-      e->u.extra = encrypt_string(u->handle, pass);
-  }
-  if (!noshare)
-    shareout("c %s %s %s\n", e->type->name, u->handle, pass ? pass : "");
-  return 1;
-}
-
-struct user_entry_type USERENTRY_PASS1 =
-{
-  0,
-  def_gotshare,
-  def_unpack,
-  def_write_userfile,
-  def_kill,
-  def_get,
-  pass1_set,
-  NULL,
-  "PASS1"
-};
-
 
 static void secpass_display(int idx, struct user_entry *e, struct userrec *u)
 {
