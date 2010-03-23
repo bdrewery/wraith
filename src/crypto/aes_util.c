@@ -34,7 +34,7 @@ bd::String encrypt_string(const bd::String& key, const bd::String& data) {
  * @param[optional] IV The 16byte IV to use
  * @return A new, encrypted string
  */
-bd::String encrypt_string_cbc(const bd::String& key, bd::String data, bd::String IV) {
+bd::String encrypt_string_cbc(bd::String key, bd::String data, bd::String IV) {
   if (!key) return data;
 
   // Add padding
@@ -43,8 +43,8 @@ bd::String encrypt_string_cbc(const bd::String& key, bd::String data, bd::String
     padding = (CRYPT_BLOCKSIZE - (data.length() % CRYPT_BLOCKSIZE));
   // Pad with padding bytes of padding
   data.resize(data.length() + padding, padding);
-
-  AES_set_encrypt_key((const unsigned char *) key.c_str(), CRYPT_KEYBITS, &e_key);
+  key.resize(CRYPT_KEYBITS);
+  AES_set_encrypt_key((const unsigned char *) key.data(), CRYPT_KEYBITS, &e_key);
   AES_cbc_encrypt((const unsigned char*)data.data(), (unsigned char*)data.mdata(), data.length(), &e_key, (unsigned char*)IV.mdata(), AES_ENCRYPT);
   OPENSSL_cleanse(&e_key, sizeof(e_key));
 
@@ -74,11 +74,12 @@ bd::String decrypt_string(const bd::String& key, const bd::String& data) {
  * @param[optional] IV The 16byte IV to use
  * @return A new, decrypted string
  */
-bd::String decrypt_string_cbc(const bd::String& key, bd::String data, bd::String IV) {
+bd::String decrypt_string_cbc(bd::String key, bd::String data, bd::String IV) {
   if (!key) return data;
 
   data.resize(data.length() - (data.length() % CRYPT_BLOCKSIZE));
-  AES_set_decrypt_key((const unsigned char *) key.c_str(), CRYPT_KEYBITS, &d_key);
+  key.resize(CRYPT_KEYBITS);
+  AES_set_decrypt_key((const unsigned char *) key.data(), CRYPT_KEYBITS, &d_key);
   AES_cbc_encrypt((const unsigned char*)data.data(), (unsigned char*)data.mdata(), data.length(), &d_key, (unsigned char*)IV.mdata(), AES_DECRYPT);
   OPENSSL_cleanse(&d_key, sizeof(d_key));
 
