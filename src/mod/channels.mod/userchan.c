@@ -819,98 +819,10 @@ void write_chans(bd::Stream& stream, int idx, bool old)
     write_chan(stream, idx, chan);
 }
 
-/* FIXME: remove after 1.2.14 */
-/* Write the channels to the userfile
- */
-void write_chans_compat(bd::Stream& stream, int idx)
-{
-  bd::String buf;
-
-  putlog(LOG_DEBUG, "*", "Writing channels..");
-
-  stream << buf.printf(CHANS_NAME " - -\n");
-
-  char w[1024] = "";
-
-  for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
-    char inactive = 0;
-
-    putlog(LOG_DEBUG, "*", "writing channel %s to userfile..", chan->dname);
-    get_mode_protect(chan, w, sizeof(w));
-
-    /* if a bot should explicitly NOT join, just set it +inactive ... */
-    if (idx >= 0 && !botshouldjoin(dcc[idx].user, chan))
-      inactive = '+';
-    /* ... otherwise give the bot the *actual* setting */
-    else
-      inactive = PLSMNS(channel_inactive(chan));
-
-    stream << buf.printf("\
-+ channel add %s { chanmode { %s } addedby %s addedts %li \
-bad-cookie %d manop %d mdop %d mop %d limit %d \
-flood-chan %d:%d flood-ctcp %d:%d flood-join %d:%d \
-flood-kick %d:%d flood-deop %d:%d flood-nick %d:%d \
-closed-ban %d closed-invite %d closed-private %d ban-time %d \
-exempt-time %d invite-time %d voice-non-ident %d auto-delay %d \
-%cenforcebans %cdynamicbans %cuserbans %cbitch \
-%cprivate %ccycle %cinactive %cdynamicexempts %cuserexempts \
-%cdynamicinvites %cuserinvites %cnodesynch %cclosed %cvoice \
-%cfastop %cautoop %cbotbitch %cbackup %cnomassjoin %c%s}\n",
-	chan->dname,
-	w,
-        chan->added_by,
-        (long)chan->added_ts,
-	chan->bad_cookie,
-	chan->manop,
-	chan->mdop,
-	chan->mop,
-        chan->limitraise,
-	chan->flood_pub_thr, chan->flood_pub_time,
-        chan->flood_ctcp_thr, chan->flood_ctcp_time,
-        chan->flood_join_thr, chan->flood_join_time,
-        chan->flood_kick_thr, chan->flood_kick_time,
-        chan->flood_deop_thr, chan->flood_deop_time,
-	chan->flood_nick_thr, chan->flood_nick_time,
-        chan->closed_ban,
-        chan->closed_invite,
-        chan->closed_private,
-        chan->ban_time,
-        chan->exempt_time,
-        chan->invite_time,
-        chan->voice_non_ident,
-        chan->auto_delay,
- 	PLSMNS(channel_enforcebans(chan)),
-	PLSMNS(channel_dynamicbans(chan)),
-	PLSMNS(!channel_nouserbans(chan)),
-	PLSMNS(channel_bitch(chan)),
-	PLSMNS(channel_privchan(chan)),
-	PLSMNS(channel_cycle(chan)),
-        inactive,
-	PLSMNS(channel_dynamicexempts(chan)),
-	PLSMNS(!channel_nouserexempts(chan)),
- 	PLSMNS(channel_dynamicinvites(chan)),
-	PLSMNS(!channel_nouserinvites(chan)),
-	PLSMNS(channel_nodesynch(chan)),
-	PLSMNS(channel_closed(chan)),
-	PLSMNS(channel_voice(chan)),
-	PLSMNS(channel_fastop(chan)),
-        PLSMNS(channel_autoop(chan)),
-        PLSMNS(channel_botbitch(chan)),
-        PLSMNS(channel_backup(chan)),
-        PLSMNS(channel_nomassjoin(chan)),
-	HAVE_TAKE ? PLSMNS(channel_take(chan)) : ' ',
-        HAVE_TAKE ? "take " : " "
-    );
-  }
-}
-
 void channels_writeuserfile(bd::Stream& stream, int old)
 {
   putlog(LOG_DEBUG, "@", "Writing channel/ban/exempt/invite entries.");
-  if (old != 1)
-    write_chans(stream, -1, old == 0 ? 0 : 1);
-  else /* flood-* hacks */
-    write_chans_compat(stream, -1);
+  write_chans(stream, -1, old == 0 ? 0 : 1);
   write_vars_and_cmdpass(stream, -1);
   write_bans(stream, -1);
   write_exempts(stream, -1);
