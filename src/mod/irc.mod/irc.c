@@ -412,7 +412,7 @@ void makecookie(char *out, size_t len, const char *chname, const memberlist* opp
   const char* hash1 = cookie_hash(chname, opper, m1, &ts[4], randstring, key);
   const char* hash2 = m2 ? cookie_hash(chname, opper, m2, &ts[4], randstring, key) : NULL;
   const char* hash3 = m3 ? cookie_hash(chname, opper, m3, &ts[4], randstring, key) : NULL;
-  bd::String cookie = encrypt_string(MD5(key), bd::String(cookie_clear));
+  bd::String cookie = encrypt_string_cbc(MD5(key), bd::String(cookie_clear));
   cookie = bd::base64Encode(cookie);
 #ifdef DEBUG
 sdprintf("key: %s", key);
@@ -474,7 +474,7 @@ static inline int checkcookie(const char *chname, const memberlist* opper, const
   cookie_key(key, sizeof(key), randstring, opper, chname);
 
   bd::String ciphertext = bd::base64Decode((char*) &cookie[HOST(0)]);
-  bd::String cleartext = decrypt_string(MD5(key), ciphertext);
+  bd::String cleartext = decrypt_string_cbc(MD5(key), ciphertext);
   char ts[8] = "";
   strlcpy(ts, cleartext.c_str() + 4, sizeof(ts));
   unsigned long counter = base64_to_int(cleartext.c_str() + 4 + 7);
