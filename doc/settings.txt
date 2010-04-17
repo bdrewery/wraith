@@ -11,6 +11,20 @@ list set list
 -bot -user
 +bot newleaf
 
+:auth_export
+md5
+sha1
+sha256
+hash
+encrypt
+decrypt
+randstring
+dns
+encrypt_fish
+decrypt_fish
+play
+
+
 # From http://stats.efnet.org with hubs removed
 :servers
 #US

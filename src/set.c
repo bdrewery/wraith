@@ -30,6 +30,7 @@ static bool parsing_botset = 0;
 char altchars[50] = "";
 char alias[1024] = "";
 char rbl_servers[1024] = "";
+char auth_export[1024] = "";
 bool auth_chan;
 char auth_key[51] = "";
 char auth_prefix[2] = "";
@@ -80,6 +81,7 @@ static variable_t vars[] = {
  VAR("alias", 		alias,			VAR_STRING|VAR_LIST|VAR_NOLOC|VAR_PERM,		0, 0, DEFAULT_ALIAS),
  VAR("altchars",	altchars,		VAR_WORD|VAR_NOLHUB,				0, 0, "-_\\`^[]"),
  VAR("auth-chan",	&auth_chan,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "1"),
+ VAR("auth-export",	auth_export,		VAR_STRING|VAR_LIST|VAR_NOLHUB,			0, 0, DEFAULT_AUTH_EXPORT),
  VAR("auth-key",	auth_key,		VAR_STRING|VAR_PERM,				0, 0, NULL),
  VAR("auth-obscure",	&auth_obscure,		VAR_INT|VAR_BOOL,				0, 1, "0"),
  VAR("auth-prefix",	auth_prefix,		VAR_WORD|VAR_NOLHUB|VAR_PERM,			0, 0, "+"),
