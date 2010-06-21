@@ -119,6 +119,7 @@ static void calc_penalty(char *, size_t);
 static bool fast_deq(int);
 static char *splitnicks(char **);
 static void msgq_clear(struct msgq_head *qh);
+static void msgq_delete_target(struct msgq_head *qh, const char* target);
 static int stack_limit = 4;
 static bool replaying_cache = 0;
 
@@ -627,6 +628,11 @@ static void empty_msgq()
   burst = 0;
   flood_count = 0;
   flood_time.sec = flood_time.usec = 0;
+}
+
+void queue_delete_target(const char* target, struct chanset_t* chan) {
+  for (size_t i = 0; i < (sizeof(qdsc) / sizeof(qdsc[0])); ++i)
+    msgq_delete_target(qdsc[i].q, target, chan);
 }
 
 /* Use when sending msgs... will spread them out so there's no flooding.
@@ -1155,6 +1161,41 @@ static void msgq_clear(struct msgq_head *qh)
   }
   qh->head = qh->last = NULL;
   qh->tot = qh->warned = 0;
+}
+
+// Remove the target from all queue actions
+// PRIVMSG target
+// NOTICE target
+// KICK #chan target
+// MODE #chan [modes] target
+static void msgq_delete_target(struct msgq_head *qh, const char* target, struct chanset_t* chan) {
+  struct msgq *qq = NULL;
+  bd::String filter_privmsg, filter_notice, filter_kick, nick_colon, msg;
+
+  filter_privmsg.printf("PRIVMSG %s :", target);
+  filter_notice.printf("NOTICE %s :", target);
+  if (chan)
+    filter_kick.printf("KICK %s %s :", chan->name, target);
+  nick_colon = target + " :";
+
+  for (struct msgq *q = qh->head; q; q = qq) {
+    msg = bd::String(q->msg);
+    bool delete_queue = 0;
+    if (!delete_queue && msg.find(filter_privmsg) != bd::String::npos)
+      delete_queue = 1;
+    if (!delete_queue && msg.find(filter_notice) != bd::String::npos)
+      delete_queue = 1;
+//    if (!delete_queue && ((chan && strstr(q->msg, filter_kick.c_str())) || (strstr(q->msg, "KICK ") && strstr(q->msg, nick_colon))))
+//      delete_queue = 1;
+
+    if (delete_queue) {
+      putlog(LOG_MISC, "*", "free: %s", q->msg);
+      free(q->msg);
+      free(q);
+    }
+    qq = q->next;
+  }
+
 }
 
 static cmd_t my_ctcps[] =
