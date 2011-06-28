@@ -266,9 +266,6 @@ See also: cmdpass
    Adds a channel to the bot's channel list. If options are specified, the 
    channel will be configured with the options.
  
-   $bTHIS CMD IS CURRENTLY EXPERIMENTAL AND WILL NOT ACTUALLY SAVE STATE$b
-   $bMEANING, ALL BOTS WILL JOIN EVENTUALLY AFTER DOING BOTJOIN$b
- 
 See also: botpart, +chan, -chan, chanset, chaninfo
 :hub:botjump:
 ###  $bbotjump$b <bot> [server [port [pass]]]
