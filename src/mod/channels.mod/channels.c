@@ -48,6 +48,7 @@
 #include "src/binds.h"
 #include "src/cmds.h"
 #include <bdlib/src/String.h>
+#include <bdlib/src/Array.h>
 
 
 #include <sys/stat.h>
@@ -146,25 +147,6 @@ static void got_cset(char *botnick, char *code, char *par)
   do_chanset(NULL, chan, par, DO_LOCAL);
 }
 
-/* returns 1 if botn is in bots */
-
-static int
-parsebots(char *bots, char *botn) {
-  if (!strcmp(bots, "*")) {
-    return 1;
-  } else {
-    char *list = strdup(bots), *bot = strtok(list, ",");
-
-    while(bot && *bot) {
-      if (!strcasecmp(bot, botn))
-        return 1;
-      bot = strtok((char*) NULL, ",");
-    }
-    free(list);
-  }
-  return 0;
-}
-
 static void got_cpart(char *botnick, char *code, char *par)
 {
   if (!par[0])
@@ -176,14 +158,16 @@ static void got_cpart(char *botnick, char *code, char *par)
   if (!(chan = findchan_by_dname(chname)))
    return;
 
-  char *bots = newsplit(&par);
-  int match = 0;
+  bd::String bots(newsplit(&par));
+  bool match = 0;
 
   /* if bots is '*' just remove_channel */
-  if (!strcmp(bots, "*"))
+  if (bots == "*")
     match = 0;
-  else
-    match = parsebots(bots, conf.bot->nick);
+  else {
+    bd::Array<bd::String> botArray = bots.split(',');
+    match = (botArray.find(conf.bot->nick) != botArray.npos);
+  }
  
   if (match)
     do_chanset(NULL, chan, "+inactive", DO_LOCAL);
@@ -226,7 +210,7 @@ static void got_cjoin(char *botnick, char *code, char *par)
 
   char *chname = newsplit(&par), *options = NULL;
   struct chanset_t *chan = findchan_by_dname(chname);
-  int match = 0;
+  bool match = 0;
 
   if (conf.bot->hub) {
     newsplit(&par);	/* hubs ignore the botmatch param */
@@ -234,8 +218,10 @@ static void got_cjoin(char *botnick, char *code, char *par)
   } else {
     /* ALL hubs should add the channel, leaf should check the list for a match */
     bool inactive = 0;
-    char *bots = newsplit(&par);
-    match = parsebots(bots, conf.bot->nick);
+    bd::String bots(newsplit(&par));
+    bd::Array<bd::String> botArray = bots.split(',');
+
+    match = (botArray.find(conf.bot->nick) != botArray.npos);
 
     if (strstr(par, "+inactive"))
       inactive = 1;
