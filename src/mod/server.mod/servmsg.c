@@ -768,7 +768,7 @@ static int gotmsg(char *from, char *msg)
 }
 
 // Adapated from ZNC
-void handle_DH1080_init(const char* nick, const char* uhost, const char* from, struct userrec* u, const bd::String theirPublicKeyB64) {
+void handle_DH1080_init(const char* nick, const char* uhost, const char* from, struct userrec* u, const bd::String theirPublicKeyB64, bool use_cbc) {
   bd::String myPublicKeyB64, myPrivateKey, sharedKey;
 
   DH1080_gen(myPrivateKey, myPublicKeyB64);
@@ -777,8 +777,15 @@ void handle_DH1080_init(const char* nick, const char* uhost, const char* from, s
     return;
   }
 
-  putlog(LOG_MSGS, "*", "[FiSH] Received DH1080 public key from (%s!%s) - sending mine", nick, uhost);
-  notice(nick, "DH1080_FINISH " + myPublicKeyB64, DP_HELP);
+  if (use_cbc) {
+    sharedKey.insert(0, "cbc:");
+    putlog(LOG_MSGS, "*", "[FiSH-CBC] Received DH1080 public key from (%s!%s) - sending mine", nick, uhost);
+    notice(nick, "DH1080_FINISH " + myPublicKeyB64 + " CBC", DP_HELP);
+  } else {
+    putlog(LOG_MSGS, "*", "[FiSH] Received DH1080 public key from (%s!%s) - sending mine", nick, uhost);
+    notice(nick, "DH1080_FINISH " + myPublicKeyB64, DP_HELP);
+  }
+
   fish_data_t* fishData = new fish_data_t;
   fishData->myPublicKeyB64 = myPublicKeyB64;
   fishData->myPrivateKey = myPrivateKey;
@@ -789,7 +796,7 @@ void handle_DH1080_init(const char* nick, const char* uhost, const char* from, s
   return;
 }
 
-void handle_DH1080_finish(const char* nick, const char* uhost, const char* from, struct userrec* u, const bd::String theirPublicKeyB64) {
+void handle_DH1080_finish(const char* nick, const char* uhost, const char* from, struct userrec* u, const bd::String theirPublicKeyB64, bool use_cbc) {
   if (!FishKeys.contains(nick)) {
     putlog(LOG_MSGS, "*", "[FiSH] Unexpected DH1080_FINISH from (%s!%s) - ignoring", nick, uhost);
     return;
@@ -803,7 +810,13 @@ void handle_DH1080_finish(const char* nick, const char* uhost, const char* from,
     return;
   }
 
-  putlog(LOG_MSGS, "*", "[FiSH] Key successfully set for (%s!%s)", nick, uhost);
+  if (use_cbc) {
+    sharedKey.insert(0, "cbc:");
+    putlog(LOG_MSGS, "*", "[FiSH-CBC] Key successfully set for (%s!%s)", nick, uhost);
+  } else {
+    putlog(LOG_MSGS, "*", "[FiSH] Key successfully set for (%s!%s)", nick, uhost);
+  }
+
   fishData->sharedKey = sharedKey;
   sdprintf("Set key for %s: %s", nick, sharedKey.c_str());
   return;
@@ -891,12 +904,18 @@ static int gotnotice(char *from, char *msg)
         bd::String smsg(msg);
         bd::String which = newsplit(smsg);
 
-        if (which == "DH1080_INIT") {
+        if (which(0, 7) == "DH1080_") {
           bd::String theirPublicKeyB64(newsplit(smsg));
-          handle_DH1080_init(nick, uhost, from, u, theirPublicKeyB64);
-        } else if (which == "DH1080_FINISH") {
-          bd::String theirPublicKeyB64(newsplit(smsg));
-          handle_DH1080_finish(nick, uhost, from, u, theirPublicKeyB64);
+          bool use_cbc = false;
+
+          if (newsplit(smsg) == "CBC") {
+            use_cbc = true;
+          }
+          if (which == "DH1080_INIT") {
+            handle_DH1080_init(nick, uhost, from, u, theirPublicKeyB64, use_cbc);
+          } else if (which == "DH1080_FINISH") {
+            handle_DH1080_finish(nick, uhost, from, u, theirPublicKeyB64, use_cbc);
+          }
         } else {
           putlog(LOG_MSGS, "*", "-%s (%s)- %s", nick, uhost, msg);
         }
