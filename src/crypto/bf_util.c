@@ -129,6 +129,55 @@ bd::String egg_bf_decrypt(bd::String in, const bd::String& key)
   return out;
 }
 
+/**
+ * @brief Encrypt a string with BF CBC
+ * @param key The key to encrypt with
+ * @param data The string to encrypt
+ * @param IV The IV to use (WARNING: This is modified inplace)
+ * @return A new, encrypted string
+ */
+bd::String bf_encrypt_string_cbc(const bd::String& key, bd::String data, bd::String IV) {
+  if (!key) return data;
+
+  // Add padding
+  size_t padding = CRYPT_BLOCKSIZE;
+  if (data.length() % CRYPT_BLOCKSIZE)
+    padding = (CRYPT_BLOCKSIZE - (data.length() % CRYPT_BLOCKSIZE));
+  // Pad with padding bytes of padding
+  data.resize(data.length() + padding, padding);
+
+  BF_set_key((const unsigned char *) key.c_str(), CRYPT_KEYBITS, &e_key);
+  BF_cbc_encrypt((const unsigned char*)data.data(), (unsigned char*)data.mdata(), data.length(), &e_key, (unsigned char*)IV.mdata(), AES_ENCRYPT);
+  OPENSSL_cleanse(&e_key, sizeof(e_key));
+
+  return data;
+}
+
+/**
+ * @brief Decrypt a BF CBC ciphered string
+ * @param key The key to decrypt with
+ * @param data The string to decrypt
+ * @param IV The IV to use (WARNING: This is modified inplace)
+ * @return A new, decrypted string
+ */
+bd::String bf_decrypt_string_cbc(const bd::String& key, bd::String data, bd::String IV) {
+  if (!key) return data;
+
+  data.resize(data.length() - (data.length() % CRYPT_BLOCKSIZE));
+  BF_set_key((const unsigned char *) key.c_str(), CRYPT_KEYBITS, &d_key);
+  BF_cbc_decrypt((const unsigned char*)data.data(), (unsigned char*)data.mdata(), data.length(), &d_key, (unsigned char*)IV.mdata(), AES_DECRYPT);
+  OPENSSL_cleanse(&d_key, sizeof(d_key));
+
+  // How much padding?
+  size_t padding = data[data.length() - 1];
+
+  if (!padding || padding > 16)
+    data.resize(strlen((char*) data.c_str()));
+  else
+    data.resize(data.length() - padding);
+  return data;
+}
+
 #ifdef not_needed
 unsigned char *
 bf_encrypt_ecb_binary(const char *keydata, unsigned char *in, size_t *inlen)

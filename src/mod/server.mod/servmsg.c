@@ -175,8 +175,17 @@ static int check_bind_raw(char *from, char *code, char *msg)
         }
 
         if (sharedKey.length()) {
+          bd::String cleartext;
           // Decrypt the message before passing along to the binds
-          bd::String cleartext(bd::String(msg, colon - msg) + egg_bf_decrypt(ciphertext, sharedKey));
+          if (sharedKey(0, 4) == "cbc:") {
+            // Skip initial * in ciphertext and cbc: in key
+            cleartext = egg_bf_decrypt_cbc(ciphertext(1), sharedKey(4));
+          } else {
+            cleartext = egg_bf_decrypt(ciphertext, sharedKey);
+          }
+
+          // Insert the proper raw data back in for later parsing
+          cleartext.insert(0, bd::String(msg, colon -msg));
           mymsg = p2 = strdup(cleartext.c_str());
         }
       }

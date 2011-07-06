@@ -971,7 +971,11 @@ void privmsg(bd::String target, bd::String msg, int idx) {
 
   // Encrypt with FiSH?
   if (!strchr(CHANMETA, target[0]) && FishKeys.contains(target) && FishKeys[target]->sharedKey.length()) {
-    msg = "+OK " + egg_bf_encrypt(msg, FishKeys[target]->sharedKey);
+    if (FishKeys[target]->sharedKey(0, 4) == "cbc:") {
+      msg = "+OK *" + egg_bf_encrypt_cbc(msg, FishKeys[target]->sharedKey(4));
+    } else {
+      msg = "+OK " + egg_bf_encrypt(msg, FishKeys[target]->sharedKey);
+    }
   }
   if (chan)
     dprintf(idx, "CPRIVMSG %s %s :%s\n", target.c_str(), chan->name, msg.c_str());
