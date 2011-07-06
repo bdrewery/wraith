@@ -13,10 +13,6 @@
 #include ".defs/libtcl_post.h"
 
 
-#define STDVAR (ClientData cd, Tcl_Interp *interp, int argc, const char *argv[])
-
-extern Tcl_Interp *global_interp;
-bd::String tcl_eval(const bd::String&);
 #endif
 
 int load_libtcl();

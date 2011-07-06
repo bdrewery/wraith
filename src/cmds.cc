@@ -57,7 +57,7 @@
 #include "socket.h"
 #include "traffic.h" /* egg_traffic_t */
 #include "core_binds.h"
-#include "libtcl.h"
+#include "script.h"
 #include "src/mod/console.mod/console.h"
 #include "src/mod/server.mod/server.h"
 #include "src/mod/irc.mod/irc.h"

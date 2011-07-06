@@ -34,14 +34,8 @@
 #include "libtcl.h"
 #include ".defs/libtcl_defs.cc"
 
-#ifdef USE_SCRIPT_TCL
-Tcl_Interp *global_interp = NULL;
-#endif
-
 void *libtcl_handle = NULL;
 static bd::Array<bd::String> my_symbols;
-
-void initialize_binds_tcl();
 
 static int load_symbols(void *handle) {
 #ifdef USE_SCRIPT_TCL
@@ -63,11 +57,11 @@ int load_libtcl() {
 #ifndef USE_SCRIPT_TCL
   sdprintf("Not compiled with TCL support");
   return 1;
-#else
-  if (global_interp) {
+#endif
+
+  if (libtcl_handle) {
     return 0;
   }
-#endif
 
   bd::Array<bd::String> libs_list(bd::String("libtcl.so libtcl83.so libtcl8.3.so libtcl84.so libtcl8.4.so libtcl85.so libtcl8.5.so libtcl86.so libtcl8.6.so").split(' '));
 
@@ -86,48 +80,11 @@ int load_libtcl() {
     return(1);
   }
 
-#ifdef USE_SCRIPT_TCL
-  // create interp
-  global_interp = Tcl_CreateInterp();
-  Tcl_FindExecutable(binname);
-
-  if (Tcl_Init(global_interp) != TCL_OK) {
-    sdprintf("Tcl_Init error: %s", Tcl_GetStringResult(global_interp));
-    return 1;
-  }
-
-  initialize_binds_tcl();
-#endif
   return 0;
 }
 
-#ifdef USE_SCRIPT_TCL
-
-#include "chanprog.h"
-static int cmd_privmsg STDVAR {
-  bd::String str = argv[2];
-  for (int i = 3; i < argc; ++i)
-    str += " " + bd::String(argv[i]);
-  privmsg(argv[1], str, DP_SERVER);
-
-  return TCL_OK;
-}
-
-void initialize_binds_tcl() {
-  Tcl_CreateCommand(global_interp, "privmsg", (Tcl_CmdProc*) cmd_privmsg, NULL, NULL);
-}
-
-#endif
-
 int unload_libtcl() {
   if (libtcl_handle) {
-#ifdef USE_SCRIPT_TCL
-    if (global_interp) {
-      Tcl_DeleteInterp(global_interp);
-      global_interp = NULL;
-    }
-#endif
-
     // Cleanup symbol table
     for (size_t i = 0; i < my_symbols.length(); ++i) {
       dl_symbol_table.remove(my_symbols[i]);
@@ -142,15 +99,4 @@ int unload_libtcl() {
   return 1;
 }
 
-#ifdef USE_SCRIPT_TCL
-bd::String tcl_eval(const bd::String& str) {
-  load_libtcl();
-  if (!global_interp) return bd::String();
-  if (Tcl_Eval(global_interp, str.c_str()) == TCL_OK) {
-    return Tcl_GetStringResult(global_interp);
-  } else
-    return tcl_eval("set errorInfo");
-  return bd::String();
-}
-#endif
 /* vim: set sts=2 sw=2 ts=8 et: */
