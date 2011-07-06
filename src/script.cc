@@ -29,31 +29,24 @@
 #include "main.h"
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
+#include <bdlib/src/HashTable.h>
+#include <bdlib/src/ScriptInterpTCL.h>
 
 #include "script.h"
 #include "libtcl.h"
 
-#ifdef USE_SCRIPT_TCL
-Tcl_Interp *global_interp = NULL;
-#endif
+bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
 
 void initialize_binds_tcl();
 
 int init_script() {
 
 #ifdef USE_SCRIPT_TCL
-  if (!global_interp) {
+  if (!ScriptInterps.contains("tcl")) {
     load_libtcl();
 
     // create interp
-    global_interp = Tcl_CreateInterp();
-    Tcl_FindExecutable(binname);
-
-    if (Tcl_Init(global_interp) != TCL_OK) {
-      sdprintf("Tcl_Init error: %s", Tcl_GetStringResult(global_interp));
-      return 1;
-    }
-
+    ScriptInterps["tcl"] = new bd::ScriptInterpTCL;
     initialize_binds_tcl();
   }
 #endif
@@ -63,41 +56,38 @@ int init_script() {
 #ifdef USE_SCRIPT_TCL
 
 #include "chanprog.h"
-static int cmd_privmsg STDVAR {
-  BADARGS(3, 999, " channel string");
-  bd::String str = argv[2];
-  for (int i = 3; i < argc; ++i)
-    str += " " + bd::String(argv[i]);
-  privmsg(argv[1], str, DP_SERVER);
 
-  return TCL_OK;
+bd::String cmd_privmsg(bd::ScriptInterp& interp, const bd::ScriptArgs& args, bd::ScriptInterp::script_clientdata_t clientData) {
+  if (args.length() != 3) {
+    return "wrong # args: should be: channel string";
+  }
+  bd::String my_cd = (clientData ? *(bd::String*) clientData : bd::String());
+  bd::String channel(args.getArgString(1)), msg(args.getArgString(2));
+  privmsg(channel, msg, DP_SERVER);
+  return "";
 }
 
+
 void initialize_binds_tcl() {
-  Tcl_CreateCommand(global_interp, "privmsg", (Tcl_CmdProc*) cmd_privmsg, NULL, NULL);
+  ScriptInterps["tcl"]->createCommand("privmsg", cmd_privmsg);
 }
 
 #endif
 
 int unload_script() {
-#ifdef USE_SCRIPT_TCL
-  if (global_interp) {
-    Tcl_DeleteInterp(global_interp);
-    global_interp = NULL;
+  bd::Array< bd::String > keys(ScriptInterps.keys());
+  for (size_t i = 0; i < keys.length(); ++i) {
+    delete ScriptInterps[keys[i]];
   }
-#endif
+  ScriptInterps.clear();
   return 1;
 }
 
 #ifdef USE_SCRIPT_TCL
 bd::String tcl_eval(const bd::String& str) {
-  load_libtcl();
-  if (!global_interp) return bd::String();
-  if (Tcl_Eval(global_interp, str.c_str()) == TCL_OK) {
-    return Tcl_GetStringResult(global_interp);
-  } else
-    return tcl_eval("set errorInfo");
-  return bd::String();
+  init_script();
+  if (!ScriptInterps.contains("tcl")) return bd::String();
+  return ScriptInterps["tcl"]->eval(str);
 }
 #endif
 

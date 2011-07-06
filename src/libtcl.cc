@@ -41,13 +41,34 @@ static int load_symbols(void *handle) {
 #ifdef USE_SCRIPT_TCL
   const char *dlsym_error = NULL;
 
-  DLSYM_GLOBAL(handle, Tcl_Eval);
-  DLSYM_GLOBAL(handle, Tcl_GetStringResult);
-  DLSYM_GLOBAL(handle, Tcl_DeleteInterp);
   DLSYM_GLOBAL(handle, Tcl_CreateCommand);
   DLSYM_GLOBAL(handle, Tcl_CreateInterp);
+  DLSYM_GLOBAL(handle, Tcl_CreateObjCommand);
+  DLSYM_GLOBAL(handle, Tcl_DeleteCommand);
+  DLSYM_GLOBAL(handle, Tcl_DeleteInterp);
+  DLSYM_GLOBAL(handle, Tcl_Eval);
+  DLSYM_GLOBAL(handle, Tcl_EvalEx);
+  DLSYM_GLOBAL(handle, Tcl_EvalFile);
   DLSYM_GLOBAL(handle, Tcl_FindExecutable);
+  DLSYM_GLOBAL(handle, TclFreeObj);
+  DLSYM_GLOBAL(handle, Tcl_GetBooleanFromObj);
+  DLSYM_GLOBAL(handle, Tcl_GetDoubleFromObj);
+  DLSYM_GLOBAL(handle, Tcl_GetLongFromObj);
+  DLSYM_GLOBAL(handle, Tcl_GetObjResult);
+  DLSYM_GLOBAL(handle, Tcl_GetStringFromObj);
+  DLSYM_GLOBAL(handle, Tcl_GetStringResult);
   DLSYM_GLOBAL(handle, Tcl_Init);
+  DLSYM_GLOBAL(handle, Tcl_InterpDeleted);
+  DLSYM_GLOBAL(handle, Tcl_NewBooleanObj);
+  DLSYM_GLOBAL(handle, Tcl_NewDoubleObj);
+  DLSYM_GLOBAL(handle, Tcl_NewIntObj);
+  DLSYM_GLOBAL(handle, Tcl_NewLongObj);
+  DLSYM_GLOBAL(handle, Tcl_NewStringObj);
+  DLSYM_GLOBAL(handle, Tcl_ObjGetVar2);
+  DLSYM_GLOBAL(handle, Tcl_SetObjResult);
+  DLSYM_GLOBAL(handle, Tcl_SetVar);
+  DLSYM_GLOBAL(handle, Tcl_SetVar2);
+  DLSYM_GLOBAL(handle, Tcl_TraceVar);
 #endif
 
   return 0;
