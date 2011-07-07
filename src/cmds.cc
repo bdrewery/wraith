@@ -4712,6 +4712,7 @@ void cmd_tcl(int idx, char *par)
   if (dcc[idx].irc && strcmp(dcc[idx].u.chat->con_chan, "*")) {
       privmsg(dcc[idx].u.chat->con_chan, tcl_eval(par), DP_SERVER);
   } else
+    result += "\n";
     dprintf(idx, result.c_str(), DP_SERVER);
 }
 #endif
