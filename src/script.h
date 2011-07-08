@@ -13,7 +13,7 @@
 #define STDVAR (ClientData cd, Tcl_Interp *interp, int argc, const char *argv[])
 
 extern bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
-bd::String tcl_eval(const bd::String&);
+bd::String script_eval(const bd::String& interp, const bd::String& script);
 #endif
 
 int init_script();

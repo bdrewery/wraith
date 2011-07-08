@@ -4708,7 +4708,7 @@ void cmd_tcl(int idx, char *par)
 
   putlog(LOG_CMDS, "*", "#%s# tcl", dcc[idx].nick);
 
-  bd::String result(tcl_eval(par));
+  bd::String result(script_eval("tcl", par));
   if (dcc[idx].irc && strcmp(dcc[idx].u.chat->con_chan, "*")) {
       privmsg(dcc[idx].u.chat->con_chan, result, DP_SERVER);
   } else

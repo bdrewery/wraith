@@ -83,11 +83,9 @@ int unload_script() {
   return 1;
 }
 
-#ifdef USE_SCRIPT_TCL
-bd::String tcl_eval(const bd::String& str) {
-  if (!ScriptInterps.contains("tcl")) return bd::String();
-  return ScriptInterps["tcl"]->eval(str);
+bd::String script_eval(const bd::String& interp, const bd::String& script) {
+  if (!ScriptInterps.contains(interp)) return bd::String();
+  return ScriptInterps[interp]->eval(script);
 }
-#endif
 
 /* vim: set sts=2 sw=2 ts=8 et: */
