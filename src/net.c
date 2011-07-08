@@ -327,6 +327,10 @@ sock_read(bd::Stream& stream)
       }
     }
   }
+  if (ssl_session) {
+    net_switch_to_ssl(socklist[fd].sock, ssl_session);
+    SSL_SESSION_free(ssl_session);
+  }
   return fd;
 }
 
@@ -672,7 +676,7 @@ int open_telnet_raw(int sock, const char *ipIn, port_t sport, bool proxy_on, int
 }
 
 #ifdef EGG_SSL_EXT
-int net_switch_to_ssl(int sock) {
+int net_switch_to_ssl(int sock, SSL_SESSION* session) {
   int i = 0;
 
   if (load_ssl()) {
@@ -696,6 +700,11 @@ int net_switch_to_ssl(int sock) {
   if (!socklist[i].ssl) {
     debug0("Error while swithing to SSL - SSL_new() error");
     return 0;
+  }
+
+  /* Re-establish an existing session? (restart) */
+  if (session) {
+    SSL_set_session(socklist[i].ssl, session);
   }
 
   SSL_set_fd(socklist[i].ssl, socklist[i].sock);
