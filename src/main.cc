@@ -43,6 +43,7 @@
 #include "users.h"
 #include "shell.h"
 #include "userrec.h"
+#include "script.h"
 #include "binds.h"
 #include "set.h"
 #include "dccutil.h"
@@ -818,6 +819,7 @@ int main(int argc, char **argv)
 
   safe_to_log = 1;
 
+  init_script();
   init_flags();			/* needed to establish FLAGS[] */
   core_binds_init();
   init_dcc();			/* needed if we are going to make any dcc */

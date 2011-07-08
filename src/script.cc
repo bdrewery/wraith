@@ -85,7 +85,6 @@ int unload_script() {
 
 #ifdef USE_SCRIPT_TCL
 bd::String tcl_eval(const bd::String& str) {
-  init_script();
   if (!ScriptInterps.contains("tcl")) return bd::String();
   return ScriptInterps["tcl"]->eval(str);
 }
