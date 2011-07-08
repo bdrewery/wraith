@@ -37,6 +37,8 @@
 #include "egg_timer.h"
 #include "traffic.h"
 #include "adns.h"
+#include "misc_file.h"
+#include "EncryptedStream.h"
 #include <bdlib/src/String.h>
 #include <bdlib/src/Stream.h>
 
@@ -280,12 +282,13 @@ sock_read(bd::Stream& stream)
 {
   int fd = -1;
   bd::String buf, type;
+  SSL_SESSION* ssl_session = NULL;
 
   while (stream.tell() < stream.length()) {
     buf = stream.getline().chomp();
 
     if (buf == STR("+sock"))
-      return fd;
+      break;
 
     type = newsplit(buf);
     if (type == STR("sock")) {
@@ -295,17 +298,36 @@ sock_read(bd::Stream& stream)
     }
 
     if (fd >= 0) {
-#ifdef USE_IPV6
-      if (type == STR("af"))
-        socklist[fd].af = atoi(buf.c_str());
-#endif
       if (type == STR("host"))
         socklist[fd].host = strdup(buf.c_str());
-      if (type == STR("port"))
+#ifdef USE_IPV6
+      else if (type == STR("af"))
+        socklist[fd].af = atoi(buf.c_str());
+#endif
+      else if (type == STR("port"))
         socklist[fd].port = atoi(buf.c_str());
+      else if (type == STR("ssl")) {
+        bd::String ssl_session_file(buf);
+        const char salt1[] = SALT1;
+        EncryptedStream ssl_session_stream(salt1);
+
+        ssl_session_stream.loadFile(ssl_session_file);
+        unlink(ssl_session_file.c_str());
+        bd::String ssl_session_asn(ssl_session_stream);
+        const unsigned char *ssl_session_asn_p = reinterpret_cast<const unsigned char*>(ssl_session_asn.data());
+
+        ssl_session = d2i_SSL_SESSION(NULL, &ssl_session_asn_p, ssl_session_asn.length());
+
+#ifdef DEBUG
+        // Print out the session for reference
+        if (sdebug) {
+          SSL_SESSION_print_fp(stderr, ssl_session);
+        }
+#endif
+      }
     }
   }
-  return -1;
+  return fd;
 }
 
 void 
@@ -323,6 +345,36 @@ sock_write(bd::Stream &stream, int fd)
       stream << bd::String::printf(STR("host %s\n"), socklist[fd].host);
     if (socklist[fd].port)
       stream << bd::String::printf(STR("port %d\n"), socklist[fd].port);
+    if (socklist[fd].ssl) {
+      /* Serialize the SSL_SESSION for reuse into its own temp file */
+      SSL_SESSION *ssl_session = SSL_get_session(socklist[fd].ssl);
+      Tempfile *ssl_session_file = new Tempfile("ssl_session");
+      size_t len = i2d_SSL_SESSION(ssl_session, NULL);
+      unsigned char *ssl_session_asn_p = NULL, *ssl_session_asn = NULL;
+
+#ifdef DEBUG
+      // Print out the session for reference
+      if (sdebug) {
+        SSL_SESSION_print_fp(stderr, ssl_session);
+      }
+#endif
+
+      ssl_session_asn_p = ssl_session_asn = (unsigned char*)my_calloc(1, len);
+      if ((len = i2d_SSL_SESSION(ssl_session, &ssl_session_asn_p))) {
+        const char salt1[] = SALT1;
+        EncryptedStream ssl_session_stream(salt1);
+        bd::String asn(reinterpret_cast<const char*>(ssl_session_asn), len);
+
+        ssl_session_stream << asn;
+        ssl_session_stream.writeFile(ssl_session_file->file);
+
+        stream << bd::String::printf(STR("ssl %s\n"), ssl_session_file->file);
+      } else {
+        // Some failure, just delete the tempfile
+        delete ssl_session_file;
+      }
+      free(ssl_session_asn);
+    }
     stream << bd::String::printf(STR("+sock\n"));
   }    
 }
