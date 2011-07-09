@@ -316,18 +316,45 @@ sock_read(bd::Stream& stream)
         bd::String ssl_session_asn(ssl_session_stream);
         const unsigned char *ssl_session_asn_p = reinterpret_cast<const unsigned char*>(ssl_session_asn.data());
 
-        ssl_session = d2i_SSL_SESSION(NULL, &ssl_session_asn_p, ssl_session_asn.length());
+        if (load_ssl()) {
+          debug0("Error while loading libssl");
+          continue;
+        }
 
+        socklist[fd].ssl = SSL_new(ssl_ctx);
+
+        ssl_session = d2i_SSL_SESSION(NULL, &ssl_session_asn_p, ssl_session_asn.length());
 #ifdef DEBUG
         // Print out the session for reference
         if (sdebug) {
           SSL_SESSION_print_fp(stderr, ssl_session);
         }
 #endif
+
+        SSL_set_session(socklist[fd].ssl, ssl_session);
+        SSL_set_fd(socklist[fd].ssl, socklist[fd].sock);
+        if (SSL_renegotiate(socklist[fd].ssl) <= 0) {
+          sdprintf("RENEGOTIATE error");
+          continue;
+        }
+        SSL_set_connect_state(socklist[fd].ssl);
+
+        if (SSL_do_handshake(socklist[fd].ssl) <= 0) {
+          sdprintf("HANDSHAKE error");
+          if (SSL_do_handshake(socklist[fd].ssl) <= 0) {
+            sdprintf("HANDSHAKE error");
+            if (SSL_do_handshake(socklist[fd].ssl) <= 0) {
+              sdprintf("HANDSHAKE error");
+            }
+          }
+        }
+
+          
+
       }
     }
   }
-  if (ssl_session) {
+  if (0 && ssl_session) {
     net_switch_to_ssl(socklist[fd].sock, ssl_session);
     SSL_SESSION_free(ssl_session);
   }
@@ -373,6 +400,7 @@ sock_write(bd::Stream &stream, int fd)
         ssl_session_stream.writeFile(ssl_session_file->file);
 
         stream << bd::String::printf(STR("ssl %s\n"), ssl_session_file->file);
+//        SSL_shutdown(socklist[fd].ssl);
       } else {
         // Some failure, just delete the tempfile
         delete ssl_session_file;
@@ -702,12 +730,14 @@ int net_switch_to_ssl(int sock, SSL_SESSION* session) {
     return 0;
   }
 
+  SSL_set_fd(socklist[i].ssl, socklist[i].sock);
+
   /* Re-establish an existing session? (restart) */
   if (session) {
     SSL_set_session(socklist[i].ssl, session);
+    //return 1;
   }
 
-  SSL_set_fd(socklist[i].ssl, socklist[i].sock);
   int err = 0, timeout = 0;
 
   while ((err = SSL_connect(socklist[i].ssl)) <= 0) {

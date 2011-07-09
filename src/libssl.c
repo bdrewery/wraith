@@ -94,7 +94,9 @@ int load_ssl() {
 #ifdef EGG_SSL_EXT
   /* good place to init ssl stuff */
   SSL_load_error_strings();
+  sdprintf("LOADING CIPHERS");
   OpenSSL_add_ssl_algorithms();
+  OpenSSL_add_all_algorithms();
   ssl_ctx = SSL_CTX_new(SSLv23_client_method());
   if (!ssl_ctx) {
     sdprintf("SSL_CTX_new() failed");
