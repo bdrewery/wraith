@@ -37,16 +37,16 @@ void _SSL_load_error_strings(void) {
                      | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
 }
 
-typedef void *(*TLS_client_method_t)(void);
-static const void *_TLS_client_method(void) {
-  if (DLSYM_VAR(TLS_client_method) == NULL)
-    if (DLSYM_GLOBAL_SIMPLE(RTLD_NEXT, TLS_client_method) == NULL)
+typedef void *(*TLS_method_t)(void);
+static const void *_TLS_method(void) {
+  if (DLSYM_VAR(TLS_method) == NULL)
+    if (DLSYM_GLOBAL_SIMPLE(RTLD_NEXT, TLS_method) == NULL)
       return NULL;
-  return DLSYM_VAR(TLS_client_method)();
+  return DLSYM_VAR(TLS_method)();
 }
 
-const void *_SSLv23_client_method(void) {
-  return _TLS_client_method();
+const void *_SSLv23_method(void) {
+  return _TLS_method();
 }
 
 } /* extern "C" */

@@ -612,7 +612,7 @@ int open_telnet_raw(int sock, const char *ipIn, in_port_t sport, bool proxy_on, 
 }
 
 #ifdef EGG_SSL_EXT
-int net_switch_to_ssl(int sock, int snum) {
+int net_switch_to_ssl(int sock, bool client, int snum) {
   int i = 0;
 
   debug0("net_switch_to_ssl()");
@@ -636,25 +636,40 @@ int net_switch_to_ssl(int sock, int snum) {
   SSL_set_fd(socklist[i].ssl, socklist[i].sock);
   int err = 0, timeout = 0;
 
-  while ((err = SSL_connect(socklist[i].ssl)) <= 0) {
-    if (timeout++ > 500) {
-      err = 0;
-      break;
+  if (client) {
+    while ((err = SSL_connect(socklist[i].ssl)) <= 0) {
+      if (timeout++ > 500) {
+        err = 0;
+        break;
+      }
+      int errs = SSL_get_error(socklist[i].ssl,err);
+      if ((errs != SSL_ERROR_WANT_READ) && (errs != SSL_ERROR_WANT_WRITE) && (errs != SSL_ERROR_WANT_X509_LOOKUP)) {
+        putlog(LOG_DEBUG, "*", "SSL_connect() = %d, %s", err, (char *)ERR_error_string(ERR_get_error(), NULL));
+        goto error;
+      }
+      usleep(1000);
     }
-    int errs = SSL_get_error(socklist[i].ssl,err);
-    if ((errs != SSL_ERROR_WANT_READ) && (errs != SSL_ERROR_WANT_WRITE) && (errs != SSL_ERROR_WANT_X509_LOOKUP)) {
-      putlog(LOG_DEBUG, "*", "SSL_connect() = %d, %s", err, (char *)ERR_error_string(ERR_get_error(), NULL));
-      goto error;
+  } else {
+    while ((err = SSL_accept(socklist[i].ssl)) <= 0) {
+      if (timeout++ > 500) {
+        err = 0;
+        break;
+      }
+      int errs = SSL_get_error(socklist[i].ssl,err);
+      if ((errs != SSL_ERROR_WANT_READ) && (errs != SSL_ERROR_WANT_WRITE) && (errs != SSL_ERROR_WANT_X509_LOOKUP)) {
+        putlog(LOG_DEBUG, "*", "SSL_accept() = %d, %s", err, (char *)ERR_error_string(ERR_get_error(), NULL));
+        goto error;
+      }
+      usleep(1000);
     }
-    usleep(1000);
-  }
 
+  }
   if (err == 1) {
-    debug0("SSL_connect() success");
+    debug0("net_switch_to_ssl() success");
     return 1;
   }
 error:
-  debug0("Error while SSL_connect()");
+  debug0("Error while switching to SSL");
   SSL_shutdown(socklist[i].ssl);
   SSL_free(socklist[i].ssl);
   socklist[i].ssl = NULL;
