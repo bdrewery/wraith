@@ -82,8 +82,6 @@ typedef struct {
 #endif /* USE_IPV6 */
   int sock;
   int encstatus;                        /* encrypted botlink */
-  int oseed;                            /* botlink out seed */
-  int iseed;                            /* botlink in seed */
   int gz; /* gzip compression */
   int enclink;				/* new encrypted botlink */
 #ifdef EGG_SSL_EXT
@@ -94,8 +92,6 @@ typedef struct {
   char *host;
   in_port_t port;
   short          flags;
-  char okey[ENC_KEY_LEN + 1];                        /* botlink enckey: out */
-  char ikey[ENC_KEY_LEN + 1];                        /* botlink enckey: in  */
 } sock_list;
 
 

@@ -335,9 +335,6 @@ int allocsock(int sock, int options)
       socklist[i].sock = sock;
       socklist[i].encstatus = 0;
       socklist[i].enclink = -1;
-      socklist[i].gz = 0;
-      bzero(&(socklist[i].okey), ENC_KEY_LEN + 1);
-      bzero(&(socklist[i].ikey), ENC_KEY_LEN + 1);
       socks_total++;
       sdprintf("allocsock(%d) = %d", i, sock);
       return i;
