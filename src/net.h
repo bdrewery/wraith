@@ -82,7 +82,6 @@ typedef struct {
 #endif /* USE_IPV6 */
   int sock;
   int encstatus;                        /* encrypted botlink */
-  int gz; /* gzip compression */
   int enclink;				/* new encrypted botlink */
 #ifdef EGG_SSL_EXT
   SSL *ssl;
