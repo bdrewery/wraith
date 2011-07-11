@@ -139,7 +139,7 @@ void init_net(void);
 int sock_read(bd::Stream&);
 void sock_write(bd::Stream&, int);
 bool socket_run();
-int net_switch_to_ssl(int sock);
+int net_switch_to_ssl(int sock, int snum = -1);
 
 extern union sockaddr_union 		cached_myip4_so;
 #ifdef USE_IPV6

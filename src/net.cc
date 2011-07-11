@@ -612,12 +612,12 @@ int open_telnet_raw(int sock, const char *ipIn, in_port_t sport, bool proxy_on, 
 }
 
 #ifdef EGG_SSL_EXT
-int net_switch_to_ssl(int sock) {
+int net_switch_to_ssl(int sock, int snum) {
   int i = 0;
 
   debug0("net_switch_to_ssl()");
   sleep(3); // Give some time to let the connect() go through.
-  i = findanysnum(sock);
+  i = snum != -1 ? snum : findanysnum(sock);
   if (i == MAXSOCKS) {
     debug0("Error while swithing to SSL - sock not found in list");
     return 0;
