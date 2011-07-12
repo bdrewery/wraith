@@ -705,7 +705,7 @@ dcc_chat_secpass(int idx, char *buf, int atr)
 
   /* Correct pass or secpass! */
   if (!dcc[idx].wrong_pass && (!dccauth || (dccauth && !badauth))) {
-    putlog(LOG_MISC, "*", "Logged in: %s (%s/%d)", dcc[idx].nick, dcc[idx].host, dcc[idx].port);
+    putlog(LOG_MISC, "*", "Logged in%s: %s (%s/%d)", socklist[findanysnum(dcc[idx].sock)].ssl ? " (SSL)" : "", dcc[idx].nick, dcc[idx].host, dcc[idx].port);
     if (dcc[idx].u.chat->away) {
       free(dcc[idx].u.chat->away);
       dcc[idx].u.chat->away = NULL;
@@ -1758,6 +1758,21 @@ dcc_telnet_id(int idx, char *buf, int atr)
   char *nick = buf;
 
   strip_telnet(dcc[idx].sock, nick, &atr);
+
+  // STLS = pop3 protocol with openssl s_client
+  if (!strcmp(nick, "STLS") || !strcmp(nick, "STARTTLS")) {
+    putlog(LOG_MISC, "*", "Establishing SSL: %s/%d", iptostr(htonl(dcc[idx].addr)), dcc[idx].port);
+    dprintf(idx, "+OK Begin SSL/TLS negotiation now.\n");
+    if (net_switch_to_ssl(dcc[idx].sock, false) == 0) {
+      putlog(LOG_WARN, "*", "SSL handshake failed with %s/%d", iptostr(htonl(dcc[idx].addr)), dcc[idx].port);
+      killsock(dcc[idx].sock);
+      lostdcc(idx);
+      return;
+    }
+
+    // Wait for their reply
+    return;
+  }
 
   if (nick[0] == '-') {
     nick++;
