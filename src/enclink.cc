@@ -31,6 +31,47 @@
 
 #include <stdarg.h>
 
+static void tls1_link(int idx, direction_t direction)
+{
+  int snum = findanysnum(dcc[idx].sock);
+
+  if (likely(snum >= 0)) {
+    bool client = direction == TO ? true : false;
+    // Send SSL handshake
+    putlog(LOG_BOTS, "*", STR("Sending SSL handshake to %s..."), dcc[idx].nick);
+    if (net_switch_to_ssl(dcc[idx].sock, client, snum) == 0) {
+      putlog(LOG_MISC, "*", STR("Failed SSL handshake to %s"), dcc[idx].nick);
+      killsock(dcc[idx].sock);
+      lostdcc(idx);
+      return;
+    }
+
+    // Keep as 0 as SSL_read/write is handled specially
+    socklist[snum].encstatus = 0;
+
+    if (client == false) {
+      link_send(idx, STR("elink !\n"));
+    }
+  } else {
+    putlog(LOG_MISC, "*", STR("Couldn't find socket for %s connection?? Shouldn't happen :/"), dcc[idx].nick);
+    killsock(dcc[idx].sock);
+    lostdcc(idx);
+  }
+}
+
+void tls1_parse(int idx, int snum, char *buf)
+{
+  /* putlog(LOG_DEBUG, "*", "Got elink: %s %s", code, buf); */
+  /* Set the socket key and we're linked */
+
+  char *code = newsplit(&buf);
+
+  if (!strcasecmp(code, STR("elink"))) {
+    putlog(LOG_BOTS, "*", STR("Handshake with %s succeeded, we're linked."), dcc[idx].nick);
+    link_done(idx);
+  }
+}
+
 void link_send(int idx, const char *format, ...)
 {
   char s[2001] = "";
@@ -171,6 +212,7 @@ void link_get_method(int idx)
 
 /* the order of entries here determines which will be picked */
 struct enc_link enclink[] = {
+  { "TLS1", LINK_TLS1, tls1_link, NULL, NULL, tls1_parse },
   { "cleartext", LINK_CLEARTEXT, NULL, NULL, NULL, NULL },
   { NULL, 0, NULL, NULL, NULL, NULL }
 };

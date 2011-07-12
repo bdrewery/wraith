@@ -1,3 +1,5 @@
+* Bots now link together via SSL instead of the old Ghost AES protocol
+
 # master
   * Require C++14 compiler support (GCC 5+, Clang 3.4+)
   * Wraith now automatically assigns roles to bots for channels, no longer

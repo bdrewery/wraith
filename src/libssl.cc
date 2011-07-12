@@ -68,6 +68,9 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL_FWDCOMPAT(handle, SSLv23_method);
   /* Some forward-compat is handled in src/compat/openssl.cc. */
 #endif
+  DLSYM_GLOBAL(handle, SSL_CTX_use_certificate_file);
+  DLSYM_GLOBAL(handle, SSL_CTX_use_certificate_chain_file);
+  DLSYM_GLOBAL(handle, SSL_CTX_use_PrivateKey_file);
 
   return 0;
 }
