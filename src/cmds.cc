@@ -4041,7 +4041,7 @@ static void rcmd_cursrv(const char * fbot, const char * fhand, const char * fidx
 
     if (server_online) {
       daysdur(now, server_online, tmp, sizeof(tmp));
-      simple_snprintf(cursrv, sizeof(cursrv), "Currently: %-30s (connected %s)%s%s", cursrvname, tmp, socklist[findanysnum(serv)].ssl ? " [SSL]" : "", floodless ? " [floodless]" : "");
+      simple_snprintf(cursrv, sizeof(cursrv), "Currently: %-30s (connected %s)%s%s", cursrvname, tmp, dcc[servidx].ssl ? " [SSL]" : "", floodless ? " [floodless]" : "");
 
       if (server_lag > 0) {
         simple_snprintf(tmp, sizeof(tmp), " Lag:%ds", server_lag);

@@ -705,7 +705,7 @@ dcc_chat_secpass(int idx, char *buf, int atr)
 
   /* Correct pass or secpass! */
   if (!dcc[idx].wrong_pass && (!dccauth || (dccauth && !badauth))) {
-    putlog(LOG_MISC, "*", "Logged in%s: %s (%s/%d)", socklist[findanysnum(dcc[idx].sock)].ssl ? " (SSL)" : "", dcc[idx].nick, dcc[idx].host, dcc[idx].port);
+    putlog(LOG_MISC, "*", "Logged in%s: %s (%s/%d)", dcc[idx].ssl ? " (SSL)" : "", dcc[idx].nick, dcc[idx].host, dcc[idx].port);
     if (dcc[idx].u.chat->away) {
       free(dcc[idx].u.chat->away);
       dcc[idx].u.chat->away = NULL;
@@ -1769,6 +1769,8 @@ dcc_telnet_id(int idx, char *buf, int atr)
       lostdcc(idx);
       return;
     }
+
+    dcc[idx].ssl = 1;
 
     // Wait for their reply
     return;

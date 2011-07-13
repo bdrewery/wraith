@@ -2212,6 +2212,8 @@ static void server_dns_callback(int id, void *client_data, const char *host,
         lostdcc(servidx);
         return;
       }
+
+      dcc[idx].ssl = 1;
     }
 #endif
     /* Queue standard login */

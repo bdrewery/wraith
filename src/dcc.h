@@ -58,6 +58,7 @@ struct dcc_t {
   bool hub;			// is this bot a hub?
   bool wrong_pass;		// auth obscure hack
   bool bot;
+  bool ssl;
 //  int auth;
   bool whowas;
   int dns_id;

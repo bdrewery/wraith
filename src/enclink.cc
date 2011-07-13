@@ -48,6 +48,7 @@ static void tls1_link(int idx, direction_t direction)
 
     // Keep as 0 as SSL_read/write is handled specially
     socklist[snum].encstatus = 0;
+    dcc[idx].ssl = 1;
 
     if (client == false) {
       link_send(idx, STR("elink !\n"));
