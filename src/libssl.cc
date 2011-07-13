@@ -71,6 +71,12 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, SSL_CTX_use_certificate_file);
   DLSYM_GLOBAL(handle, SSL_CTX_use_certificate_chain_file);
   DLSYM_GLOBAL(handle, SSL_CTX_use_PrivateKey_file);
+  DLSYM_GLOBAL(handle, SSL_CTX_set_verify);
+  DLSYM_GLOBAL(handle, SSL_set_verify);
+  DLSYM_GLOBAL(handle, SSL_CTX_set_verify_depth);
+  DLSYM_GLOBAL(handle, X509_verify_cert_error_string);
+  DLSYM_GLOBAL(handle, X509_STORE_CTX_get_error);
+  DLSYM_GLOBAL(handle, X509_STORE_CTX_get_current_cert);
 
   return 0;
 }

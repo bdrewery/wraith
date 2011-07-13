@@ -19,10 +19,13 @@
 #endif
 
 typedef DH* (*dh_callback_t)(SSL*, int, int);
+typedef int (*verify_callback_t)(int, X509_STORE_CTX*);
 
 #include ".defs/libssl_post.h"
 
 typedef void (*SSL_CTX_set_tmp_dh_callback_t)(SSL_CTX*, dh_callback_t);
+typedef void (*SSL_CTX_set_verify_t)(SSL_CTX*, int, verify_callback_t);
+typedef void (*SSL_set_verify_t)(SSL*, int, verify_callback_t);
 
 int load_libssl();
 int unload_libssl();

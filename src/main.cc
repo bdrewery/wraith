@@ -818,13 +818,12 @@ int main(int argc, char **argv)
     }
   }
 
-  if (conf.bot->hub) {
-    if (SSL_CTX_use_certificate_chain_file(ssl_ctx, "server.pem") != 1) {
-      sdprintf("UNABLE TO LOAD CRT");
-    }
-    if (SSL_CTX_use_PrivateKey_file(ssl_ctx, "server.pem", SSL_FILETYPE_PEM) != 1) {
-      sdprintf("UNABLE TO LOAD PRIVATE KEY");
-    }
+  if (SSL_CTX_use_certificate_chain_file(ssl_ctx, "ssl.pem") != 1) {
+    sdprintf("UNABLE TO LOAD CRT");
+  }
+  if (SSL_CTX_use_PrivateKey_file(ssl_ctx, "ssl.pem", SSL_FILETYPE_PEM) != 1) {
+    //X509_digest
+    sdprintf("UNABLE TO LOAD PRIVATE KEY");
   }
 
   safe_to_log = 1;
