@@ -138,7 +138,12 @@ void init_net(void);
 int sock_read(bd::Stream&);
 void sock_write(bd::Stream&, int);
 bool socket_run();
-int net_switch_to_ssl(int sock, bool client = true, int snum = -1);
+
+
+#define W_SSL_CONNECT            BIT0
+#define W_SSL_ACCEPT             BIT1
+
+int net_switch_to_ssl(int sock, long options, int snum = -1);
 
 extern union sockaddr_union 		cached_myip4_so;
 #ifdef USE_IPV6

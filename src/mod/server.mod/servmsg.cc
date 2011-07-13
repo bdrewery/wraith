@@ -2206,7 +2206,7 @@ static void server_dns_callback(int id, void *client_data, const char *host,
     setsockopt(serv, 6, TCP_NODELAY, &i, sizeof(int));
 #ifdef EGG_SSL_EXT
     if (ssl_use) { /* kyotou */
-      if (net_switch_to_ssl(serv) == 0) {
+      if (net_switch_to_ssl(serv, W_SSL_CONNECT) == 0) {
         putlog(LOG_SERV, "*", "SSL Failed to connect to %s (Error while switching to SSL)", dcc[servidx].host);
         trying_server = 0;
         lostdcc(servidx);

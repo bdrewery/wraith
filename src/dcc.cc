@@ -1763,7 +1763,7 @@ dcc_telnet_id(int idx, char *buf, int atr)
   if (!strcmp(nick, "STLS") || !strcmp(nick, "STARTTLS")) {
     putlog(LOG_MISC, "*", "Establishing SSL: %s/%d", iptostr(htonl(dcc[idx].addr)), dcc[idx].port);
     dprintf(idx, "+OK Begin SSL/TLS negotiation now.\n");
-    if (net_switch_to_ssl(dcc[idx].sock, false) == 0) {
+    if (net_switch_to_ssl(dcc[idx].sock, W_SSL_ACCEPT) == 0) {
       putlog(LOG_WARN, "*", "SSL handshake failed with %s/%d", iptostr(htonl(dcc[idx].addr)), dcc[idx].port);
       killsock(dcc[idx].sock);
       lostdcc(idx);

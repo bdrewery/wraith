@@ -612,7 +612,7 @@ int open_telnet_raw(int sock, const char *ipIn, in_port_t sport, bool proxy_on, 
 }
 
 #ifdef EGG_SSL_EXT
-int net_switch_to_ssl(int sock, bool client, int snum) {
+int net_switch_to_ssl(int sock, long options, int snum) {
   int i = 0;
 
   debug0("net_switch_to_ssl()");
@@ -636,7 +636,7 @@ int net_switch_to_ssl(int sock, bool client, int snum) {
   SSL_set_fd(socklist[i].ssl, socklist[i].sock);
   int err = 0, timeout = 0;
 
-  if (client) {
+  if (options & W_SSL_CONNECT) {
     while ((err = SSL_connect(socklist[i].ssl)) <= 0) {
       if (timeout++ > 500) {
         err = 0;
@@ -649,7 +649,7 @@ int net_switch_to_ssl(int sock, bool client, int snum) {
       }
       usleep(1000);
     }
-  } else {
+  } else if (options & W_SSL_ACCEPT) {
     while ((err = SSL_accept(socklist[i].ssl)) <= 0) {
       if (timeout++ > 500) {
         err = 0;

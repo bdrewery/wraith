@@ -36,10 +36,11 @@ static void tls1_link(int idx, direction_t direction)
   int snum = findanysnum(dcc[idx].sock);
 
   if (likely(snum >= 0)) {
-    bool client = direction == TO ? true : false;
+    long options = (direction == TO ? W_SSL_CONNECT : W_SSL_ACCEPT);
+
     // Send SSL handshake
     putlog(LOG_BOTS, "*", STR("Sending SSL handshake to %s..."), dcc[idx].nick);
-    if (net_switch_to_ssl(dcc[idx].sock, client, snum) == 0) {
+    if (net_switch_to_ssl(dcc[idx].sock, options, snum) == 0) {
       putlog(LOG_MISC, "*", STR("Failed SSL handshake to %s"), dcc[idx].nick);
       killsock(dcc[idx].sock);
       lostdcc(idx);
@@ -50,7 +51,7 @@ static void tls1_link(int idx, direction_t direction)
     socklist[snum].encstatus = 0;
     dcc[idx].ssl = 1;
 
-    if (client == false) {
+    if (options & W_SSL_ACCEPT) {
       link_send(idx, STR("elink !\n"));
     }
   } else {
