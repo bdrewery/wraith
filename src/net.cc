@@ -633,6 +633,19 @@ int net_switch_to_ssl(int sock, long options, int snum) {
     return 0;
   }
 
+  int verify_mode = 0;
+  if (options & W_SSL_VERIFY_PEER) {
+    verify_mode |= SSL_VERIFY_PEER;
+  }
+  if (options & W_SSL_REQUIRE_PEER_CERT) {
+    verify_mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+  }
+
+  if (verify_mode) {
+    SSL_set_verify(socklist[i].ssl, verify_mode, verify_callback);
+    SSL_set_verify_depth(socklist[i].ssl, 4);
+  }
+
   SSL_set_fd(socklist[i].ssl, socklist[i].sock);
   int err = 0, timeout = 0;
 

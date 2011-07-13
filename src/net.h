@@ -142,6 +142,8 @@ bool socket_run();
 
 #define W_SSL_CONNECT            BIT0
 #define W_SSL_ACCEPT             BIT1
+#define W_SSL_VERIFY_PEER        BIT2
+#define W_SSL_REQUIRE_PEER_CERT  BIT3
 
 int net_switch_to_ssl(int sock, long options, int snum = -1);
 

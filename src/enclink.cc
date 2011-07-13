@@ -36,7 +36,7 @@ static void tls1_link(int idx, direction_t direction)
   int snum = findanysnum(dcc[idx].sock);
 
   if (likely(snum >= 0)) {
-    long options = (direction == TO ? W_SSL_CONNECT : W_SSL_ACCEPT);
+    long options = ((direction == TO ? W_SSL_CONNECT : W_SSL_ACCEPT)|W_SSL_VERIFY_PEER|W_SSL_REQUIRE_PEER_CERT);
 
     // Send SSL handshake
     putlog(LOG_BOTS, "*", STR("Sending SSL handshake to %s..."), dcc[idx].nick);

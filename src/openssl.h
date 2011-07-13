@@ -19,4 +19,6 @@ extern int ssl_use;
 
 int init_openssl();
 int uninit_openssl();
+int verify_callback(int ok, X509_STORE_CTX* store);
+
 #endif

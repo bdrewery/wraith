@@ -114,9 +114,6 @@ int init_openssl() {
   SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_SINGLE_DH_USE);
   SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER|SSL_MODE_ENABLE_PARTIAL_WRITE);
   SSL_CTX_set_tmp_dh_callback(ssl_ctx, tmp_dh_callback);
-  SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);
-  SSL_CTX_set_verify_depth(ssl_ctx, 4);
-
 
   const char* ciphers = "HIGH:!MEDIUM:!LOW:!EXP:!SSLv2:!ADH:!aNULL:!eNULL:!NULL:@STRENGTH";
   if (!SSL_CTX_set_cipher_list(ssl_ctx, ciphers)) {
