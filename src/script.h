@@ -8,9 +8,6 @@
 #include <bdlib/src/ScriptInterp.h>
 
 #ifdef USE_SCRIPT_TCL
-#include <tcl.h>
-
-#define STDVAR (ClientData cd, Tcl_Interp *interp, int argc, const char *argv[])
 
 extern bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
 bd::String script_eval(const bd::String& interp, const bd::String& script);

@@ -115,6 +115,7 @@ voice_ok(memberlist *m, struct chanset_t *chan)
 #include "mode.cc"
 #include "cmdsirc.cc"
 #include "msgcmds.cc"
+#include "script.cc"
 
 static int
 detect_offense(memberlist* m, struct chanset_t *chan, char *msg)

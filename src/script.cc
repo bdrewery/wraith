@@ -31,6 +31,7 @@
 #include <bdlib/src/Array.h>
 #include <bdlib/src/HashTable.h>
 #include <bdlib/src/ScriptInterpTCL.h>
+#include "src/mod/irc.mod/irc.h"
 
 #include "script.h"
 #include "libtcl.h"
@@ -55,21 +56,11 @@ int init_script() {
 
 #ifdef USE_SCRIPT_TCL
 
-#include "chanprog.h"
-
-bd::String cmd_privmsg(bd::ScriptInterp& interp, const bd::ScriptArgs& args, bd::ScriptInterp::script_clientdata_t clientData) {
-  if (args.length() != 3) {
-    return "wrong # args: should be: channel string";
-  }
-  bd::String my_cd = (clientData ? *(bd::String*) clientData : bd::String());
-  bd::String channel(args.getArgString(1)), msg(args.getArgString(2));
-  privmsg(channel, msg, DP_SERVER);
-  return "";
-}
-
-
 void initialize_binds_tcl() {
-  ScriptInterps["tcl"]->createCommand("privmsg", cmd_privmsg);
+  bd::Array<bd::String> keys(ScriptInterps.keys());
+  for (size_t i = 0; i < keys.length(); ++i) {
+    irc_init_script(*ScriptInterps[keys[i]]);
+  }
 }
 
 #endif
