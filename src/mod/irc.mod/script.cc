@@ -39,8 +39,55 @@ SCRIPT_FUNCTION(cmd_privmsg) {
   return SCRIPT_OK;
 }
 
+SCRIPT_FUNCTION(cmd_chanlist) {
+  SCRIPT_BADARGS(2, 3, " channel ?flags?");
+
+  bd::String channel(args.getArgString(1));
+  chanset_t *chan = findchan_by_dname(channel.c_str());
+  if (!chan) {
+    return_string = "invalid channel: " + channel;
+    return SCRIPT_ERROR;
+  }
+  bd::Array<bd::String> results;
+
+  // No flags, return all
+  if (args.length() == 2) {
+    for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
+      results << m->nick;
+    }
+  } else {
+
+    struct flag_record plus = { FR_CHAN | FR_GLOBAL | FR_BOT, 0, 0, 0 },
+                       minus = { FR_CHAN | FR_GLOBAL | FR_BOT, 0, 0, 0 },
+                       fluser = { FR_CHAN | FR_GLOBAL | FR_BOT, 0, 0, 0 };
+    bd::String flags(args.getArgString(2));
+
+    break_down_flags(flags.c_str(), &plus, &minus);
+    int f = (minus.global || minus.chan || minus.bot);
+    // Return empty set if asked for flags but flags don't exist
+    if (!plus.global && !plus.chan && !plus.bot && !f) {
+      return SCRIPT_OK;
+    }
+
+    minus.match = plus.match ^ (FR_AND | FR_OR);
+    for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
+      member_getuser(m);
+
+      get_user_flagrec(m->user, &fluser, chan->dname);
+      fluser.match = plus.match;
+      if (flagrec_eq(&plus, &fluser) && (!f || !flagrec_eq(&minus, &fluser))) {
+          results << m->nick;
+      }
+    }
+  }
+
+  return_string = results.join(" ");
+  return SCRIPT_OK;
+}
+
 void irc_init_script(bd::ScriptInterp& interp) {
     interp.createCommand("privmsg", cmd_privmsg);
+    interp.createCommand("chanlist", cmd_chanlist);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
