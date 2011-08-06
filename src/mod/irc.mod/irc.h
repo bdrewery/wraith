@@ -8,7 +8,6 @@
 
 #include "src/auth.h"
 #include "src/chanprog.h"
-#include "src/script.h"
 
 enum { BC_NOCOOKIE = 1, BC_SLACK, BC_HASH, BC_COUNTER };
 
@@ -23,7 +22,6 @@ enum { BC_NOCOOKIE = 1, BC_SLACK, BC_HASH, BC_COUNTER };
 
 namespace bd {
   class String;
-  class ScriptInterp;
 }
 
 enum flood_reason_t {
@@ -161,7 +159,6 @@ void reset_chan_info(struct chanset_t *);
 char *getnick(const char *, struct chanset_t *);
 void check_shouldjoin(struct chanset_t* chan);
 void delete_member(memberlist* m);
-void irc_init_script(bd::ScriptInterp& interp);
 
 extern int		max_bans, max_exempts, max_invites, max_modes;
 extern bool		use_354, include_lk;

@@ -1771,5 +1771,7 @@ irc_init()
   add_builtins("bot", irc_bot);
   add_builtins("raw", irc_raw);
   add_builtins("msg", C_msg);
+
+  script_add_commands(irc_cmds);
 }
 /* vim: set sts=2 sw=2 ts=8 et: */

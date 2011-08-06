@@ -85,9 +85,10 @@ SCRIPT_FUNCTION(cmd_chanlist) {
   return SCRIPT_OK;
 }
 
-void irc_init_script(bd::ScriptInterp& interp) {
-    interp.createCommand("privmsg", cmd_privmsg);
-    interp.createCommand("chanlist", cmd_chanlist);
-}
+script_cmd_t irc_cmds[] = {
+  {"privmsg",                         cmd_privmsg},
+  {"chanlist",                        cmd_chanlist},
+  {NULL,                              NULL}
+};
 
 /* vim: set sts=2 sw=2 ts=8 et: */

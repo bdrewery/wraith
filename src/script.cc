@@ -31,14 +31,11 @@
 #include <bdlib/src/Array.h>
 #include <bdlib/src/HashTable.h>
 #include <bdlib/src/ScriptInterpTCL.h>
-#include "src/mod/irc.mod/irc.h"
 
 #include "script.h"
 #include "libtcl.h"
 
 bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
-
-void initialize_binds_tcl();
 
 int init_script() {
 
@@ -48,22 +45,21 @@ int init_script() {
 
     // create interp
     ScriptInterps["tcl"] = new bd::ScriptInterpTCL;
-    initialize_binds_tcl();
   }
 #endif
   return 0;
 }
 
-#ifdef USE_SCRIPT_TCL
+void script_add_commands(script_cmd_t* cmds) {
+  script_cmd_t *cmd = NULL;
+  bd::Array<bd::String> interps(ScriptInterps.keys());
 
-void initialize_binds_tcl() {
-  bd::Array<bd::String> keys(ScriptInterps.keys());
-  for (size_t i = 0; i < keys.length(); ++i) {
-    irc_init_script(*ScriptInterps[keys[i]]);
+  for (cmd = cmds; cmd && cmd->name; cmd = ++cmds) {
+    for (size_t i = 0; i < interps.length(); ++i) {
+      ScriptInterps[interps[i]]->createCommand(cmd->name, cmd->callback);
+    }
   }
 }
-
-#endif
 
 int unload_script() {
   bd::Array< bd::String > keys(ScriptInterps.keys());
