@@ -32,11 +32,11 @@ SCRIPT_FUNCTION(cmd_privmsg) {
   SCRIPT_BADARGS(3, 3, " channel string");
   bd::String channel(args.getArgString(1)), msg(args.getArgString(2));
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
-    return_string = "invalid channel: " + channel;
-    return SCRIPT_ERROR;
+    SCRIPT_RETURN_STRING("invalid channel: " + channel);
+    return bd::SCRIPT_ERROR;
   }
   privmsg(channel, msg, DP_SERVER);
-  return SCRIPT_OK;
+  return bd::SCRIPT_OK;
 }
 
 SCRIPT_FUNCTION(cmd_chanlist) {
@@ -45,8 +45,8 @@ SCRIPT_FUNCTION(cmd_chanlist) {
   bd::String channel(args.getArgString(1));
   chanset_t *chan = findchan_by_dname(channel.c_str());
   if (!chan) {
-    return_string = "invalid channel: " + channel;
-    return SCRIPT_ERROR;
+    SCRIPT_RETURN_STRING("invalid channel: " + channel);
+    return bd::SCRIPT_ERROR;
   }
   bd::Array<bd::String> results;
 
@@ -66,7 +66,7 @@ SCRIPT_FUNCTION(cmd_chanlist) {
     int f = (minus.global || minus.chan || minus.bot);
     // Return empty set if asked for flags but flags don't exist
     if (!plus.global && !plus.chan && !plus.bot && !f) {
-      return SCRIPT_OK;
+      return bd::SCRIPT_OK;
     }
 
     minus.match = plus.match ^ (FR_AND | FR_OR);
@@ -81,8 +81,8 @@ SCRIPT_FUNCTION(cmd_chanlist) {
     }
   }
 
-  return_string = results.join(" ");
-  return SCRIPT_OK;
+  SCRIPT_RETURN_STRING(results.join(" "));
+  return bd::SCRIPT_OK;
 }
 
 script_cmd_t irc_cmds[] = {

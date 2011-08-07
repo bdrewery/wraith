@@ -12,7 +12,7 @@ bd::String script_eval(const bd::String& interp, const bd::String& script);
 
 typedef struct {
   const char *name;
-  bd::ScriptInterp::script_cmd_handler_string_t callback;
+  bd::ScriptInterp::script_cmd_handler_t callback;
 } script_cmd_t;
 
 
