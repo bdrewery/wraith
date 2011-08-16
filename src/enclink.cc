@@ -31,6 +31,7 @@
 
 #include <stdarg.h>
 
+#ifdef EGG_SSL_EXT
 static void tls1_link(int idx, direction_t direction)
 {
   int snum = findanysnum(dcc[idx].sock);
@@ -73,6 +74,7 @@ void tls1_parse(int idx, int snum, char *buf)
     link_done(idx);
   }
 }
+#endif
 
 void link_send(int idx, const char *format, ...)
 {
@@ -214,7 +216,9 @@ void link_get_method(int idx)
 
 /* the order of entries here determines which will be picked */
 struct enc_link enclink[] = {
+#ifdef EGG_SSL_EXT
   { "TLS1", LINK_TLS1, tls1_link, NULL, NULL, tls1_parse },
+#endif
   { "cleartext", LINK_CLEARTEXT, NULL, NULL, NULL, NULL },
   { NULL, 0, NULL, NULL, NULL, NULL }
 };

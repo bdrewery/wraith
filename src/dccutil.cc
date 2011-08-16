@@ -656,7 +656,12 @@ tell_dcc(int idx)
         break;
       }
       int snum = findanysnum(dcc[i].sock);
-      dprintf(idx, format, dcc[i].sock, i, (snum != -1 && socklist[snum].ssl) ? "yes" : "no", dcc[i].addr, dcc[i].port, dcc[i].nick, dcc[i].host + j, other);
+      bool is_ssl = 0;
+#ifdef EGG_SSL_EXT
+      if (snum != -1 && socklist[snum].ssl)
+        is_ssl = 1;
+#endif
+      dprintf(idx, format, dcc[i].sock, i, is_ssl ? "yes" : "no", dcc[i].addr, dcc[i].port, dcc[i].nick, dcc[i].host + j, other);
     }
   }
 }

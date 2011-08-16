@@ -1761,6 +1761,7 @@ dcc_telnet_id(int idx, char *buf, int atr)
 
   // STLS = pop3 protocol with openssl s_client
   if (!strcmp(nick, "STLS") || !strcmp(nick, "STARTTLS")) {
+#ifdef EGG_SSL_EXT
     putlog(LOG_MISC, "*", "Establishing SSL: %s/%d", iptostr(htonl(dcc[idx].addr)), dcc[idx].port);
     dprintf(idx, "+OK Begin SSL/TLS negotiation now.\n");
     if (net_switch_to_ssl(dcc[idx].sock, W_SSL_ACCEPT|W_SSL_VERIFY_PEER) == 0) {
@@ -1774,6 +1775,12 @@ dcc_telnet_id(int idx, char *buf, int atr)
 
     // Wait for their reply
     return;
+#else /* !EGG_SSL_EXT */
+    putlog(LOG_WARN, "*", "Unsupported SSL connection attempt: %s/%d", iptostr(htonl(dcc[idx].addr)), dcc[idx].port);
+    killsock(dcc[idx].sock);
+    lostdcc(idx);
+    return;
+#endif
   }
 
   if (nick[0] == '-') {

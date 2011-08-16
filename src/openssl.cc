@@ -41,6 +41,7 @@ char	*tls_rand_file = NULL;
 #endif
 int     ssl_use = 0; /* kyotou */
 
+#ifdef EGG_SSL_EXT
 static int seed_PRNG(void);
 
 #include "dhparam.cc"
@@ -90,6 +91,7 @@ int verify_callback(int ok, X509_STORE_CTX* store) {
 
   return ok;
 }
+#endif
 
 int init_openssl() {
   if (load_libcrypto() || load_libssl()) {

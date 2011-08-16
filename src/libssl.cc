@@ -32,12 +32,15 @@
 #include <bdlib/src/Array.h>
 
 #include "libssl.h"
+#ifdef EGG_SSL_EXT
 #include ".defs/libssl_defs.cc"
+#endif
 
 void *libssl_handle = NULL;
 static bd::Array<bd::String> my_symbols;
 
 static int load_symbols(void *handle) {
+#ifdef EGG_SSL_EXT
   DLSYM_GLOBAL(handle, SSL_get_error);
   DLSYM_GLOBAL(handle, SSL_connect);
   DLSYM_GLOBAL(handle, SSL_CTX_free);
@@ -78,12 +81,14 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, X509_verify_cert_error_string);
   DLSYM_GLOBAL(handle, X509_STORE_CTX_get_error);
   DLSYM_GLOBAL(handle, X509_STORE_CTX_get_current_cert);
+#endif
 
   return 0;
 }
 
 
 int load_libssl() {
+#ifdef EGG_SSL_EXT
   if (ssl_ctx) {
     return 0;
   }
@@ -109,7 +114,7 @@ int load_libssl() {
     fprintf(stderr, STR("Missing symbols for libssl (likely too old)\n"));
     return(1);
   }
-
+#endif
   return 0;
 }
 

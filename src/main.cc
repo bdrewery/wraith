@@ -818,6 +818,7 @@ int main(int argc, char **argv)
     }
   }
 
+#ifdef EGG_SSL_EXT
   if (SSL_CTX_use_certificate_chain_file(ssl_ctx, "ssl.pem") != 1) {
     sdprintf("UNABLE TO LOAD CRT");
   }
@@ -825,6 +826,7 @@ int main(int argc, char **argv)
     //X509_digest
     sdprintf("UNABLE TO LOAD PRIVATE KEY");
   }
+#endif
 
   safe_to_log = 1;
 
