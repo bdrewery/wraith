@@ -62,9 +62,9 @@ SCRIPT_FUNCTION(cmd_chanlist) {
     bd::String flags(args.getArgString(2));
 
     break_down_flags(flags.c_str(), &plus, &minus);
-    int f = (minus.global || minus.chan || minus.bot);
+    bool have_minus = (minus.global || minus.chan || minus.bot);
     // Return empty set if asked for flags but flags don't exist
-    if (!plus.global && !plus.chan && !plus.bot && !f) {
+    if (!plus.global && !plus.chan && !plus.bot && !have_minus) {
       return bd::SCRIPT_OK;
     }
 
@@ -75,7 +75,7 @@ SCRIPT_FUNCTION(cmd_chanlist) {
 
       get_user_flagrec(m->user, &fluser, chan->dname);
       fluser.match = plus.match;
-      if (flagrec_eq(&plus, &fluser) && (!f || !flagrec_eq(&minus, &fluser))) {
+      if (flagrec_eq(&plus, &fluser) && (!have_minus || !flagrec_eq(&minus, &fluser))) {
           results << m->nick;
       }
     }

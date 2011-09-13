@@ -315,7 +315,7 @@ flagrec_eq(struct flag_record *req, struct flag_record *have)
 {
   if (req->match & FR_AND) {
     if (req->match & FR_GLOBAL) {
-      if ((req->global &have->global) !=req->global)
+      if ((req->global & have->global) != req->global)
         return 0;
     }
     if (req->match & FR_CHAN) {
@@ -327,7 +327,7 @@ flagrec_eq(struct flag_record *req, struct flag_record *have)
     if (!req->chan && !req->global)
       return 1;
     if (req->match & FR_GLOBAL) {
-      if (have->global &req->global)
+      if (have->global & req->global)
         return 1;
     }
     if (req->match & FR_CHAN) {
