@@ -56,10 +56,9 @@ SCRIPT_FUNCTION(cmd_chanlist) {
       results << m->nick;
     }
   } else {
-
-    struct flag_record plus = { FR_CHAN | FR_GLOBAL | FR_BOT, 0, 0, 0 },
-                       minus = { FR_CHAN | FR_GLOBAL | FR_BOT, 0, 0, 0 },
-                       fluser = { FR_CHAN | FR_GLOBAL | FR_BOT, 0, 0, 0 };
+    struct flag_record plus = { FR_CHAN | FR_GLOBAL, 0, 0, 0 },
+                       minus = { FR_CHAN | FR_GLOBAL, 0, 0, 0 },
+                       fluser = { FR_CHAN | FR_GLOBAL, 0, 0, 0 };
     bd::String flags(args.getArgString(2));
 
     break_down_flags(flags.c_str(), &plus, &minus);

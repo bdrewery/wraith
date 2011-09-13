@@ -82,6 +82,8 @@ enum deflag_event_t {
 #define USER_CHAN_VALID (flag_t) CHAN_VALID|USER_AUTOOP|USER_MASTER|USER_OWNER
 #define USER_VALID (flag_t) USER_ADMIN|USER_HUBA|USER_CHUBA|USER_PARTY|USER_CHAN_VALID
 
+// 'b' is not actually used, but is for eggdrop-script compat
+#define BOT_BOT		FLAG[(int) 'b']
 #define BOT_BACKUP	FLAG[(int) 'B']
 #define BOT_CHANHUB	FLAG[(int) 'c']
 #define BOT_FLOODBOT	FLAG[(int) 'f'] 
@@ -91,7 +93,7 @@ enum deflag_event_t {
 #define BOT_DOVOICE	FLAG[(int) 'y']
 
 #define BOT_CHAN_VALID (flag_t) CHAN_VALID|BOT_CHANHUB|BOT_DOLIMIT|BOT_DOVOICE|BOT_DORESOLV|BOT_BACKUP|BOT_FLOODBOT
-#define BOT_VALID  (flag_t) BOT_CHAN_VALID|BOT_UPDATEHUB
+#define BOT_VALID  (flag_t) BOT_CHAN_VALID|BOT_UPDATEHUB|BOT_BOT
 
 
 #define bot_hublevel(x) ( ( (x) && x->bot && (get_user(&USERENTRY_BOTADDR, x)) ) ? \

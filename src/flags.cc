@@ -197,7 +197,7 @@ break_down_flags(const char *string, struct flag_record *plus, struct flag_recor
           switch (chan) {
             case 0:
               /* which->global |= (flag_t) 1 << (*string - 'a'); */
-              which->global |=flagbit;
+              which->global |= flagbit;
 
               break;
             case 1:
@@ -208,8 +208,16 @@ break_down_flags(const char *string, struct flag_record *plus, struct flag_recor
         }
       }
     }
-    string++;
+    ++string;
   }
+
+  // eggdrop-script compat
+  if (plus && plus->global & BOT_BOT) {
+    flags |= FR_BOT;
+  } else if (minus && minus->global & BOT_BOT) {
+    flags |= FR_BOT;
+  }
+
   for (which = plus; which; which = (which == plus ? minus : 0)) {
     if (flags & FR_BOT) {
       which->global &= BOT_VALID;
@@ -389,10 +397,12 @@ get_user_flagrec(const struct userrec *u, struct flag_record *fr, const char *ch
     return;
   }
 
-  if (u->bot)
-    fr->bot = 1;
-
   fr->global = (fr->match & FR_GLOBAL) ? u->flags : 0;
+
+  if (u->bot) {
+    fr->bot = 1;
+    fr->global |= BOT_BOT;
+  }
 
   if (fr->match & FR_CHAN) {
     struct chanuserrec *cr = NULL;
