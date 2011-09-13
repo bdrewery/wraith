@@ -68,6 +68,7 @@ SCRIPT_FUNCTION(cmd_chanlist) {
       return bd::SCRIPT_OK;
     }
 
+    plus.match |= FR_AND;
     minus.match = plus.match ^ (FR_AND | FR_OR);
     for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
       member_getuser(m);
