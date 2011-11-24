@@ -846,6 +846,8 @@ bool bot_shouldjoin(struct userrec* u, struct flag_record* fr, struct chanset_t*
   // No user record, can't make any safe assumptions really
   if (!u) return 0;
 
+  // FIXME: Add groups / botjoin check here.
+
 #ifdef DEBUG
   /* Force debugging bots to only join 3 channels */
   if (!strncmp(u->handle, "wtest", 5)) {

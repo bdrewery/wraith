@@ -688,7 +688,7 @@ int stream_readuserfile(bd::Stream& stream, struct userrec **ret)
             }
 	  }
 	} else if (!strcmp(code, "!")) {	/* user channel record */
-	  /* ! #chan laston flags [info] */
+	  /* ! #chan laston flags [{ flags }] [info] */
 	  char *chname = NULL, *st = NULL, *fl = NULL;
 
 	  if (u) {
@@ -712,6 +712,23 @@ int stream_readuserfile(bd::Stream& stream, struct userrec **ret)
 		strlcpy(cr->channel, chname, 80);
 		cr->laston = atoi(st);
 		cr->flags = fr.chan;
+                // Check for bot-specific channel flags
+                if (u->bot && s[0] == '{') {
+                  bd::String options;
+                  int inactive = -1;
+
+                  p = strchr(s, '}');
+                  // Make string of options without {} and trimming out spaces
+                  options = bd::String(s, (p - 1) - (s + 1)).trim();
+                  s = p;
+                  newsplit(&s); // Remove }
+
+                  if (options.find("+inactive") != options.npos) {
+                    inactive = 1;
+                  } else if (options.find("-inactive") != options.npos) {
+                    inactive = 0;
+                  }
+                }
 		if (s[0]) {
                   cr->info = strdup(s);
 		} else
