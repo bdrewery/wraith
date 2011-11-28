@@ -464,7 +464,9 @@ chk_autoop(struct flag_record fr, struct chanset_t *chan)
   if (glob_bot(fr))
     return 0;
   if (!chan || (!channel_take(chan) && !privchan(fr, chan, PRIV_OP) && chk_op(fr, chan) && !chk_deop(fr, chan))) {
-    if (channel_autoop(chan) || chan_autoop(fr) || glob_autoop(fr))
+    bool fr_autoop = (glob_autoop(fr) && !chan_noautoop(fr) && !glob_noautoop(fr)) || (chan_autoop(fr) && !glob_noautoop(fr) && !chan_noautoop(fr));
+    bool ch_autoop = (channel_autoop(chan) && !glob_)
+    if (!chan_noautoop(fr) && (channel_autoop(chan) || chan_autoop(fr) || glob_autoop(fr)))
       return 1;
   }
   return 0;

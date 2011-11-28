@@ -1508,9 +1508,9 @@ static void cmd_channel(int idx, char *par)
         atrflag = 'D';
       else if (chan_deop(user))
         atrflag = 'd';
-      else if (glob_autoop(user))
+      else if (glob_autoop(user) && !chan_noautoop(user) && !glob_noautoop(user))
         atrflag = 'A';
-      else if (chan_autoop(user))
+      else if (chan_autoop(user) && !chan_noautoop(user) && !glob_noautoop(user))
         atrflag = 'a';
       else if (glob_op(user) && !privchan(user, chan, PRIV_OP))
         atrflag = 'O';

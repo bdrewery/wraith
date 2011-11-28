@@ -68,6 +68,7 @@ struct flag_record {
 #define USER_MASTER	FLAG[(int) 'm']
 #define USER_OWNER	FLAG[(int) 'n']
 
+#define USER_NOAUTOOP	FLAG[(int) 'D']
 #define USER_AUTOOP	FLAG[(int) 'O']
 
 #define USER_DEOP	FLAG[(int) 'd']
@@ -80,7 +81,7 @@ struct flag_record {
 
 #define CHAN_VALID (flag_t) USER_DEOP|USER_KICK|USER_OP|USER_QUIET|USER_VOICE|USER_NOFLOOD|USER_WASOPTEST
 
-#define USER_CHAN_VALID (flag_t) CHAN_VALID|USER_AUTOOP|USER_MASTER|USER_OWNER
+#define USER_CHAN_VALID (flag_t) CHAN_VALID|USER_NOAUTOOP|USER_AUTOOP|USER_MASTER|USER_OWNER
 #define USER_VALID (flag_t) USER_ADMIN|USER_HUBA|USER_CHUBA|USER_PARTY|USER_CHAN_VALID
 
 #define BOT_BACKUP	FLAG[(int) 'B']
@@ -107,6 +108,8 @@ struct flag_record {
 #define glob_op(x)                     ((x).global & USER_OP)
 #define chan_autoop(x)                 ((x).chan & USER_AUTOOP)
 #define glob_autoop(x)                 ((x).global & USER_AUTOOP)
+#define chan_noautoop(x)               ((x).chan & USER_NOAUTOOP)
+#define glob_noautoop(x)               ((x).global & USER_NOAUTOOP)
 #define chan_deop(x)                   ((x).chan & USER_DEOP)
 #define glob_deop(x)                   ((x).global & USER_DEOP)
 #define glob_master(x)                 ((x).global & USER_MASTER)

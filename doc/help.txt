@@ -446,7 +446,7 @@ See also: link
  
    The following can be set + or - (e.g. '%dchanset #channel -enforcebans')
         $bautoop$b         Bots that are +y will auto-op all users with 
-                       op access to the channel.
+                       op access to the channel who are not +D.
         $bbackup$b         Make backup-bots (+B) join when set.
         $bbitch$b          Only let users with the +o flag have op on the
                        channel?
@@ -1993,6 +1993,7 @@ See also: whom
    Valid user-only flags:
       $ba$b - admin (user has absolute control over botnet minus a few perm-owner only cmds)
               Be careful who you give this to, only the perm-owner of the net should even have it.
+      $bD$b = dont-autoop (user is not auto-opped in channels they are +O in or +autoop channels)
       $bi$b - hub access (user has hub DCC access)
       $bj$b - leaf access (user has leaf DCC access)
       $bm$b = master (user has more access to the botnet cmds than a normal user)
