@@ -941,6 +941,9 @@ int stream_readuserfile(bd::Stream& stream, struct userrec **ret)
   return 1;
 }
 
+/**
+ * @brief Return the linkpref ([hublevel][nick]) for the given user
+ */
 void link_pref_val(struct userrec *u, char *val)
 {
 /* val must be HANDLEN + 4 chars minimum */
