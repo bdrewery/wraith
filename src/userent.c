@@ -364,6 +364,8 @@ static bool set_gotshare(struct userrec *u, struct user_entry *e, char *buf, int
 
 static void set_write_userfile(bd::Stream& stream, const struct userrec *u, const struct user_entry *e, int idx)
 {
+  tand_t *bot = findbot(u->handle);
+  tand_t *parentBot = bot ? bot->via : NULL;
   int localhub = nextbot(u->handle);
   /* only write if saving local, or if sending to hub, or if sending to same user as entry, or the localhub in the chain */
   if (idx == -1 || dcc[idx].hub || dcc[idx].user == u || (localhub != -1 && idx == localhub)) {
