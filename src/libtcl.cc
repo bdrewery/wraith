@@ -56,7 +56,6 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, Tcl_GetLongFromObj);
   DLSYM_GLOBAL(handle, Tcl_GetObjResult);
   DLSYM_GLOBAL(handle, Tcl_GetStringFromObj);
-  DLSYM_GLOBAL(handle, Tcl_GetStringResult);
   DLSYM_GLOBAL(handle, Tcl_Init);
   DLSYM_GLOBAL(handle, Tcl_InterpDeleted);
   DLSYM_GLOBAL(handle, Tcl_NewBooleanObj);
@@ -68,6 +67,7 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, Tcl_SetObjResult);
   DLSYM_GLOBAL(handle, Tcl_SetVar);
   DLSYM_GLOBAL(handle, Tcl_SetVar2);
+  DLSYM_GLOBAL(handle, Tcl_UnsetVar);
   DLSYM_GLOBAL(handle, Tcl_TraceVar);
 #endif
 
