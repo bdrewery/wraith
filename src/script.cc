@@ -50,17 +50,6 @@ int init_script() {
   return 0;
 }
 
-void script_add_commands(script_cmd_t* cmds) {
-  script_cmd_t *cmd = NULL;
-  bd::Array<bd::String> interps(ScriptInterps.keys());
-
-  for (cmd = cmds; cmd && cmd->name; cmd = ++cmds) {
-    for (size_t i = 0; i < interps.length(); ++i) {
-      ScriptInterps[interps[i]]->createCommand(cmd->name, cmd->callback);
-    }
-  }
-}
-
 int unload_script() {
   bd::Array< bd::String > keys(ScriptInterps.keys());
   for (size_t i = 0; i < keys.length(); ++i) {

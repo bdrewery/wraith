@@ -28,30 +28,24 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-SCRIPT_FUNCTION(cmd_privmsg) {
-  SCRIPT_BADARGS(3, 3, " channel string");
-  bd::String channel(args.getArgString(1)), msg(args.getArgString(2));
+bd::String cmd_privmsg(bd::String channel, bd::String msg) {
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
-    SCRIPT_RETURN_STRING("invalid channel: " + channel);
-    return bd::SCRIPT_ERROR;
+    return "invalid channel: " + channel;
   }
   privmsg(channel, msg, DP_SERVER);
-  return bd::SCRIPT_OK;
+  return bd::String();
 }
 
-SCRIPT_FUNCTION(cmd_chanlist) {
-  SCRIPT_BADARGS(2, 3, " channel ?flags?");
-
-  bd::String channel(args.getArgString(1));
+bd::String cmd_chanlist(bd::String channel, bd::String flags) {
+  putlog(LOG_MISC, "*", "chanlist %s %s", channel.c_str(), flags.c_str());
   chanset_t *chan = findchan_by_dname(channel.c_str());
   if (!chan) {
-    SCRIPT_RETURN_STRING("invalid channel: " + channel);
-    return bd::SCRIPT_ERROR;
+    return "invalid channel: " + channel;
   }
   bd::Array<bd::String> results;
 
   // No flags, return all
-  if (args.length() == 2) {
+  if (!flags) {
     for (memberlist *m = chan->channel.member; m && m->nick[0]; m = m->next) {
       results << m->nick;
     }
@@ -59,13 +53,12 @@ SCRIPT_FUNCTION(cmd_chanlist) {
     struct flag_record plus = { FR_CHAN | FR_GLOBAL, 0, 0, 0 },
                        minus = { FR_CHAN | FR_GLOBAL, 0, 0, 0 },
                        fluser = { FR_CHAN | FR_GLOBAL, 0, 0, 0 };
-    bd::String flags(args.getArgString(2));
 
     break_down_flags(flags.c_str(), &plus, &minus);
     bool have_minus = (minus.global || minus.chan || minus.bot);
     // Return empty set if asked for flags but flags don't exist
     if (!plus.global && !plus.chan && !plus.bot && !have_minus) {
-      return bd::SCRIPT_OK;
+      return bd::String();
     }
 
     plus.match |= FR_AND;
@@ -81,14 +74,12 @@ SCRIPT_FUNCTION(cmd_chanlist) {
     }
   }
 
-  SCRIPT_RETURN_STRING(results.join(" "));
-  return bd::SCRIPT_OK;
+  return results.join(" ");
 }
 
-script_cmd_t irc_cmds[] = {
-  {"privmsg",                         cmd_privmsg},
-  {"chanlist",                        cmd_chanlist},
-  {NULL,                              NULL}
-};
+static void irc_script_init() {
+  script_add_command("privmsg", cmd_privmsg);
+  script_add_command("chanlist", cmd_chanlist, 1);
+}
 
 /* vim: set sts=2 sw=2 ts=8 et: */
