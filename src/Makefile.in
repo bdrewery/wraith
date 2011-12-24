@@ -24,6 +24,7 @@ OBJS = auth.So \
 	base64.So \
 	binary.So \
 	binds.So \
+	binds_script.So \
 	bg.So \
 	botcmd.So \
 	botmsg.So \

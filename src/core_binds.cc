@@ -39,6 +39,7 @@
 #include "binds.h"
 #include "dcc.h"
 #include "cmds.h"
+#include "binds_script.h"
 
 extern cmd_t 		C_dcc[];
 
@@ -58,6 +59,7 @@ void core_binds_init()
         BT_nkch = bind_table_add("nkch", 2, "ss", MATCH_MASK, BIND_STACKABLE);
         BT_note = bind_table_add("note", 3 , "sss", MATCH_EXACT, 0);
 	BT_time = bind_table_add("time", 5, "iiiii", MATCH_MASK, BIND_STACKABLE);
+        binds_script_init();
 }
 
 bool check_aliases(int idx, const char *cmd, const char *args)
