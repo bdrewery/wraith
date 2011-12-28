@@ -1,5 +1,6 @@
 * Bots now link together via SSL instead of the old Ghost AES protocol
 * SSL partyline is now supported with 'openssl s_client -starttls pop3 hostname:port' (fixes #359)
+* Add new set option 'ssl-ciphers'
 
 # master
   * Require C++14 compiler support (GCC 5+, Clang 3.4+)

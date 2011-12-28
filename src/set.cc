@@ -77,6 +77,7 @@ bool fish_auto_keyx = 0;
 bool fish_paranoid = 0;
 int server_cycle_wait;
 int wait_split;
+char ssl_ciphers[256] = DEFAULT_SSL_CIPHERS;
 
 ////// THIS MUST REMAIN SORTED: !LC_ALL=C sort
 // VAR("bad-process",	&badprocess,		VAR_INT|VAR_DETECTED,				0, 4, "ignore"),
@@ -136,6 +137,7 @@ static variable_t vars[] = {
  VAR("servers-ssl",	&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB|VAR_NOLDEF,	0, 0, DEFAULT_SERVERS_SSL),
  VAR("servers6",	&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB|VAR_NOLDEF,	0, 0, DEFAULT_SERVERS6),
  VAR("servers6-ssl",	&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB|VAR_NOLDEF,	0, 0, DEFAULT_SERVERS6_SSL),
+ VAR("ssl-ciphers",	ssl_ciphers,		VAR_STRING|VAR_NOLOC,				0, 0, DEFAULT_SSL_CIPHERS),
  VAR("trace",		&trace,			VAR_INT|VAR_DETECTED,				0, 4, "die"),
  VAR("usermode",	&usermode,		VAR_WORD|VAR_NOLHUB,				0, 0, "+iws"),
  VAR("wait-split",	&wait_split,		VAR_INT|VAR_NOLHUB,				0, 86400, "1000"),
@@ -416,14 +418,18 @@ sdprintf("var (mem): %s -> %s", var->name, datain ? datain : "(NULL)");
     sdprintf("server-use-ssl changed, reprocessing server list");
     variable_t *servers = var_get_var_by_name(get_server_type());
     var_set_mem(servers, servers->ldata ? servers->ldata : servers->gdata);
-  }
-
-  // Check if should part/join channels based on groups changing
-  if (!conf.bot->hub && !strcmp(var->name, "groups")) {
+  } else if (!conf.bot->hub && !strcmp(var->name, "groups")) {
+    // Check if should part/join channels based on groups changing
     if (server_online && !restarting && !loading && !reset_chans) {
       for (struct chanset_t* chan = chanset; chan; chan = chan->next) {
         check_shouldjoin(chan);
       }
+    }
+  } else if (!strcmp(var->name, "ssl-ciphers")) {
+    sdprintf("Setting SSL Ciphers: %s", ssl_ciphers);
+    if (!SSL_CTX_set_cipher_list(ssl_ctx, ssl_ciphers)) {
+      sdprintf("Invalid ciphers, reverting to default");
+      SSL_CTX_set_cipher_list(ssl_ctx, var->def);
     }
   }
 
