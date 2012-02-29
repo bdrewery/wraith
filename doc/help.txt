@@ -1646,6 +1646,9 @@ See also: reload, backup
                           (0/- to disable)
 [B]  $bmanop-warn$b      Warn users via /NOTICE when they msg-op in a channel with manop
                            punishments.
+
+[S]  $bhomechan$b        Channel to designate as the homechan. See the wiki under Homechan
+                           for more explanation.
  
   *  Msg cmd vars may be left blank to disable usage of cmd.
 [S]  $bmsg-op$b          Defines the cmd for opping via msging the bot.
