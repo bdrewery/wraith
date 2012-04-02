@@ -135,12 +135,12 @@ detect_offense(memberlist* m, struct chanset_t *chan, char *msg)
   double caps_percentage = 0, caps_count = 0;
   const double caps_limit = chan->capslimit ? double(chan->capslimit) / 100.0 : double(0);
 
-  // Need to know how long the message is, and want to ignore spaces, so avoid a strlen() and just loop to count
+  // Need to know how long the message is, and want to ignore non-alphas, so avoid a strlen() and just loop to count
   size_t tot = 0;
   if (caps_limit) {
     char *msg_check = msg;
     while (msg_check && *msg_check) {
-      if (!egg_isspace(*msg_check) && *msg_check != 3 && *msg_check != 2) {
+      if (egg_isalpha(*msg_check) && *msg_check != 3 && *msg_check != 2) {
         ++tot;
       }
       ++msg_check;
@@ -155,8 +155,8 @@ detect_offense(memberlist* m, struct chanset_t *chan, char *msg)
   }
 
   while (msg && *msg) {
-    // Skip spaces
-    if (egg_isspace(*msg)) {
+    // Skip non-alpha
+    if (!egg_isalpha(*msg)) {
       ++msg;
       continue;
     }
