@@ -56,6 +56,7 @@ void init_userent()
   add_entry_type(&USERENTRY_OSVER);
   add_entry_type(&USERENTRY_PASS);
   add_entry_type(&USERENTRY_PASS1);
+  add_entry_type(&USERENTRY_EGGPASS);
   add_entry_type(&USERENTRY_SECPASS);
   add_entry_type(&USERENTRY_HOSTS);
   add_entry_type(&USERENTRY_STATS);
@@ -594,6 +595,7 @@ static bool pass_set(struct userrec *u, struct user_entry *e, void *buf)
 
   /* clear old records */
   noshare = 1;
+  set_user(&USERENTRY_EGGPASS, u, NULL);
   set_user(&USERENTRY_PASS1, u, NULL);
   noshare = 0;
   return 1;
@@ -651,6 +653,18 @@ struct user_entry_type USERENTRY_PASS1 =
   "PASS1"
 };
 
+struct user_entry_type USERENTRY_EGGPASS =
+{
+  0,
+  def_gotshare,
+  def_unpack,
+  def_write_userfile,
+  def_kill,
+  def_get,
+  eggpass_set,
+  NULL,
+  "EGGPASS"
+};
 
 static void secpass_display(int idx, struct user_entry *e, struct userrec *u)
 {

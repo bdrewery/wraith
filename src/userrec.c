@@ -294,26 +294,31 @@ bool user_has_host(const char *handle, struct userrec *u, char *host)
 
 void convert_password(struct userrec *u)
 {
-  char *oldpass = (char *) get_user(&USERENTRY_PASS1, u);
+  char *eggpass = (char *) get_user(&USERENTRY_EGGPASS, u);
 
-  if (oldpass && oldpass[0]) {
-    char *pass = NULL, *passp = NULL;
-    /* need to convert into new password format and remove old */
+  if (eggpass) {
+  } else {
+    char *oldpass = (char *) get_user(&USERENTRY_PASS1, u);
 
-    /* --------- this changes to reflect how to decrypt old password --------- */
-    passp = pass = decrypt_string(u->handle, &oldpass[1]);
-    /* Advance pass over the salt */
-    pass += 17;
-    /* ----------------------------------------------------------------------- */
+    if (oldpass && oldpass[0]) {
+      char *pass = NULL, *passp = NULL;
+      /* need to convert into new password format and remove old */
 
-    set_user(&USERENTRY_PASS, u, pass);
-    OPENSSL_cleanse(passp, strlen(passp));
-    free(passp);
+      /* --------- this changes to reflect how to decrypt old password --------- */
+      passp = pass = decrypt_string(u->handle, &oldpass[1]);
+      /* Advance pass over the salt */
+      pass += 17;
+      /* ----------------------------------------------------------------------- */
 
-    /* clear old record */
-    noshare = 1;
-    set_user(&USERENTRY_PASS1, u, NULL);
-    noshare = 0;
+      set_user(&USERENTRY_PASS, u, pass);
+      OPENSSL_cleanse(passp, strlen(passp));
+      free(passp);
+
+      /* clear old record */
+      noshare = 1;
+      set_user(&USERENTRY_PASS1, u, NULL);
+      noshare = 0;
+    }
   }
   
 }
