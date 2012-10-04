@@ -936,7 +936,7 @@ static void cmd_groups(int idx, char *par)
           maxGroupLen = group.length();
         }
         // Add their groups into the master list
-        if (allgroups.find(group) == allgroups.npos) {
+        if (allgroups.ifind(group) == allgroups.npos) {
           allgroups << group;
         }
         // Add them to the list for this group
@@ -1438,7 +1438,7 @@ static void cmd_botcmd(int idx, char *par)
       if (bot_hublevel(tbot->u) == 999) {
         group_match = false;
         if (group) {
-          group_match = bd::String(var_get_bot_data(tbot->u, "groups", true)).split(',').find(group) != bd::String::npos;
+          group_match = bd::String(var_get_bot_data(tbot->u, "groups", true)).split(',').ifind(group) != bd::String::npos;
         } else {
           group_match = true;
         }
@@ -1462,7 +1462,7 @@ static void cmd_botcmd(int idx, char *par)
       if (bot_hublevel(tbot->u) == 999 && tbot->localhub) {
         group_match = false;
         if (group) {
-          group_match = bd::String(var_get_bot_data(tbot->u, "groups", true)).split(',').find(group) != bd::String::npos;
+          group_match = bd::String(var_get_bot_data(tbot->u, "groups", true)).split(',').ifind(group) != bd::String::npos;
         } else {
           group_match = true;
         }

@@ -759,7 +759,7 @@ bool bot_shouldjoin(struct userrec* u, struct flag_record* fr, const struct chan
 
   if (chan->groups && chan->groups->length()) {
     for (size_t i = 0; i < my_groupsArray.length(); ++i) {
-      if (chan->groups->find(my_groupsArray[i]) != chan->groups->npos) {
+      if (chan->groups->ifind(my_groupsArray[i]) != chan->groups->npos) {
         group_match = 1;
         break;
       }

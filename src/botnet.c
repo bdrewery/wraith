@@ -578,7 +578,7 @@ tell_bots(int idx, int up, const char *nodename)
       const bd::Array<bd::String> botgroups((bd::String(var_get_bot_data(u, "groups", true))).split(","));
 
       // Include this bot?
-      const bool group_match = group.length() && botgroups.find(group) != botgroups.npos;
+      const bool group_match = group.length() && botgroups.ifind(group) != botgroups.npos;
       const char *userNode = (const char*) get_user(&USERENTRY_NODENAME, u);
       const bd::String node(userNode ? userNode : "(unknown)");
       const bool node_match = ((nodename && node.length() && wild_match(nodename, node.c_str())) || !nodename);

@@ -455,7 +455,7 @@ void show_channels(int idx, char *handle)
     struct flag_record fr = { FR_CHAN | FR_GLOBAL, 0, 0, 0 };
     const bd::String chname(chan->dname);
     // If a group was passed, ensure it matches
-    if (group.length() && chan->groups->find(group) == chan->groups->npos) {
+    if (group.length() && chan->groups->ifind(group) == chan->groups->npos) {
       continue;
     }
     get_user_flagrec(u, &fr, chan->dname);
