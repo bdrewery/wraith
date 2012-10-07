@@ -470,7 +470,7 @@ void show_channels(int idx, char *handle)
 
   if (channelNames.length()) {
     char format[120] = "";
-    simple_snprintf(format, sizeof(format), "  %%c%%-%zus %%-s%%-s%%-s%%-s%%-s%%-s{ %%-s }\n", (maxChannelLength+2));
+    simple_snprintf(format, sizeof(format), "  %%c%%-%zus %%-10s %%-10s %%-10s %%-10s %%-10s %%-10s %%-s\n", (maxChannelLength+2));
     if (group.length()) {
       dprintf(idx, "group '%s' is in %zu channel%s:\n", group.c_str(), channelNames.length(), (channelNames.length() > 1) ? "s" : "");
     } else {
@@ -480,11 +480,14 @@ void show_channels(int idx, char *handle)
     for (size_t i = 0; i < channelNames.length(); ++i) {
       const bd::String chname(channelNames[i]);
       const struct chanset_t* chan = channels[chname];
-      dprintf(idx, format, !conf.bot->hub && me_op(chan) ? '@' : ' ', chan->dname, ((conf.bot->hub && channel_inactive(chan)) || (!conf.bot->hub && !shouldjoin(chan))) ? "(inactive) " : "",
-          channel_privchan(chan) ? "(private)  " : "", chan->manop ? "(no manop) " : "", 
-          channel_bitch(chan) && !channel_botbitch(chan) ? "(bitch)    " : channel_botbitch(chan) ? "(botbitch) " : "",
-          channel_closed(chan) ?  "(closed) " : "", channel_backup(chan) ? "(backup)" : "",
-          static_cast<bd::String>(chan->groups->join(" ")).c_str());
+      dprintf(idx, format, !conf.bot->hub && me_op(chan) ? '@' : ' ', chan->dname,
+          ((conf.bot->hub && channel_inactive(chan)) || (!conf.bot->hub && !shouldjoin(chan))) ? "(inactive)" : "",
+          channel_privchan(chan) ? "(private)" : "",
+          chan->manop ? "(no manop)" : "", 
+          channel_bitch(chan) && !channel_botbitch(chan) ? "(bitch)" : channel_botbitch(chan) ? "(botbitch)" : "",
+          channel_closed(chan) ? "(closed)" : "",
+          channel_backup(chan) ? "(backup)" : "",
+          bd::String("{ " + chan->groups->join(" ") + " }").c_str());
     }
   } else {
     if (group.length()) {
