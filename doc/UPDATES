@@ -1,3 +1,5 @@
+* Show groups in .channels
+
 maint
   * Prevent crashing on startup if openssl can not be loaded
 

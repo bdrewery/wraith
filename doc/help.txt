@@ -620,6 +620,8 @@ See also: status, whois
 ###  $bchannels$b %{+m}[user|%group]%{-}
    Displays channels that you have access to, and any important 
    flags that are set on them.
+
+   This will also list which groups are in each channel
 %{+m}
    Masters: You can specify other users to see what channels their 
             flags grant them access to.%{-}
