@@ -34,12 +34,12 @@
 #include "socket.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <lib/bsd/sys/queue.h>
 #include <arpa/inet.h>
 #include <bdlib/src/Array.h>
 #include <bdlib/src/String.h>
 
 typedef struct dns_query {
-	struct dns_query *next;
 	bd::Array<bd::String>* answer;
 	dns_callback_t callback;
 	void *client_data;
@@ -51,6 +51,7 @@ typedef struct dns_query {
 	int answers;
 	int remaining;
         int lowest_ttl;
+	LIST_ENTRY(dns_query) next;
 } dns_query_t;
 
 /* RFC1035
@@ -148,7 +149,7 @@ typedef struct {
 
 
 static dns_header_t _dns_header = {0, 0, 0, 0, 0, 0};
-static dns_query_t *query_head = NULL;
+LIST_HEAD(query_list, dns_query) query_head;
 static dns_host_t *hosts = NULL;
 static int nhosts = 0;
 static dns_cache_t *cache = NULL;
@@ -177,6 +178,7 @@ static void dns_on_read(int idx, char *buf, int atr);
 static void dns_on_eof(int idx);
 static const char *dns_next_server();
 static int parse_reply(char *response, size_t nbytes, const char* server_ip, bool blocking = 0);
+static int query_cancel(dns_query_t *, int issue_callback);
 
 interval_t async_lookup_timeout = 10;
 interval_t async_server_timeout = 20;
@@ -297,8 +299,10 @@ static int get_dns_id() {
 	while (1) {
 		int id = randint(65534);
 		bool found = 0;
+		dns_query_t *q;
+
 		// Make sure this ID is not already in use, avoid a race condition
-		for (dns_query_t *q = query_head; q; q = q->next) {
+		LIST_FOREACH(q, &query_head, next) {
 			if (q->id == id) {
 				found = 1;
 				break;
@@ -309,7 +313,8 @@ static int get_dns_id() {
 	}
 }
 
-static dns_query_t *alloc_query(void *client_data, dns_callback_t callback, const char *query)
+static dns_query_t
+*query_new(void *client_data, dns_callback_t callback, const char *query)
 {
 	dns_query_t *q = (dns_query_t *) my_calloc(1, sizeof(*q));
 
@@ -321,8 +326,7 @@ static dns_query_t *alloc_query(void *client_data, dns_callback_t callback, cons
 	q->callback = callback;
 	q->client_data = client_data;
 	q->expiretime = now + async_lookup_timeout;
-	q->next = query_head;
-	query_head = q;
+	LIST_INSERT_HEAD(&query_head, q, next);
 
 	return q;
 }
@@ -422,10 +426,23 @@ dns_query_t *query_find_by_host(const char *host)
 {
 	dns_query_t *q = NULL;
 
-	for (q = query_head; q; q = q->next)
+	LIST_FOREACH(q, &query_head, next) {
 		if (!strcasecmp(q->query, host))
 			return q;
+	}
 	return NULL;
+}
+
+dns_query_t *query_find_by_id(const int id)
+{
+	dns_query_t *q = NULL;
+
+	LIST_FOREACH(q, &query_head, next) {
+		if (q->id == id) {
+			break;
+		}
+	}
+	return (q);
 }
 
 #define DEFAULT_DNS_TYPE (DNS_LOOKUP_A|DNS_LOOKUP_AAAA)
@@ -481,7 +498,7 @@ void dns_resend_queries()
 {
 	dns_query_t *q = NULL;
 
-	for (q = query_head; q; q = q->next) {
+	LIST_FOREACH(q, &query_head, next) {
 		if (now >= q->expiretime) {
 			sdprintf("RESENDING: %s", q->query);
 			dns_send_query(q);
@@ -548,7 +565,7 @@ int egg_dns_lookup(const char *host, interval_t timeout, dns_callback_t callback
 	}
 
 	/* Allocate our query struct. */
-	q = alloc_query(client_data, callback, host);
+	q = query_new(client_data, callback, host);
 
 	sdprintf("egg_dns_lookup(%s, %d) -> %d", host, timeout, q->id);
 	dns_send_query(q, type);
@@ -592,18 +609,7 @@ read_more:
 	}
 
 	if (q) {
-		dns_query_t *prev = NULL, *cur = NULL;
-		for (cur = query_head; cur; cur = cur->next) {
-			if (cur->id == q->id)
-				break;
-			prev = cur;
-		}
-		if (cur) {
-			if (prev)
-				prev->next = cur->next;
-			else
-				query_head = cur->next;
-		}
+		LIST_REMOVE(q, next);
 		free_query(q);
 	}
 
@@ -619,7 +625,7 @@ bd::Array<bd::String> dns_blocking_loop(const char* what, interval_t timeout, co
 	bd::Array<bd::String> answer;
 	static int cnt = 0;
 try_again:
-	q = alloc_query(NULL, NULL, what);
+	q = query_new(NULL, NULL, what);
 
 	if (is_ip)
 		query_transform_ip(q, what);
@@ -742,7 +748,7 @@ int egg_dns_reverse(const char *ip, interval_t timeout, dns_callback_t callback,
 		return(-1);
 	}
 
-	q = alloc_query(client_data, callback, ip);
+	q = query_new(client_data, callback, ip);
 	sdprintf("egg_dns_reverse(%s, %d) -> %d", ip, timeout, q->id);
 
 	query_transform_ip(q, ip);
@@ -1025,19 +1031,17 @@ int reverse_ip(const char *host, char *reverse)
 
 int egg_dns_cancel(int id, int issue_callback)
 {
-	dns_query_t *q, *prev = NULL;
+	dns_query_t *q = query_find_by_id(id);
+	return query_cancel(q, issue_callback);
+}
 
-	for (q = query_head; q; q = q->next) {
-		if (q->id == id)
-			break;
-		prev = q;
-	}
+int
+query_cancel(dns_query_t* q, int issue_callback)
+{
 	if (!q)
 		return(-1);
-	if (prev)
-		prev->next = q->next;
-	else
-		query_head = q->next;
+	LIST_REMOVE(q, next);
+
 	sdprintf("Cancelling query: %s", q->query);
 	if (issue_callback && q->callback) {
 		if (q->answer->size() > 0) {
@@ -1096,7 +1100,7 @@ void print_reply(dns_rr_t &reply)
 static int parse_reply(char *response, size_t nbytes, const char* server_ip, bool blocking)
 {
 	dns_header_t header;
-	dns_query_t *q = NULL, *prev = NULL;
+	dns_query_t *q = NULL;
 	char result[512] = "";
 	short rr;
 	dns_rr_t reply;
@@ -1117,11 +1121,7 @@ static int parse_reply(char *response, size_t nbytes, const char* server_ip, boo
 //	print_header(header);
 
 	/* Find our copy of the query before proceeding. */
-	for (q = query_head; q; q = q->next) {
-		if (q->id == header.id)
-			break;
-		prev = q;
-	}
+	q = query_find_by_id(header.id);
 
 	sdprintf("Reply(%d) questions: %d answers: %d ar: %d ns: %d from: %s QR: %d OPCODE: %d AA: %d TC: %d RD: %d RA: %d RCODE: %d",
 			header.id,
@@ -1262,10 +1262,7 @@ callback:
 	errno = 0;
 
 	/* Ok, we have, so now issue the callback with the answers. */
-	if (prev)
-		prev->next = q->next;
-	else
-		query_head = q->next;
+	LIST_REMOVE(q, next);
 
 	if (q->answer->size() > 0) {
 		cache_add(q->query, *(q->answer), q->lowest_ttl);
@@ -1290,7 +1287,7 @@ void tell_dnsdebug(int idx)
 
 	dprintf(idx, "NS: %s\n", dns_ip);
 
-	for (q = query_head; q; q = q->next)
+	LIST_FOREACH(q, &query_head, next)
 		dprintf(idx, "DNS (%d) (%ds): %s\n", q->id, (int) (q->expiretime - now), q->query);
 
 //	for (i = 0; i < nhosts; i++)
@@ -1305,7 +1302,7 @@ void tell_dnsdebug(int idx)
 
 static void expire_queries()
 {
-	dns_query_t *q = NULL, *next = NULL;
+	dns_query_t *q = NULL, *q_tmp = NULL;
 	int i = 0;
 
 	/* need to check for expired queries and either:
@@ -1313,15 +1310,10 @@ static void expire_queries()
 	   b) expire due to ttl
 	   */
 
-	if (query_head) {
-		for (q = query_head; q; q = q->next) {
-			if (q->expiretime <= now) {		/* set in alloc_query */
-				if (q->next)
-					next = q->next;
-				egg_dns_cancel(q->id, 1);
-				if (!next)
-					break;
-				q = next;
+	if (!LIST_EMPTY(&query_head)) {
+		LIST_FOREACH_SAFE(q, &query_head, next, q_tmp) {
+			if (q->expiretime <= now) {		/* set in query_new */
+				query_cancel(q, 1);
 			}
 		}
 	}
@@ -1334,7 +1326,6 @@ static void expire_queries()
 			i--;
 		}
 	}
-
 }
 
 
@@ -1343,6 +1334,8 @@ int egg_dns_init()
 {
 	/* Set RECURSION DESIRED */
 	SET_RD(_dns_header.flags);
+
+	LIST_INIT(&query_head);
 
 	/* Convert flags to network order */
 	_dns_header.flags = htons(_dns_header.flags);
