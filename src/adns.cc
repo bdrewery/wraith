@@ -418,7 +418,7 @@ static void egg_dns_send(char *query, int len, bool blocking)
 //	sockbuf_write(dns_idx, query, len);
 }
 
-dns_query_t *find_query(const char *host)
+dns_query_t *query_find_by_host(const char *host)
 {
 	dns_query_t *q = NULL;
 
@@ -542,7 +542,7 @@ int egg_dns_lookup(const char *host, interval_t timeout, dns_callback_t callback
 	}
 
 	/* check if the query was already made */
-	if ((q = find_query(host))) {
+	if ((q = query_find_by_host(host))) {
 		sdprintf("egg_dns_lookup(%s, %d): Already querying -> %d", host, timeout, q->id);
 		return(-2);
 	}
@@ -737,7 +737,7 @@ int egg_dns_reverse(const char *ip, interval_t timeout, dns_callback_t callback,
 	}
 
 	/* check if the query was already made */
-	if ((q = find_query(ip))) {
+	if ((q = query_find_by_host(ip))) {
 		sdprintf("egg_dns_reverse(%s, %d): Already querying -> %d", ip, timeout, q->id);
 		return(-1);
 	}
