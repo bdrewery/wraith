@@ -170,7 +170,7 @@ static int read_resolv(char *fname);
 static void read_hosts(char *fname);
 static int get_dns_idx();
 //static void dns_resend_queries();
-static dns_cache_t* cache_find(const char *);
+static dns_cache_t* dns_cache_find(const char *);
 //static int dns_on_read(void *client_data, int idx, char *buf, int len);
 //static int dns_on_eof(void *client_data, int idx, int err, const char *errmsg);
 static void dns_read(int idx, char*, int&, bool blocking = 0);
@@ -545,7 +545,7 @@ int egg_dns_lookup(const char *host, interval_t timeout, dns_callback_t callback
 		}
 	}
 
-	dns_cache_t *cache = cache_find(host);
+	dns_cache_t *cache = dns_cache_find(host);
 	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
 		sdprintf("egg_dns_lookup(%s, %d): Found in cache -> %s", host, timeout, cache->answer->join(',').c_str());
@@ -659,7 +659,7 @@ bd::Array<bd::String> dns_lookup_block(const char *host, interval_t timeout, int
 		}
 	}
 
-	dns_cache_t *cache = cache_find(host);
+	dns_cache_t *cache = dns_cache_find(host);
 
 	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
@@ -693,7 +693,7 @@ bd::Array<bd::String> dns_reverse_block(const char *ip, interval_t timeout)
 		}
 	}
 
-	dns_cache_t *cache = cache_find(ip);
+	dns_cache_t *cache = dns_cache_find(ip);
 	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
 		sdprintf("dns_reverse_block(%s, %d): Found in cache -> %s", ip, timeout, cache->answer->join(',').c_str());
@@ -730,7 +730,7 @@ int egg_dns_reverse(const char *ip, interval_t timeout, dns_callback_t callback,
 		}
 	}
 
-	dns_cache_t *cache = cache_find(ip);
+	dns_cache_t *cache = dns_cache_find(ip);
 	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
 		sdprintf("egg_dns_reverse(%s, %d): Found in cache -> %s", ip, timeout, cache->answer->join(',').c_str());
@@ -860,12 +860,13 @@ static void add_host(char *host, char *ip)
 }
 
 inline static bool
-cache_expired(const dns_cache_t* cache)
+dns_cache_expired(const dns_cache_t* cache)
 {
 	return (cache->expiretime && (now >= cache->expiretime));
 }
 
-static void cache_del(int id)
+static void
+dns_cache_del(int id)
 {
 	delete cache_head[id].answer;
 	free(cache_head[id].query);
@@ -881,7 +882,8 @@ static void cache_del(int id)
 	cache_head = (dns_cache_t *) my_realloc(cache_head, (ncache+1) * sizeof(*cache_head));
 }
 
-static void cache_add(const char *query, bd::Array<bd::String> answer, int ttl)
+static void
+dns_cache_add(const char *query, bd::Array<bd::String> answer, int ttl)
 {
 	cache_head = (dns_cache_t *) my_realloc(cache_head, (ncache+1) * sizeof(*cache_head));
 	bzero(&cache_head[ncache], sizeof(cache_head[ncache]));
@@ -893,7 +895,7 @@ static void cache_add(const char *query, bd::Array<bd::String> answer, int ttl)
 }
 
 static dns_cache_t*
-cache_find(const char *query)
+dns_cache_find(const char *query)
 {
 	dns_cache_t *cache = NULL;
 
@@ -911,7 +913,7 @@ void dns_cache_flush()
 	int i = 0;
 
 	for (i = 0; i < ncache; i++) {
-		cache_del(i);
+		dns_cache_del(i);
 		if (i == ncache)
 			break;
 		i--;
@@ -1042,7 +1044,7 @@ query_cancel(dns_query_t* q, int issue_callback)
 	sdprintf("Cancelling query: %s", q->query);
 	if (issue_callback && q->callback) {
 		if (q->answer->size() > 0) {
-			cache_add(q->query, *(q->answer), q->lowest_ttl);
+			dns_cache_add(q->query, *(q->answer), q->lowest_ttl);
 
 			q->callback(q->id, q->client_data, q->query, *(q->answer));
 		} else {
@@ -1262,7 +1264,7 @@ callback:
 	LIST_REMOVE(q, next);
 
 	if (q->answer->size() > 0) {
-		cache_add(q->query, *(q->answer), q->lowest_ttl);
+		dns_cache_add(q->query, *(q->answer), q->lowest_ttl);
 
 		if (q->callback)
 			q->callback(q->id, q->client_data, q->query, *(q->answer));
@@ -1316,8 +1318,8 @@ static void expire_queries()
 	}
 
 	for (i = 0; i < ncache; i++) {
-		if (cache_expired(&cache_head[i])) {
-			cache_del(i);
+		if (dns_cache_expired(&cache_head[i])) {
+			dns_cache_del(i);
 			if (i == ncache)
 				break;
 			i--;
