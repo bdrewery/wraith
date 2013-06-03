@@ -859,11 +859,10 @@ static void add_host(char *host, char *ip)
 	nhosts++;
 }
 
-static int cache_expired(int id)
+inline static bool
+cache_expired(const dns_cache_t* cache)
 {
-	if (cache_head[id].expiretime && (now >= cache_head[id].expiretime))
-		return(1);
-	return (0);
+	return (cache->expiretime && (now >= cache->expiretime));
 }
 
 static void cache_del(int id)
@@ -1317,7 +1316,7 @@ static void expire_queries()
 	}
 
 	for (i = 0; i < ncache; i++) {
-		if (cache_expired(i)) {
+		if (cache_expired(&cache_head[i])) {
 			cache_del(i);
 			if (i == ncache)
 				break;
