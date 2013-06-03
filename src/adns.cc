@@ -178,6 +178,7 @@ static void dns_on_read(int idx, char *buf, int atr);
 static void dns_on_eof(int idx);
 static const char *dns_next_server();
 static int parse_reply(char *response, size_t nbytes, const char* server_ip, bool blocking = 0);
+static dns_query_t* query_find_by_id(const int id);
 static int query_cancel(dns_query_t *, int issue_callback);
 
 interval_t async_lookup_timeout = 10;
@@ -298,18 +299,11 @@ static void free_query(dns_query_t*& q) {
 static int get_dns_id() {
 	while (1) {
 		int id = randint(65534);
-		bool found = 0;
-		dns_query_t *q;
 
 		// Make sure this ID is not already in use, avoid a race condition
-		LIST_FOREACH(q, &query_head, next) {
-			if (q->id == id) {
-				found = 1;
-				break;
-			}
+		if (query_find_by_id(id) == NULL) {
+			return (id);
 		}
-		if (found) continue;
-		return id;
 	}
 }
 
@@ -433,7 +427,8 @@ dns_query_t *query_find_by_host(const char *host)
 	return NULL;
 }
 
-dns_query_t *query_find_by_id(const int id)
+dns_query_t *
+query_find_by_id(const int id)
 {
 	dns_query_t *q = NULL;
 
