@@ -170,7 +170,7 @@ static int read_resolv(char *fname);
 static void read_hosts(char *fname);
 static int get_dns_idx();
 //static void dns_resend_queries();
-static int cache_find(const char *);
+static dns_cache_t* cache_find(const char *);
 //static int dns_on_read(void *client_data, int idx, char *buf, int len);
 //static int dns_on_eof(void *client_data, int idx, int err, const char *errmsg);
 static void dns_read(int idx, char*, int&, bool blocking = 0);
@@ -521,7 +521,7 @@ void dns_create_timeout_timer(dns_query_t **qm, const char *query, int timeout)
 int egg_dns_lookup(const char *host, interval_t timeout, dns_callback_t callback, void *client_data, int type)
 {
 	dns_query_t *q = NULL;
-	int i, cache_id;
+	int i;
 
 	if (is_dotted_ip(host)) {
 		/* If it's already an ip, we're done. */
@@ -545,11 +545,11 @@ int egg_dns_lookup(const char *host, interval_t timeout, dns_callback_t callback
 		}
 	}
 
-	cache_id = cache_find(host);
-	if (cache_id >= 0) {
+	dns_cache_t *cache = cache_find(host);
+	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
-		sdprintf("egg_dns_lookup(%s, %d): Found in cache -> %s", host, timeout, cache_head[cache_id].answer->join(',').c_str());
-		callback(-1, client_data, host, *(cache_head[cache_id].answer));
+		sdprintf("egg_dns_lookup(%s, %d): Found in cache -> %s", host, timeout, cache->answer->join(',').c_str());
+		callback(-1, client_data, host, *(cache->answer));
 		return(-1);
 	}
 
@@ -659,11 +659,12 @@ bd::Array<bd::String> dns_lookup_block(const char *host, interval_t timeout, int
 		}
 	}
 
-	int cache_id = cache_find(host);
-	if (cache_id >= 0) {
+	dns_cache_t *cache = cache_find(host);
+
+	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
-		sdprintf("dns_lookup_block(%s, %d): Found in cache -> %s", host, timeout, cache_head[cache_id].answer->join(',').c_str());
-		return *(cache_head[cache_id].answer);
+		sdprintf("dns_lookup_block(%s, %d): Found in cache -> %s", host, timeout, cache->answer->join(',').c_str());
+		return *(cache->answer);
 	}
 
 	return dns_blocking_loop(host, timeout, "dns_lookup_block", type);
@@ -692,11 +693,11 @@ bd::Array<bd::String> dns_reverse_block(const char *ip, interval_t timeout)
 		}
 	}
 
-	int cache_id = cache_find(ip);
-	if (cache_id >= 0) {
+	dns_cache_t *cache = cache_find(ip);
+	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
-		sdprintf("dns_reverse_block(%s, %d): Found in cache -> %s", ip, timeout, cache_head[cache_id].answer->join(',').c_str());
-		return *(cache_head[cache_id].answer);
+		sdprintf("dns_reverse_block(%s, %d): Found in cache -> %s", ip, timeout, cache->answer->join(',').c_str());
+		return *(cache->answer);
 	}
 
 	return dns_blocking_loop(ip, timeout, "dns_reverse_block", 0, 1);
@@ -708,7 +709,7 @@ bd::Array<bd::String> dns_reverse_block(const char *ip, interval_t timeout)
 int egg_dns_reverse(const char *ip, interval_t timeout, dns_callback_t callback, void *client_data)
 {
 	dns_query_t *q;
-	int i, cache_id;
+	int i;
 
 	if (!is_dotted_ip(ip)) {
 		/* If it's not a valid ip, don't even make the request. */
@@ -729,11 +730,11 @@ int egg_dns_reverse(const char *ip, interval_t timeout, dns_callback_t callback,
 		}
 	}
 
-	cache_id = cache_find(ip);
-	if (cache_id >= 0) {
+	dns_cache_t *cache = cache_find(ip);
+	if (cache != NULL) {
 //		cache[cache_id].answer->shuffle();
-		sdprintf("egg_dns_reverse(%s, %d): Found in cache -> %s", ip, timeout, cache_head[cache_id].answer->join(',').c_str());
-		callback(-1, client_data, ip, *(cache_head[cache_id].answer));
+		sdprintf("egg_dns_reverse(%s, %d): Found in cache -> %s", ip, timeout, cache->answer->join(',').c_str());
+		callback(-1, client_data, ip, *(cache->answer));
 		return(-1);
 	}
 
@@ -892,14 +893,18 @@ static void cache_add(const char *query, bd::Array<bd::String> answer, int ttl)
 	ncache++;
 }
 
-static int cache_find(const char *query)
+static dns_cache_t*
+cache_find(const char *query)
 {
-	int i;
+	dns_cache_t *cache = NULL;
 
-	for (i = 0; i < ncache; i++)
-		if (!strcasecmp(cache_head[i].query, query))
-			return (i);
-	return (-1);
+	for (int i = 0; i < ncache; i++) {
+		if (!strcasecmp(cache_head[i].query, query)) {
+			cache = &cache_head[i];
+			break;
+		}
+	}
+	return (cache);
 }
 
 void dns_cache_flush()
