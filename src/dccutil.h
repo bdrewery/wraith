@@ -5,13 +5,6 @@
 #include "dcc.h"
 #include "auth.h"
 
-/* Public structure for the listening port map */
-struct portmap {
-  in_port_t realport;
-  in_port_t mappedto;
-  struct portmap *next;
-};
-
 namespace bd {
   class Stream;
   class String;

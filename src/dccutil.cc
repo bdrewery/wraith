@@ -55,6 +55,13 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Stream.h>
 
+/* Structure for the listening port map */
+struct portmap {
+  in_port_t realport;
+  in_port_t mappedto;
+  struct portmap *next;
+};
+
 static struct portmap *root = NULL;
 
 interval_t connect_timeout = 40;    /* How long to wait before a telnet connection times out */
