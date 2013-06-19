@@ -54,15 +54,16 @@
 #include <stdarg.h>
 #include <bdlib/src/String.h>
 #include <bdlib/src/Stream.h>
+#include <lib/bsd/sys/queue.h>
 
 /* Structure for the listening port map */
-struct portmap {
+typedef struct portmap {
   in_port_t realport;
   in_port_t mappedto;
-  struct portmap *next;
-};
+  LIST_ENTRY(portmap) next;
+} portmap_t;
 
-static struct portmap *root = NULL;
+LIST_HEAD(portmap_list, portmap) portmap_head;
 
 interval_t connect_timeout = 40;    /* How long to wait before a telnet connection times out */
 int max_dcc = 200;
@@ -80,6 +81,7 @@ init_dcc()
     dcc = (struct dcc_t *) my_realloc(dcc, sizeof(struct dcc_t) * max_dcc);
   else
     dcc = (struct dcc_t *) my_calloc(1, sizeof(struct dcc_t) * max_dcc);
+  LIST_INIT(&portmap_head);
 }
 
 /* Replace \n with \r\n */
@@ -890,16 +892,17 @@ listen_all(in_port_t lport, bool off, bool should_v6)
   int i6 = -1;
 #endif /* USE_IPV6 */
   int i = -1;
-  struct portmap *pmap = NULL, *pold = NULL;
+  struct portmap *pmap = NULL;
 
   port = realport = lport;
   // If using a random port, lookup the port mapping
   if (lport == 0) {
-    for (pmap = root; pmap; pold = pmap, pmap = pmap->next)
+    LIST_FOREACH(pmap, &portmap_head, next) {
       if (pmap->realport == port) {
         port = pmap->mappedto;
         break;
       }
+    }
   }
 
   // Look for an existing open port and close if requested
@@ -910,8 +913,7 @@ listen_all(in_port_t lport, bool off, bool should_v6)
 
       if (off) {
         if (lport == 0 && pmap) {
-          if (pold) pold->next = pmap->next;
-          else root = pmap->next;
+	  LIST_REMOVE(pmap, next);
           free(pmap);
         }
 #ifdef USE_IPV6
@@ -984,8 +986,7 @@ listen_all(in_port_t lport, bool off, bool should_v6)
 #endif /* USE_IPV6 */
             if (!pmap) {
               pmap = (struct portmap *) my_calloc(1, sizeof(struct portmap));
-              pmap->next = root;
-              root = pmap;
+	      LIST_INSERT_HEAD(&portmap_head, pmap, next);
             }
             pmap->realport = realport;
             pmap->mappedto = port;
