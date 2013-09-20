@@ -53,6 +53,7 @@ typedef struct dns_query {
         int lowest_ttl;
 	LIST_ENTRY(dns_query) next;
 } dns_query_t;
+LIST_HEAD(query_list, dns_query) query_head;
 
 /* RFC1035
                                     1  1  1  1  1  1
@@ -149,7 +150,6 @@ typedef struct {
 
 
 static dns_header_t _dns_header = {0, 0, 0, 0, 0, 0};
-LIST_HEAD(query_list, dns_query) query_head;
 static dns_host_t *hosts = NULL;
 static int nhosts = 0;
 static dns_cache_t *cache_head = NULL;
