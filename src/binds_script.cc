@@ -37,16 +37,17 @@
 
 struct script_callback {
   public:
+    const bd::String interp;
     const bd::String callback_command;
     script_callback() = delete;
-    script_callback(bd::String _callback_command) : callback_command(_callback_command) {};
+    script_callback(const bd::String _interp, bd::String _callback_command) : interp(_interp), callback_command(_callback_command) {};
 };
 
 void my_callback(script_callback* callback_data, const char* nick, const char* uhost, struct userrec* u, const char* args) {
   bd::String x(callback_data->callback_command);
   putlog(LOG_MISC, "*", "x: %s", x.c_str());
   // Forward to the TCL callback
-  script_eval("tcl", callback_data->callback_command + bd::String::printf(" %s %s %s %s", nick, uhost, u->handle, args));
+  script_eval(callback_data->interp, callback_data->callback_command + bd::String::printf(" %s %s %s %s", nick, uhost, u->handle, args));
 }
 
 bd::String script_bind(bd::String type, bd::String flags, bd::String mask, bd::String cmd) {
@@ -56,9 +57,11 @@ bd::String script_bind(bd::String type, bd::String flags, bd::String mask, bd::S
     return "invalid type: " + type;
   }
 
+  const bd::String interp("tcl");
+
   if (cmd) {
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
-    script_callback* callback_data = new script_callback(cmd);
+    script_callback* callback_data = new script_callback(interp, cmd);
     bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) my_callback, (void*) callback_data);
   }
 
