@@ -37,39 +37,37 @@
 
 struct script_callback {
   public:
-    const bd::String interp;
+    bd::ScriptInterp* interp;
     const bd::String callback_command;
     script_callback() = delete;
-    script_callback(const bd::String _interp, bd::String _callback_command) : interp(_interp), callback_command(_callback_command) {};
+    script_callback(bd::ScriptInterp* _interp, bd::String _callback_command) : interp(_interp), callback_command(_callback_command) {};
 };
 
-void my_callback(script_callback* callback_data, const char* nick, const char* uhost, struct userrec* u, const char* args) {
+void script_bind_callback(script_callback* callback_data, const char* nick, const char* uhost, struct userrec* u, const char* args) {
   bd::String x(callback_data->callback_command);
   putlog(LOG_MISC, "*", "x: %s", x.c_str());
   // Forward to the TCL callback
-  script_eval(callback_data->interp, callback_data->callback_command + bd::String::printf(" %s %s %s %s", nick, uhost, u->handle, args));
+  callback_data->interp->eval(callback_data->callback_command + bd::String::printf(" %s %s %s %s", nick, uhost, u->handle, args));
 }
 
-bd::String script_bind(bd::String type, bd::String flags, bd::String mask, bd::String cmd) {
+bd::String script_bind(bd::ScriptInterp* interp, const bd::String type, const bd::String flags, const bd::String mask, const bd::String cmd) {
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {
     return "invalid type: " + type;
   }
 
-  const bd::String interp("tcl");
-
   if (cmd) {
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
     script_callback* callback_data = new script_callback(interp, cmd);
-    bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) my_callback, (void*) callback_data);
+    bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) script_bind_callback, (void*) callback_data);
   }
 
   return bd::String();
 }
 
 void binds_script_init() {
-  script_add_command("bind", script_bind);
+  script_add_command_interp("bind", script_bind);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */

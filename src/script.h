@@ -24,5 +24,14 @@ void script_add_command(const bd::String& cmdName, ReturnType(*callback)(Params.
   }
 }
 
+template<typename ReturnType, typename... Params>
+void script_add_command_interp(const bd::String& cmdName, ReturnType(*callback)(bd::ScriptInterp*, Params...), size_t minParams = sizeof...(Params)) {
+  bd::Array<bd::String> interps(ScriptInterps.keys());
+
+  for (auto key : interps) {
+    bd::ScriptInterp::createCommandInterp(*static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]), cmdName, callback, minParams);
+  }
+}
+
 
 #endif /* !_SCRIPT_H */
