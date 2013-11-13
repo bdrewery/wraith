@@ -59,7 +59,7 @@ bd::String script_bind(bd::String type, bd::String flags, bd::String mask, bd::S
   if (cmd) {
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
     script_callback* callback_data = new script_callback(cmd);
-    bind_entry_add(table, flags.c_str(), 0, mask.c_str(), name.c_str(), BIND_WANTS_CD, (Function) my_callback, (void*) callback_data);
+    bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) my_callback, (void*) callback_data);
   }
 
   return bd::String();
