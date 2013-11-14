@@ -20,7 +20,12 @@ void script_add_command(const bd::String& cmdName, ReturnType(*callback)(Params.
   bd::Array<bd::String> interps(ScriptInterps.keys());
 
   for (auto key : interps) {
-    bd::ScriptInterp::createCommand(*static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]), cmdName, callback, minParams);
+    switch (ScriptInterps[key]->type()) {
+      // This type hacking is done due to not being able to have templated virtual functions
+      case bd::ScriptInterp::SCRIPT_TYPE_TCL:
+        bd::ScriptInterp::createCommand(*static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]), cmdName, callback, minParams);
+        break;
+    }
   }
 }
 
@@ -29,7 +34,12 @@ void script_add_command_interp(const bd::String& cmdName, ReturnType(*callback)(
   bd::Array<bd::String> interps(ScriptInterps.keys());
 
   for (auto key : interps) {
-    bd::ScriptInterp::createCommandInterp(*static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]), cmdName, callback, minParams);
+    switch (ScriptInterps[key]->type()) {
+      // This type hacking is done due to not being able to have templated virtual functions
+      case bd::ScriptInterp::SCRIPT_TYPE_TCL:
+        bd::ScriptInterp::createCommandInterp(*static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]), cmdName, callback, minParams);
+        break;
+    }
   }
 }
 

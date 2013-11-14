@@ -20,7 +20,7 @@
 
 /*
  * script.c -- handles:
- *  TCL
+ *  Generic Script handling
  *
  */
 

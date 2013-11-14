@@ -46,7 +46,7 @@ struct script_callback {
 void script_bind_callback(script_callback* callback_data, const char* nick, const char* uhost, struct userrec* u, const char* args) {
   bd::String x(callback_data->callback_command);
   putlog(LOG_MISC, "*", "x: %s", x.c_str());
-  // Forward to the TCL callback
+  // Forward to the Script callback
   callback_data->interp->eval(callback_data->callback_command + bd::String::printf(" %s %s %s %s", nick, uhost, u->handle, args));
 }
 
