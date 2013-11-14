@@ -25,6 +25,7 @@
  *
  */
 
+#include <stdarg.h>
 
 #include "common.h"
 #include "binds_script.h"
@@ -37,20 +38,40 @@
 
 struct script_callback {
   public:
-    bd::ScriptInterp* interp;
-    const bd::String callback_command;
+    bd::ScriptCallbacker* callback_command;
+    const bind_table_t* table;
     script_callback() = delete;
-    script_callback(bd::ScriptInterp* _interp, bd::String _callback_command) : interp(_interp), callback_command(_callback_command) {};
+    script_callback(bd::ScriptCallbacker* _callback_command, const bind_table_t* _table) : callback_command(_callback_command), table(_table) {};
 };
 
-void script_bind_callback(script_callback* callback_data, const char* nick, const char* uhost, struct userrec* u, const char* args) {
-  bd::String x(callback_data->callback_command);
-  putlog(LOG_MISC, "*", "x: %s", x.c_str());
+void script_bind_callback(script_callback* callback_data, ...) {
+  va_list va;
+  char *type;
+  bd::Array<bd::String> args(strlen(callback_data->table->syntax));
+
+  // Go over the syntax and parse out the passed in args and then convert to Strings
+  // to pass into the script interp
+  va_start(va, callback_data);
+  for (type = callback_data->table->syntax; *type != '\0'; ++type) {
+    switch (*type) {
+      case 's':
+        args << bd::String(va_arg(va, char*));
+        break;
+      case 'U':
+        args << bd::String(va_arg(va, struct userrec*)->handle);
+        break;
+      case 'i':
+        args << bd::String::printf("%d", va_arg(va, int));
+        break;
+    }
+  }
+  va_end(va);
+
   // Forward to the Script callback
-  callback_data->interp->eval(callback_data->callback_command + bd::String::printf(" %s %s %s %s", nick, uhost, u->handle, args));
+  callback_data->callback_command->call(args);
 }
 
-bd::String script_bind(bd::ScriptInterp* interp, const bd::String type, const bd::String flags, const bd::String mask, const bd::String cmd) {
+bd::String script_bind(const bd::String type, const bd::String flags, const bd::String mask, bd::ScriptCallbacker* cmd) {
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {
@@ -59,7 +80,7 @@ bd::String script_bind(bd::ScriptInterp* interp, const bd::String type, const bd
 
   if (cmd) {
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
-    script_callback* callback_data = new script_callback(interp, cmd);
+    script_callback* callback_data = new script_callback(cmd, table);
     bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) script_bind_callback, (void*) callback_data);
   }
 
@@ -67,7 +88,7 @@ bd::String script_bind(bd::ScriptInterp* interp, const bd::String type, const bd
 }
 
 void binds_script_init() {
-  script_add_command_interp("bind", script_bind);
+  script_add_command("bind", script_bind);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
