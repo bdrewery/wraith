@@ -165,7 +165,7 @@ static const struct {
 #define Q_CACHE 4
 
 #include "cmdsserv.cc"
-
+#include "script.cc"
 
 /*
  *     Bot server queues
@@ -1206,6 +1206,8 @@ void server_init()
   add_builtins("raw", my_raw_binds);
   add_builtins("dcc", C_dcc_serv);
   add_builtins("ctcp", my_ctcps);
+
+  server_script_init();
 
   egg_timeval_t howlong;
 
