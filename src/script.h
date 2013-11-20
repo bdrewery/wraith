@@ -11,6 +11,8 @@
 extern bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
 bd::String script_eval(const bd::String& interp, const bd::String& script);
 
+template <typename T>
+void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook = nullptr);
 
 int init_script();
 int unload_script();
