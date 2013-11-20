@@ -111,6 +111,8 @@ static void get_channel_masks(struct chanset_t* chan);
 const char* punish_flooder(struct chanset_t* chan, memberlist* m, const char *reason = NULL);
 void set_devoice(struct chanset_t* chan, memberlist* m);
 
+static void check_bind_pub(const char *nick, const char *from, const char *chname, char *msg);
+
 #endif /* MAKING_IRC */
 
 void my_setkey(struct chanset_t *, char *);

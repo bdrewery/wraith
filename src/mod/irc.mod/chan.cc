@@ -3374,6 +3374,7 @@ static int gotmsg(char *from, char *msg)
       }
       free(my_ptr);
     }
+    check_bind_pub(nick, uhost, chan->dname, msg);
     irc_log(chan, "%s<%s> %s", to[0] == '@' ? "@" : "", nick, msg);
     update_idle(chan->dname, nick);
   }

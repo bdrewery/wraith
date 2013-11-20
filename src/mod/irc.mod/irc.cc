@@ -74,6 +74,7 @@ static cache_t *irccache = NULL;
 
 #define do_eI (((now - chan->channel.last_eI) > 30) ? 1 : 0)
 
+static bind_table_t *BT_pub;
 static time_t wait_split = 900;    /* Time to wait for user to return from
                                  * net-split. */
 int max_bans;                   /* Modified by net-type 1-4 */
@@ -1675,6 +1676,26 @@ int check_bind_authc(char *cmd, Auth *a, char *chname, char *par)
   return (0);
 }
 
+/* Check for tcl-bound pub command, return 1 if found
+ *
+ * pub: proc-name <nick> <user@host> <handle> <chan> <args...>
+ */
+
+static void check_bind_pub(const char *nick, const char *from, const char *chname, char *msg)
+{
+  struct flag_record fr = {FR_GLOBAL | FR_CHAN | FR_ANYWH, 0, 0, 0 };
+  char *cmd, s[UHOSTLEN + 1] = "";
+  struct userrec *u = NULL;
+
+  cmd = newsplit(&msg);
+  simple_snprintf(s, sizeof(s), "%s!%s", nick, from);
+  u = get_user_by_host(s);
+  get_user_flagrec(u, &fr, chname);
+
+  check_bind(BT_pub, cmd, &fr, nick, s, u, chname, msg);
+}
+
+
 /* Flush the modes for EVERY channel.
  */
 void
@@ -1765,6 +1786,8 @@ void
 irc_init()
 {
   timer_create_secs(60, "irc_minutely", (Function) irc_minutely);
+
+  BT_pub = bind_table_add("pub", 5, "ssUss", MATCH_FLAGS, 0);
 
   /* Add our commands to the imported tables. */
   add_builtins("dcc", irc_dcc);
