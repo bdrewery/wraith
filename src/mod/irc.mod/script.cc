@@ -78,8 +78,8 @@ bd::String cmd_chanlist(bd::String channel, bd::String flags) {
 }
 
 static void irc_script_init() {
-  script_add_command("privmsg", cmd_privmsg);
-  script_add_command("chanlist", cmd_chanlist, 1);
+  script_add_command("privmsg", cmd_privmsg, "channel msg");
+  script_add_command("chanlist", cmd_chanlist, "channel ?flags?", 1);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
