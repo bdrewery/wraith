@@ -30,7 +30,7 @@
 
 bd::String cmd_privmsg(bd::String channel, bd::String msg) {
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
-    return "invalid channel: " + channel;
+    throw bd::String("invalid channel ") + channel;
   }
   privmsg(channel, msg, DP_SERVER);
   return bd::String();
@@ -40,7 +40,7 @@ bd::String cmd_chanlist(bd::String channel, bd::String flags) {
   putlog(LOG_MISC, "*", "chanlist %s %s", channel.c_str(), flags.c_str());
   chanset_t *chan = findchan_by_dname(channel.c_str());
   if (!chan) {
-    return "invalid channel: " + channel;
+    throw bd::String("invalid channel ") + channel;
   }
   bd::Array<bd::String> results;
 

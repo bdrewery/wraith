@@ -75,7 +75,7 @@ bd::String script_bind(const bd::String type, const bd::String flags, const bd::
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {
-    return "invalid type: " + type;
+    throw bd::String("invalid type: ") + type;
   }
 
   if (cmd) {
