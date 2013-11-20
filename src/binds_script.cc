@@ -88,7 +88,7 @@ bd::String script_bind(const bd::String type, const bd::String flags, const bd::
 }
 
 void binds_script_init() {
-  script_add_command("bind", script_bind);
+  script_add_command("bind", script_bind, "type flags cmd/mask ?procname?");
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
