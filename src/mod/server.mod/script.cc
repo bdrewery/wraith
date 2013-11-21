@@ -26,7 +26,6 @@
 
 #include "src/script.h"
 #include <bdlib/src/String.h>
-#include <bdlib/src/Array.h>
 
 static void script_put(int queue, int queue_next, const bd::String& text, const bd::String options) {
   if (options && options != "-next" && options != "-normal")
