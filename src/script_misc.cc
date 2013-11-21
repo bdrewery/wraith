@@ -34,9 +34,20 @@ void script_putcmdlog(const bd::String text) {
   putlog(LOG_CMDS, "*", "%s", text.c_str());
 }
 
+void script_putloglev(const bd::String levels, const bd::String channel, const bd::String text) {
+  int lev = 0;
+
+  lev = logmodes(levels.c_str());
+  if (!lev)
+    throw bd::String("No valid log-level given");
+
+  putlog(lev, channel.c_str(), text.c_str());
+}
+
 void init_script_misc() {
   script_add_command("putlog", script_putlog, "text");
   script_add_command("putcmdlog", script_putcmdlog, "text");
+  script_add_command("putloglev", script_putloglev, "level(s) channel text");
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
