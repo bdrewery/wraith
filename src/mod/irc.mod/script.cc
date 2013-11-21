@@ -28,7 +28,7 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-bd::String cmd_privmsg(bd::String channel, bd::String msg) {
+bd::String script_privmsg(bd::String channel, bd::String msg) {
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
     throw bd::String("invalid channel ") + channel;
   }
@@ -36,7 +36,7 @@ bd::String cmd_privmsg(bd::String channel, bd::String msg) {
   return bd::String();
 }
 
-bd::String cmd_chanlist(bd::String channel, bd::String flags) {
+bd::String script_chanlist(bd::String channel, bd::String flags) {
   putlog(LOG_MISC, "*", "chanlist %s %s", channel.c_str(), flags.c_str());
   chanset_t *chan = findchan_by_dname(channel.c_str());
   if (!chan) {
@@ -78,8 +78,8 @@ bd::String cmd_chanlist(bd::String channel, bd::String flags) {
 }
 
 static void irc_script_init() {
-  script_add_command("privmsg", cmd_privmsg, "channel msg");
-  script_add_command("chanlist", cmd_chanlist, "channel ?flags?", 1);
+  script_add_command("privmsg", script_privmsg, "channel msg");
+  script_add_command("chanlist", script_chanlist, "channel ?flags?", 1);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
