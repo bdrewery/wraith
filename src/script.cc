@@ -33,6 +33,7 @@
 #include <bdlib/src/ScriptInterpTCL.h>
 
 #include "script.h"
+#include "script_misc.h"
 #include "libtcl.h"
 
 bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
@@ -47,6 +48,7 @@ int init_script() {
     ScriptInterps["tcl"] = new bd::ScriptInterpTCL;
   }
 #endif
+  init_script_misc();
   return 0;
 }
 

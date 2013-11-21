@@ -57,6 +57,7 @@ OBJS = auth.So \
 	response.So \
 	rfc1459.So \
 	script.So \
+	script_misc.So \
 	set.So \
 	shell.So \
 	socket.So \
