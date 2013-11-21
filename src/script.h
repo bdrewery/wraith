@@ -11,6 +11,14 @@
 extern bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
 bd::String script_eval(const bd::String& interp, const bd::String& script);
 
+struct script_callback {
+  public:
+    bd::ScriptCallbacker* callback_command;
+    void *cdata;
+    script_callback() = delete;
+    script_callback(bd::ScriptCallbacker* _callback_command, void *_cdata = nullptr) : callback_command(_callback_command), cdata(_cdata) {};
+};
+
 template <typename T>
 void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook = nullptr);
 

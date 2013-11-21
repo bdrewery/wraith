@@ -36,24 +36,17 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-struct script_callback {
-  public:
-    bd::ScriptCallbacker* callback_command;
-    const bind_table_t* table;
-    script_callback() = delete;
-    script_callback(bd::ScriptCallbacker* _callback_command, const bind_table_t* _table) : callback_command(_callback_command), table(_table) {};
-};
-
 void script_bind_callback(script_callback* callback_data, ...) {
   va_list va;
   char *type;
-  bd::Array<bd::String> args(strlen(callback_data->table->syntax));
+  bind_table_t* table = (bind_table_t*)callback_data->cdata;
+  bd::Array<bd::String> args(strlen(table->syntax));
   struct userrec *u = NULL;
 
   // Go over the syntax and parse out the passed in args and then convert to Strings
   // to pass into the script interp
   va_start(va, callback_data);
-  for (type = callback_data->table->syntax; *type != '\0'; ++type) {
+  for (type = table->syntax; *type != '\0'; ++type) {
     switch (*type) {
       case 's':
         args << bd::String(va_arg(va, char*));

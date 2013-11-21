@@ -24,6 +24,7 @@
  */
 
 #include "script.h"
+#include "egg_timer.h"
 #include "main.h"
 #include "net.h"
 #include <bdlib/src/String.h>
@@ -46,11 +47,69 @@ void script_putloglev(const bd::String levels, const bd::String channel, const b
   putlog(lev, channel.c_str(), text.c_str());
 }
 
+void script_timer_callback(script_callback* callback_data) {
+  // Forward to the Script callback
+  callback_data->callback_command->call(bd::Array<bd::String>());
+  delete callback_data;
+}
+
+static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int count) {
+  script_callback* callback_data = NULL;
+  bd::String timer_name;
+  egg_timeval_t howlong;
+  int timer_id;
+
+  if (seconds < 0)
+    throw bd::String("time value must be positive");
+
+  if (count < 0)
+    throw bd::String("count value must be >= 0");
+  else if (!count)
+    count = 1;
+
+  howlong.sec = seconds;
+  howlong.usec = 0;
+
+  timer_name = bd::String("script:") + cmd->cmd;
+  callback_data = new script_callback(cmd, NULL);
+
+  timer_id = timer_create_complex(&howlong, timer_name.c_str(),
+      (Function) script_timer_callback, callback_data, 0);
+
+  return bd::String::printf("timer%lu", (unsigned long) timer_id);
+}
+
+bd::String script_timer(int minutes, bd::ScriptCallbacker* cmd, int count) {
+  return _script_timer(minutes * 60, cmd, count);
+}
+
+bd::String script_utimer(int seconds, bd::ScriptCallbacker* cmd, int count) {
+  return _script_timer(seconds, cmd, count);
+}
+
+static void _script_killtimer(const bd::String timerID) {
+  if (timerID(0, 5) != "timer")
+    throw bd::String("argument is not a timerID");
+
+  if (timer_destroy(atoi(timerID(5).c_str())))
+    throw bd::String("invalid timerID");
+}
+
+void script_killtimer(const bd::String timerID) {
+  _script_killtimer(timerID);
+}
+
+void script_killutimer(const bd::String timerID) {
+  _script_killtimer(timerID);
+}
+
 bd::String script_duration(int seconds) {
   char s[70];
   long tmp;
 
-  if (seconds <= 0)
+  if (seconds < 0)
+    throw bd::String("seconds must be positive");
+  else if (seconds == 0)
     return "0 seconds";
 
   s[0] = 0;
@@ -136,9 +195,13 @@ void init_script_misc() {
   script_add_command("putlog",		script_putlog,		"text");
   script_add_command("putcmdlog",	script_putcmdlog,	"text");
   script_add_command("putloglev",	script_putloglev,	"level(s) channel text");
+  script_add_command("killtimer",	script_killtimer,	"timerID");
+  script_add_command("killutimer",	script_killutimer,	"timerID");
   script_add_command("myip",		script_myip);
   script_add_command("rand",		script_rand,		"limit");
   script_add_command("strftime",	script_strftime,	"formatstring ?time?",		1);
+  script_add_command("timer",		script_timer,		"minutes command ?count?",	2);
+  script_add_command("utimer",		script_utimer,		"seconds command ?count?",	2);
   script_add_command("unixtime",	script_unixtime);
 }
 
