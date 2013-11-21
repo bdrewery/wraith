@@ -27,7 +27,7 @@
 #include "src/script.h"
 #include <bdlib/src/String.h>
 
-static void script_put(int queue, int queue_next, const bd::String& text, const bd::String options) {
+static void script_put(int queue, int queue_next, const bd::String& text, const bd::String& options) {
   if (options && options != "-next" && options != "-normal")
     throw bd::String("Unknown option '") + options +
       bd::String("'. Should be one of: -normal, -next");
