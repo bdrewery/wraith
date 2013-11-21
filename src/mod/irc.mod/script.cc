@@ -28,12 +28,11 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-bd::String script_privmsg(bd::String channel, bd::String msg) {
+void script_privmsg(bd::String channel, bd::String msg) {
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
     throw bd::String("invalid channel ") + channel;
   }
   privmsg(channel, msg, DP_SERVER);
-  return bd::String();
 }
 
 bd::String script_chanlist(bd::String channel, bd::String flags) {
