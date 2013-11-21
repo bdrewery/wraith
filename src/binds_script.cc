@@ -48,6 +48,7 @@ void script_bind_callback(script_callback* callback_data, ...) {
   va_list va;
   char *type;
   bd::Array<bd::String> args(strlen(callback_data->table->syntax));
+  struct userrec *u = NULL;
 
   // Go over the syntax and parse out the passed in args and then convert to Strings
   // to pass into the script interp
@@ -58,7 +59,8 @@ void script_bind_callback(script_callback* callback_data, ...) {
         args << bd::String(va_arg(va, char*));
         break;
       case 'U':
-        args << bd::String(va_arg(va, struct userrec*)->handle);
+        u = va_arg(va, struct userrec*);
+        args << bd::String(u ? u->handle : "*");
         break;
       case 'i':
         args << bd::String::printf("%d", va_arg(va, int));
