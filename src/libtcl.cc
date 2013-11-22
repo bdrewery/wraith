@@ -41,6 +41,7 @@ static int load_symbols(void *handle) {
 #ifdef USE_SCRIPT_TCL
   const char *dlsym_error = NULL;
 
+  DLSYM_GLOBAL(handle, TclFreeObj);
   DLSYM_GLOBAL(handle, Tcl_CreateCommand);
   DLSYM_GLOBAL(handle, Tcl_CreateInterp);
   DLSYM_GLOBAL(handle, Tcl_CreateObjCommand);
@@ -50,7 +51,6 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, Tcl_EvalEx);
   DLSYM_GLOBAL(handle, Tcl_EvalFile);
   DLSYM_GLOBAL(handle, Tcl_FindExecutable);
-  DLSYM_GLOBAL(handle, TclFreeObj);
   DLSYM_GLOBAL(handle, Tcl_GetBooleanFromObj);
   DLSYM_GLOBAL(handle, Tcl_GetDoubleFromObj);
   DLSYM_GLOBAL(handle, Tcl_GetLongFromObj);
@@ -67,8 +67,8 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, Tcl_SetObjResult);
   DLSYM_GLOBAL(handle, Tcl_SetVar);
   DLSYM_GLOBAL(handle, Tcl_SetVar2);
-  DLSYM_GLOBAL(handle, Tcl_UnsetVar);
   DLSYM_GLOBAL(handle, Tcl_TraceVar);
+  DLSYM_GLOBAL(handle, Tcl_UnsetVar);
 #endif
 
   return 0;
