@@ -123,7 +123,7 @@ bd::Array<bd::Array<bd::String>> _script_timers() {
 
       timer << bd::String::printf("%li", diff.sec);
       timer << name;
-      timer << bd::String::printf("timer%d", i);
+      timer << bd::String::printf("timer%d", ids[i]);
       timer << "0";
 
       ret << timer;
