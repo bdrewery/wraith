@@ -49,6 +49,7 @@ void script_putloglev(const bd::String levels, const bd::String channel, const b
 
 void script_timer_callback(script_callback* callback_data) {
   // Forward to the Script callback
+  ContextNote("timer callback", callback_data->callback_command->cmd.c_str());
   callback_data->callback_command->call();
   delete callback_data;
 }

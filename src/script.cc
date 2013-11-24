@@ -63,6 +63,7 @@ int unload_script() {
 
 bd::String script_eval(const bd::String& interp, const bd::String& script) {
   if (!ScriptInterps.contains(interp)) return bd::String();
+  ContextNote(interp.c_str(), script.c_str());
   return ScriptInterps[interp]->eval(script);
 }
 
@@ -76,6 +77,7 @@ void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var
     switch (ScriptInterps[key]->type()) {
       // This type hacking is done due to not being able to have templated virtual functions
       case bd::ScriptInterp::SCRIPT_TYPE_TCL:
+        ContextNote("TCL", name.c_str());
         (static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]))->linkVar(name, data, var_hook_func);
         break;
     }

@@ -272,7 +272,7 @@ static int bind_entry_exec(bind_table_t *table, bind_entry_t *entry, void **al)
 	bind_entry_t *prev = NULL;
 	int retval;
 
-	ContextNote("bind", entry->mask);
+	ContextNote("bind", entry->function_name);
 	/* Give this entry a hit. */
 	entry->nhits++;
 

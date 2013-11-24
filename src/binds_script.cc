@@ -63,6 +63,7 @@ void script_bind_callback(script_callback* callback_data, ...) {
   va_end(va);
 
   // Forward to the Script callback
+  ContextNote("bind callback", callback_data->callback_command->cmd.c_str());
   callback_data->callback_command->call(args);
 }
 
