@@ -294,11 +294,15 @@ int timer_list(int **ids)
 
 	/* Count timers. */
 	for (timer = timer_repeat_head; timer; timer = timer->next) ntimers++;
+	for (timer = timer_once_head; timer; timer = timer->next) ntimers++;
 
 	/* Fill in array. */
 	*ids = (int *) my_calloc(1, sizeof(int) * (ntimers+1));
 	ntimers = 0;
 	for (timer = timer_repeat_head; timer; timer = timer->next) {
+		(*ids)[ntimers++] = timer->id;
+	}
+	for (timer = timer_once_head; timer; timer = timer->next) {
 		(*ids)[ntimers++] = timer->id;
 	}
 	return(ntimers);
@@ -311,6 +315,11 @@ int timer_info(int id, char **name, egg_timeval_t *initial_len, egg_timeval_t *t
         for (timer = timer_repeat_head; timer; timer = timer->next) {
                 if (timer->id == id) break;
         }
+	if (!timer) {
+		for (timer = timer_once_head; timer; timer = timer->next) {
+			if (timer->id == id) break;
+		}
+	}
         if (!timer) return(-1);
 	if (name) *name = timer->name;
         if (initial_len) memcpy(initial_len, &timer->howlong, sizeof(*initial_len));
