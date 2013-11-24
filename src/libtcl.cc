@@ -58,9 +58,12 @@ static int load_symbols(void *handle) {
   DLSYM_GLOBAL(handle, Tcl_GetStringFromObj);
   DLSYM_GLOBAL(handle, Tcl_Init);
   DLSYM_GLOBAL(handle, Tcl_InterpDeleted);
+  DLSYM_GLOBAL(handle, Tcl_ListObjAppendElement);
+  DLSYM_GLOBAL(handle, Tcl_ListObjGetElements);
   DLSYM_GLOBAL(handle, Tcl_NewBooleanObj);
   DLSYM_GLOBAL(handle, Tcl_NewDoubleObj);
   DLSYM_GLOBAL(handle, Tcl_NewIntObj);
+  DLSYM_GLOBAL(handle, Tcl_NewListObj);
   DLSYM_GLOBAL(handle, Tcl_NewLongObj);
   DLSYM_GLOBAL(handle, Tcl_NewStringObj);
   DLSYM_GLOBAL(handle, Tcl_ObjGetVar2);

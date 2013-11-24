@@ -103,6 +103,44 @@ void script_killutimer(const bd::String timerID) {
   _script_killtimer(timerID);
 }
 
+bd::Array<bd::Array<bd::String>> _script_timers() {
+  bd::Array<bd::Array<bd::String>> ret;
+  int *ids = 0, n = 0, called = 0;
+  egg_timeval_t howlong, trigger_time, mynow, diff;
+
+  if ((n = timer_list(&ids))) {
+    int i = 0;
+    char *name = NULL;
+
+    timer_get_now(&mynow);
+
+    for (i = 0; i < n; i++) {
+      bd::Array<bd::String> timer;
+
+      timer_info(ids[i], &name, &howlong, &trigger_time, &called);
+      timer_diff(&mynow, &trigger_time, &diff);
+
+      timer << bd::String::printf("%li", diff.sec);
+      timer << name;
+      timer << bd::String::printf("timer%d", i);
+      timer << "0";
+
+      ret << timer;
+    }
+    free(ids);
+  }
+
+  return ret;
+}
+
+bd::Array<bd::Array<bd::String>> script_timers() {
+  return _script_timers();
+}
+
+bd::Array<bd::Array<bd::String>> script_utimers() {
+  return _script_timers();
+}
+
 bd::String script_duration(int seconds) {
   char s[70];
   long tmp;
@@ -201,6 +239,8 @@ void init_script_misc() {
   script_add_command("rand",		script_rand,		"limit");
   script_add_command("strftime",	script_strftime,	"formatstring ?time?",		1);
   script_add_command("timer",		script_timer,		"minutes command ?count?",	2);
+  script_add_command("timers",		script_timers);
+  script_add_command("utimers",		script_utimers);
   script_add_command("utimer",		script_utimer,		"seconds command ?count?",	2);
   script_add_command("unixtime",	script_unixtime);
 }
