@@ -1,6 +1,7 @@
 #ifndef _EGG_TIMER_H_
 #define _EGG_TIMER_H_
 
+#include "common.h"
 #include "types.h"
 
 typedef struct egg_timeval_b {
@@ -8,10 +9,12 @@ typedef struct egg_timeval_b {
 	long usec;
 } egg_timeval_t;
 
-#define TIMER_REPEAT 1
+#define TIMER_ONCE    BIT1
+#define TIMER_REPEAT  BIT2
+#define TIMER_SCRIPT  BIT3
 
 /* Create a simple timer with no client data and no flags. */
-#define timer_create(howlong,name,callback) timer_create_complex(howlong, name, callback, NULL, 0)
+#define timer_create(howlong,name,callback) timer_create_complex(howlong, name, callback, NULL, TIMER_ONCE)
 
 /* Create a simple timer with no client data, but it repeats. */
 #define timer_create_repeater(howlong,name,callback) timer_create_complex(howlong, name, callback, NULL, TIMER_REPEAT)

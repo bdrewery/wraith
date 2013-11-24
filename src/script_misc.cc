@@ -75,7 +75,7 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int coun
   callback_data = new script_callback(cmd, NULL);
 
   timer_id = timer_create_complex(&howlong, timer_name.c_str(),
-      (Function) script_timer_callback, callback_data, 0);
+      (Function) script_timer_callback, callback_data, TIMER_ONCE);
 
   return bd::String::printf("timer%lu", (unsigned long) timer_id);
 }
