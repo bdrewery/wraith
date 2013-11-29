@@ -47,15 +47,13 @@ void script_putloglev(const bd::String levels, const bd::String channel, const b
   putlog(lev, channel.c_str(), text.c_str());
 }
 
-void script_timer_callback(script_callback* callback_data) {
+void script_timer_callback(bd::ScriptCallbacker* callback_command) {
   // Forward to the Script callback
-  ContextNote("timer callback", callback_data->callback_command->cmd.c_str());
-  callback_data->callback_command->call();
-  delete callback_data;
+  ContextNote("timer callback", callback_command->cmd.c_str());
+  callback_command->call();
 }
 
 static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int count, int type) {
-  script_callback* callback_data = NULL;
   bd::String timer_name;
   egg_timeval_t howlong;
   int timer_id;
@@ -72,7 +70,6 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int coun
   howlong.usec = 0;
 
   timer_name = bd::String("script:") + cmd->cmd;
-  callback_data = new script_callback(cmd, NULL);
 
   if (count)
     type |= TIMER_REPEAT;
@@ -80,7 +77,7 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int coun
     type |= TIMER_ONCE;
 
   timer_id = timer_create_complex(&howlong, timer_name.c_str(),
-      (Function) script_timer_callback, callback_data, TIMER_SCRIPT|type, count);
+      (Function) script_timer_callback, cmd, TIMER_SCRIPT|type, count);
 
   return bd::String::printf("timer%lu", (unsigned long) timer_id);
 }
