@@ -36,6 +36,7 @@ typedef struct egg_timer_b {
 	int id;
 	char *name;
         TimerFunc callback;
+        TimerFunc destroy_callback;
 	void *client_data;
 	egg_timeval_t howlong;
 	egg_timeval_t trigger_time;
@@ -150,7 +151,7 @@ int timer_create_secs(int secs, const char *name, Function callback)
 	return timer_create_repeater(&howlong, name, callback, 0);
 }
 
-int timer_create_complex(egg_timeval_t *howlong, const char *name, Function callback, void *client_data, int flags, int count)
+int timer_create_complex(egg_timeval_t *howlong, const char *name, Function callback, Function destroy_callback, void *client_data, int flags, int count)
 {
 	egg_timer_t *timer = NULL;
 
@@ -160,6 +161,7 @@ int timer_create_complex(egg_timeval_t *howlong, const char *name, Function call
 	if (name) timer->name = strdup(name);
 	else timer->name = NULL;
 	timer->callback = (TimerFunc) callback;
+	timer->destroy_callback = (TimerFunc) destroy_callback;
 	timer->client_data = client_data;
 	timer->flags = flags;
 	timer->howlong.sec = howlong->sec;
@@ -178,6 +180,10 @@ int timer_create_complex(egg_timeval_t *howlong, const char *name, Function call
 }
 
 static void timer_free(egg_timer_t* timer) {
+	TimerFunc callback = timer->callback;
+	void *client_data = timer->client_data;
+
+	callback(client_data);
 	free(timer->name);
 	free(timer);
 }

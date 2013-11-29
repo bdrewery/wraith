@@ -53,6 +53,10 @@ void script_timer_callback(bd::ScriptCallbacker* callback_command) {
   callback_command->call();
 }
 
+void script_timer_destroy_callback(bd::ScriptCallbacker* callback_command) {
+  delete callback_command;
+}
+
 static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int count, int type) {
   bd::String timer_name;
   egg_timeval_t howlong;
@@ -77,7 +81,8 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int coun
     type |= TIMER_ONCE;
 
   timer_id = timer_create_complex(&howlong, timer_name.c_str(),
-      (Function) script_timer_callback, cmd, TIMER_SCRIPT|type, count);
+      (Function) script_timer_callback,
+      (Function) script_timer_destroy_callback, cmd, TIMER_SCRIPT|type, count);
 
   return bd::String::printf("timer%lu", (unsigned long) timer_id);
 }

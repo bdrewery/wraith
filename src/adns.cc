@@ -499,7 +499,7 @@ void dns_create_timeout_timer(dns_query_t **qm, const char *query, int timeout)
 	howlong.sec = timeout;
 	howlong.usec = 0;
 
-	q->timer_id = timer_create_complex(&howlong, query, (Function) async_timeout, (void *) q->id, TIMER_ONCE, 0);
+	q->timer_id = timer_create_complex(&howlong, query, (Function) async_timeout, NULL, (void *) q->id, TIMER_ONCE, 0);
 }
 */
 

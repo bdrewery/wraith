@@ -16,10 +16,10 @@ typedef struct egg_timeval_b {
 #define TIMER_SCRIPT_SECONDLY  BIT5
 
 /* Create a simple timer with no client data and no flags. */
-#define timer_create(howlong,name,callback) timer_create_complex(howlong, name, callback, NULL, TIMER_ONCE, 0)
+#define timer_create(howlong,name,callback) timer_create_complex(howlong, name, callback, NULL, NULL, TIMER_ONCE, 0)
 
 /* Create a simple timer with no client data, but it repeats. */
-#define timer_create_repeater(howlong,name,callback,count) timer_create_complex(howlong, name, callback, NULL, TIMER_REPEAT, count)
+#define timer_create_repeater(howlong,name,callback,count) timer_create_complex(howlong, name, callback, NULL, NULL, TIMER_REPEAT, count)
 
 void timer_get_now(egg_timeval_t *_now);
 int timer_get_now_sec(int *sec);
@@ -27,7 +27,7 @@ void timer_update_now(egg_timeval_t *_now);
 int timer_diff(egg_timeval_t *from_time, egg_timeval_t *to_time, egg_timeval_t *diff);
 long timeval_diff(const egg_timeval_t *tv1, const egg_timeval_t *tv2);
 int timer_create_secs(int, const char *, Function);
-int timer_create_complex(egg_timeval_t *howlong, const char *name, Function callback, void *client_data, int flags, int count);
+int timer_create_complex(egg_timeval_t *howlong, const char *name, Function callback, Function destroy_callback, void *client_data, int flags, int count);
 int timer_destroy(int timer_id);
 #ifdef not_used
 int timer_destroy_all();

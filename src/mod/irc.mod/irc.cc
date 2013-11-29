@@ -274,7 +274,7 @@ void lockdown_chan(struct chanset_t* chan, flood_reason_t reason, const char* fl
     dprintf(DP_MODE_NEXT, "MODE %s +%s\n", chan->name[0] ? chan->name : chan->dname, buf);
     howlong.sec = chan->flood_lock_time;
     howlong.usec = 0;
-    timer_create_complex(&howlong, "unlock", (Function) unlock_chan, (void *) chan, TIMER_ONCE, 0);
+    timer_create_complex(&howlong, "unlock", (Function) unlock_chan, NULL, (void *) chan, TIMER_ONCE, 0);
 
     if (reason == FLOOD_MASSJOIN) {
       putlog(LOG_MISC, "*", "Join flood detected in %s! Locking for %d seconds.", chan->dname, chan->flood_lock_time);
