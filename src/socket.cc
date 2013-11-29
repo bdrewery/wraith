@@ -95,7 +95,7 @@ static connect_info_t *attach(int idx, const char *host, int port, interval_t ti
                 howlong.sec = timeout;
                 howlong.usec = 0;
                 connect_info->timer_id = timer_create_complex(&howlong, buf, 
-                    (Function) egg_connect_timeout, connect_info, TIMER_ONCE);
+                    (Function) egg_connect_timeout, connect_info, TIMER_ONCE, 0);
         }
         return(connect_info);
 }

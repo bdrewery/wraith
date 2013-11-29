@@ -54,7 +54,7 @@ void script_timer_callback(script_callback* callback_data) {
   delete callback_data;
 }
 
-static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int count) {
+static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int count, int type) {
   script_callback* callback_data = NULL;
   bd::String timer_name;
   egg_timeval_t howlong;
@@ -74,18 +74,23 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int coun
   timer_name = bd::String("script:") + cmd->cmd;
   callback_data = new script_callback(cmd, NULL);
 
+  if (count)
+    type |= TIMER_REPEAT;
+  else
+    type |= TIMER_ONCE;
+
   timer_id = timer_create_complex(&howlong, timer_name.c_str(),
-      (Function) script_timer_callback, callback_data, TIMER_ONCE);
+      (Function) script_timer_callback, callback_data, TIMER_SCRIPT|type, count);
 
   return bd::String::printf("timer%lu", (unsigned long) timer_id);
 }
 
 bd::String script_timer(int minutes, bd::ScriptCallbacker* cmd, int count) {
-  return _script_timer(minutes * 60, cmd, count);
+  return _script_timer(minutes * 60, cmd, count, TIMER_SCRIPT_MINUTELY);
 }
 
 bd::String script_utimer(int seconds, bd::ScriptCallbacker* cmd, int count) {
-  return _script_timer(seconds, cmd, count);
+  return _script_timer(seconds, cmd, count, TIMER_SCRIPT_SECONDLY);
 }
 
 static void _script_killtimer(const bd::String timerID) {
@@ -104,12 +109,12 @@ void script_killutimer(const bd::String timerID) {
   _script_killtimer(timerID);
 }
 
-bd::Array<bd::Array<bd::String>> _script_timers() {
+bd::Array<bd::Array<bd::String>> _script_timers(int type) {
   bd::Array<bd::Array<bd::String>> ret;
   int *ids = 0, n = 0, called = 0;
   egg_timeval_t howlong, trigger_time, mynow, diff;
 
-  if ((n = timer_list(&ids, TIMER_SCRIPT|TIMER_ONCE))) {
+  if ((n = timer_list(&ids, type))) {
     int i = 0;
     char *name = NULL;
 
@@ -135,11 +140,11 @@ bd::Array<bd::Array<bd::String>> _script_timers() {
 }
 
 bd::Array<bd::Array<bd::String>> script_timers() {
-  return _script_timers();
+  return _script_timers(TIMER_SCRIPT_MINUTELY);
 }
 
 bd::Array<bd::Array<bd::String>> script_utimers() {
-  return _script_timers();
+  return _script_timers(TIMER_SCRIPT_SECONDLY);
 }
 
 bd::String script_duration(int seconds) {

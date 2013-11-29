@@ -1214,7 +1214,7 @@ void server_init()
   howlong.sec = 0;
   howlong.usec = DEQ_RATE * 1000;
 
-  timer_create_repeater(&howlong, "server_queue", (Function) deq_msg);
+  timer_create_repeater(&howlong, "server_queue", (Function) deq_msg, 0);
   timer_create_secs(1, "server_secondly", (Function) server_secondly);
   timer_create_secs(30, "server_check_lag", (Function) server_check_lag);
   timer_create_secs(60, "server_minutely", (Function) server_minutely);

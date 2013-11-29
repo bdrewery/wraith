@@ -41,6 +41,7 @@ typedef struct egg_timer_b {
 	egg_timeval_t trigger_time;
 	int flags;
 	int called;
+	int count;
 } egg_timer_t;
 
 /* We keep a sorted list of active timers. */
@@ -146,10 +147,10 @@ int timer_create_secs(int secs, const char *name, Function callback)
 	howlong.sec = secs;
 	howlong.usec = 0;
 
-	return timer_create_repeater(&howlong, name, callback);
+	return timer_create_repeater(&howlong, name, callback, 0);
 }
 
-int timer_create_complex(egg_timeval_t *howlong, const char *name, Function callback, void *client_data, int flags)
+int timer_create_complex(egg_timeval_t *howlong, const char *name, Function callback, void *client_data, int flags, int count)
 {
 	egg_timer_t *timer = NULL;
 
@@ -166,6 +167,7 @@ int timer_create_complex(egg_timeval_t *howlong, const char *name, Function call
 	timer->trigger_time.sec = now.sec + howlong->sec;
 	timer->trigger_time.usec = now.usec + howlong->usec;
 	timer->called = 0;
+	timer->count = count;
 
 	if (timer->flags & TIMER_REPEAT)
 		timer_add_to_list(timer_repeat_head, timer);
@@ -173,6 +175,11 @@ int timer_create_complex(egg_timeval_t *howlong, const char *name, Function call
 		timer_add_to_list(timer_once_head, timer);
 
 	return(timer->id);
+}
+
+static void timer_free(egg_timer_t* timer) {
+	free(timer->name);
+	free(timer);
 }
 
 static int timer_destroy_list(egg_timer_t* &timer_list, int timer_id)
@@ -191,9 +198,8 @@ static int timer_destroy_list(egg_timer_t* &timer_list, int timer_id)
 	if (prev) prev->next = timer->next;
 	else timer_list = timer->next;
 
-	if (timer->name)
-		free(timer->name);
-	free(timer);
+	timer_free(timer);
+
 	return(0);
 }
 
@@ -249,6 +255,10 @@ static bool process_timer(egg_timer_t* timer) {
 		}
 
 		++(timer->called);
+
+		if (timer->called == timer->count) {
+			deleted = 1;
+		}
 	} else {
 		deleted = 1;
 	}
@@ -273,9 +283,7 @@ static void process_timer_list(egg_timer_t* &timer_list) {
 			if (prev) prev->next = timer->next;
 			else timer_list = timer->next;
 
-			if (timer->name)
-				free(timer->name);
-			free(timer);
+			timer_free(timer);
 		} else
 			prev = timer;
 	}
@@ -294,12 +302,12 @@ int timer_list(int **ids, int flags)
 
 	/* Count timers. */
 	for (timer = timer_repeat_head; timer; timer = timer->next) {
-		if (timer->flags & flags) {
+		if ((timer->flags & flags) || !flags) {
 			++ntimers;
 		}
 	}
 	for (timer = timer_once_head; timer; timer = timer->next) {
-		if (timer->flags & flags) {
+		if ((timer->flags & flags) || !flags) {
 			++ntimers;
 		}
 	}
@@ -308,12 +316,12 @@ int timer_list(int **ids, int flags)
 	*ids = (int *) my_calloc(1, sizeof(int) * (ntimers+1));
 	ntimers = 0;
 	for (timer = timer_repeat_head; timer; timer = timer->next) {
-		if (timer->flags & flags) {
+		if ((timer->flags & flags) || !flags) {
 			(*ids)[ntimers++] = timer->id;
 		}
 	}
 	for (timer = timer_once_head; timer; timer = timer->next) {
-		if (timer->flags & flags) {
+		if ((timer->flags & flags) || !flags) {
 			(*ids)[ntimers++] = timer->id;
 		}
 	}
