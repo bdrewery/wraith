@@ -2129,7 +2129,7 @@ static void cmd_timers(int idx, char *par)
   int *ids = 0, n = 0, called = 0;
   egg_timeval_t howlong, trigger_time, mynow, diff;
 
-  if ((n = timer_list(&ids))) {
+  if ((n = timer_list(&ids, TIMER_ONCE|TIMER_REPEAT))) {
     int i = 0;
     char *name = NULL;
 

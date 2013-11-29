@@ -287,23 +287,35 @@ void timer_run()
 	process_timer_list(timer_repeat_head);
 }
 
-int timer_list(int **ids)
+int timer_list(int **ids, int flags)
 {
 	egg_timer_t *timer = NULL;
 	int ntimers = 0;
 
 	/* Count timers. */
-	for (timer = timer_repeat_head; timer; timer = timer->next) ntimers++;
-	for (timer = timer_once_head; timer; timer = timer->next) ntimers++;
+	for (timer = timer_repeat_head; timer; timer = timer->next) {
+		if (timer->flags & flags) {
+			++ntimers;
+		}
+	}
+	for (timer = timer_once_head; timer; timer = timer->next) {
+		if (timer->flags & flags) {
+			++ntimers;
+		}
+	}
 
 	/* Fill in array. */
 	*ids = (int *) my_calloc(1, sizeof(int) * (ntimers+1));
 	ntimers = 0;
 	for (timer = timer_repeat_head; timer; timer = timer->next) {
-		(*ids)[ntimers++] = timer->id;
+		if (timer->flags & flags) {
+			(*ids)[ntimers++] = timer->id;
+		}
 	}
 	for (timer = timer_once_head; timer; timer = timer->next) {
-		(*ids)[ntimers++] = timer->id;
+		if (timer->flags & flags) {
+			(*ids)[ntimers++] = timer->id;
+		}
 	}
 	return(ntimers);
 }

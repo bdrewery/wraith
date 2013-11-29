@@ -32,6 +32,6 @@ int timer_destroy_all();
 #endif
 int timer_get_shortest(egg_timeval_t *howlong);
 void timer_run();
-int timer_list(int **ids);
+int timer_list(int **ids, int flags);
 int timer_info(int id, char **name, egg_timeval_t *initial_len, egg_timeval_t *trigger_time, int *called);
 #endif /* _EGG_TIMER_H_ */

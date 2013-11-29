@@ -109,7 +109,7 @@ bd::Array<bd::Array<bd::String>> _script_timers() {
   int *ids = 0, n = 0, called = 0;
   egg_timeval_t howlong, trigger_time, mynow, diff;
 
-  if ((n = timer_list(&ids))) {
+  if ((n = timer_list(&ids, TIMER_SCRIPT|TIMER_ONCE))) {
     int i = 0;
     char *name = NULL;
 
