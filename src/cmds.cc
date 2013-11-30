@@ -2126,7 +2126,7 @@ static void cmd_debug(int idx, char *par)
 
 static void cmd_timers(int idx, char *par)
 {
-  int *ids = 0, n = 0, called = 0;
+  int *ids = 0, n = 0, called = 0, remaining = 0;
   egg_timeval_t howlong, trigger_time, mynow, diff;
 
   if ((n = timer_list(&ids, 0))) {
@@ -2138,11 +2138,14 @@ static void cmd_timers(int idx, char *par)
     for (i = 0; i < n; i++) {
       char interval[51] = "", next[51] = "";
 
-      timer_info(ids[i], &name, &howlong, &trigger_time, &called);
+      timer_info(ids[i], &name, &howlong, &trigger_time, &called, &remaining);
       timer_diff(&mynow, &trigger_time, &diff);
       simple_snprintf(interval, sizeof interval, "(%lis %lims)", howlong.sec, howlong.usec / 1000);
       simple_snprintf(next, sizeof next, "%lis %lims", diff.sec, diff.usec / 1000);
-      dprintf(idx, "%-2d: %-25s %-15s Next: %-25s Called: %d\n", i, name, interval, next, called);
+      if (remaining)
+        dprintf(idx, "%-2d: %-25s %-15s Next: %-25s Called: %-8d Remaining: %d\n", i, name, interval, next, called, remaining);
+      else
+        dprintf(idx, "%-2d: %-25s %-15s Next: %-25s Called: %-8d\n", i, name, interval, next, called);
     }
     free(ids);
   }

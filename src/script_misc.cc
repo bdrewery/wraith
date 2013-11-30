@@ -113,7 +113,7 @@ void script_killutimer(const bd::String timerID) {
 
 bd::Array<bd::Array<bd::String>> _script_timers(int type) {
   bd::Array<bd::Array<bd::String>> ret;
-  int *ids = 0, n = 0, called = 0;
+  int *ids = 0, n = 0, called = 0, remaining = 0;
   egg_timeval_t howlong, trigger_time, mynow, diff;
 
   if ((n = timer_list(&ids, type))) {
@@ -125,13 +125,13 @@ bd::Array<bd::Array<bd::String>> _script_timers(int type) {
     for (i = 0; i < n; i++) {
       bd::Array<bd::String> timer;
 
-      timer_info(ids[i], &name, &howlong, &trigger_time, &called);
+      timer_info(ids[i], &name, &howlong, &trigger_time, &called, &remaining);
       timer_diff(&mynow, &trigger_time, &diff);
 
       timer << bd::String::printf("%li", diff.sec);
       timer << name;
       timer << bd::String::printf("timer%d", ids[i]);
-      timer << "0";
+      timer << bd::String::printf("%d", remaining);
 
       ret << timer;
     }

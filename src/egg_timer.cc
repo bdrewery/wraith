@@ -334,7 +334,7 @@ int timer_list(int **ids, int flags)
 	return(ntimers);
 }
 
-int timer_info(int id, char **name, egg_timeval_t *initial_len, egg_timeval_t *trigger_time, int *called)
+int timer_info(int id, char **name, egg_timeval_t *initial_len, egg_timeval_t *trigger_time, int *called, int *remaining)
 {
         egg_timer_t *timer = NULL;
 
@@ -351,6 +351,7 @@ int timer_info(int id, char **name, egg_timeval_t *initial_len, egg_timeval_t *t
         if (initial_len) memcpy(initial_len, &timer->howlong, sizeof(*initial_len));
         if (trigger_time) memcpy(trigger_time, &timer->trigger_time, sizeof(*trigger_time));
 	if (called) *called = timer->called;
+	if (remaining) *remaining = timer->count ? timer->count - timer->called : 0;
         return(0);
 }
 
