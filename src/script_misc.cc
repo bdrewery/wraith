@@ -26,6 +26,7 @@
 #include "script.h"
 #include "egg_timer.h"
 #include "main.h"
+#include "misc.h"
 #include "net.h"
 #include "userent.h"
 #include <bdlib/src/base64.h>
@@ -47,6 +48,18 @@ bd::String script_encpass(const bd::String password) {
  ret = encrypted_pass;
  free(encrypted_pass);
  return ret;
+}
+
+void script_exit(bd::String reason) {
+  bd::String msg;
+
+  msg = bd::String::printf("BOT SHUTDOWN (%s)", reason ? reason.c_str() : "No reason");
+  if (reason)
+    strlcpy(quit_msg, msg.c_str(), sizeof(quit_msg));
+  else
+    quit_msg[0] = 0;
+
+  kill_bot(msg.c_str(), quit_msg[0] ? quit_msg : "EXIT");
 }
 
 void script_putlog(const bd::String text) {
@@ -259,8 +272,10 @@ void init_script_misc() {
   script_add_command("ctime",		script_ctime,		"unixtime");
   script_add_command("duration",	script_duration,	"seconds");
   script_add_command("decrypt", 	script_decrypt, 	"key encrypted-base64-string");
+  script_add_command("die",        	script_exit,     	"?reason?",			0);
   script_add_command("encpass", 	script_encpass, 	"password");
   script_add_command("encrypt", 	script_encrypt, 	"key string");
+  script_add_command("exit",    	script_exit,     	"?reason?",			0);
   script_add_command("putlog",		script_putlog,		"text");
   script_add_command("putcmdlog",	script_putcmdlog,	"text");
   script_add_command("putloglev",	script_putloglev,	"level(s) channel text");

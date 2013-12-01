@@ -50,7 +50,7 @@ char *str_escape(const char *, const char, const char);
 char *strchr_unescape(char *, const char, const char);
 void str_unescape(char *, const char);
 int str_isdigit(const char *);
-void kill_bot(char *, char *);
+void kill_bot(const char *, const char *);
 char *strtolower(char *);
 char *strtoupper(char *);
 char *step_thru_file(FILE *);

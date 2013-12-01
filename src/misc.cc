@@ -633,7 +633,7 @@ int str_isdigit(const char *str)
 /* Kills the bot. s1 is the reason shown to other bots, 
  * s2 the reason shown on the partyline. (Sup 25Jul2001)
  */
-void kill_bot(char *s1, char *s2)
+void kill_bot(const char *s1, const char *s2)
 {
   write_userfile(-1);
   if (!conf.bot->hub)
