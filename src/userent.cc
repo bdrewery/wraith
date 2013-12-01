@@ -559,6 +559,18 @@ struct user_entry_type USERENTRY_MODIFIED =
   "MODIFIED"
 };
 
+char *encpass(char *pass) {
+  unsigned char *p = (unsigned char *) pass;
+
+  while (*p) {
+    if ((*p <= 32) || (*p == 127))
+      *p = '?';
+    p++;
+  }
+
+  return salted_sha1(pass);
+}
+
 static bool pass_set(struct userrec *u, struct user_entry *e, void *buf)
 {
   char *newpass = NULL;
@@ -568,18 +580,10 @@ static bool pass_set(struct userrec *u, struct user_entry *e, void *buf)
   if (!pass || !pass[0] || (pass[0] == '-'))
     e->u.extra = NULL;
   else {
-    unsigned char *p = (unsigned char *) pass;
-
     if (u->bot || (pass[0] == '+'))
       newpass = strdup(pass);
-    else {
-      while (*p) {
-        if ((*p <= 32) || (*p == 127))
-          *p = '?';
-        p++;
-      }
-      newpass = salted_sha1(pass);
-    }
+    else
+      newpass = encpass(pass);
     e->u.extra = strdup(newpass);
   }
   if (!noshare)

@@ -27,7 +27,27 @@
 #include "egg_timer.h"
 #include "main.h"
 #include "net.h"
+#include "userent.h"
+#include <bdlib/src/base64.h>
 #include <bdlib/src/String.h>
+
+bd::String script_decrypt(const bd::String key, const bd::String enc) {
+  return decrypt_string(key, bd::base64Decode(enc));
+}
+
+bd::String script_encrypt(const bd::String key, const bd::String string) {
+  return bd::base64Encode(encrypt_string(key, string));
+}
+
+bd::String script_encpass(const bd::String password) {
+ char *encrypted_pass;
+ bd::String ret;
+
+ encrypted_pass = encpass(password.mdata());
+ ret = encrypted_pass;
+ free(encrypted_pass);
+ return ret;
+}
 
 void script_putlog(const bd::String text) {
   putlog(LOG_MISC, "*", "%s", text.c_str());
@@ -238,6 +258,9 @@ unsigned long script_rand(long limit) {
 void init_script_misc() {
   script_add_command("ctime",		script_ctime,		"unixtime");
   script_add_command("duration",	script_duration,	"seconds");
+  script_add_command("decrypt", 	script_decrypt, 	"key encrypted-base64-string");
+  script_add_command("encpass", 	script_encpass, 	"password");
+  script_add_command("encrypt", 	script_encrypt, 	"key string");
   script_add_command("putlog",		script_putlog,		"text");
   script_add_command("putcmdlog",	script_putcmdlog,	"text");
   script_add_command("putloglev",	script_putloglev,	"level(s) channel text");
