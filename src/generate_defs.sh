@@ -61,6 +61,8 @@ for file in ${files}; do
           $SED \
 		  -e 's/extern "C" *//' \
 		  -e "s/\(.*\) *${symbol} *(\(.*\)).*/typedef \1 (*${symbol}_t)(\2);/" \
+		  -e 's/[_0-9A-Za-z]*\[\]\(,\)/*\1/g' \
+		  -e 's/[_0-9A-Za-z]*\[\]\();\)/*\1/g' \
 		  -e 's/[_0-9A-Za-z]*\(,\)/\1/g' \
 		  -e 's/[_0-9A-Za-z]*\();\)/\1/g' \
 		  -e 's/  */ /g' \
