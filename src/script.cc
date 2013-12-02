@@ -34,6 +34,7 @@
 
 #include "script.h"
 #include "script_misc.h"
+#include "script_user.h"
 #include "libtcl.h"
 
 bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
@@ -49,6 +50,7 @@ int init_script() {
   }
 #endif
   init_script_misc();
+  init_script_user();
   return 0;
 }
 
