@@ -67,16 +67,16 @@ void script_bind_callback(script_callback* callback_data, ...) {
   callback_data->callback_command->call(args);
 }
 
-bd::String script_bind(const bd::String type, const bd::String flags, const bd::String mask, bd::ScriptCallbacker* cmd) {
+bd::String script_bind(const bd::String type, const bd::String flags, const bd::String mask, bd::ScriptCallbacker* callback_command) {
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {
     throw bd::String("invalid type: ") + type;
   }
 
-  if (cmd) {
+  if (callback_command) {
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
-    script_callback* callback_data = new script_callback(cmd, table);
+    script_callback* callback_data = new script_callback(callback_command, table);
     bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) script_bind_callback, (void*) callback_data);
   }
 
