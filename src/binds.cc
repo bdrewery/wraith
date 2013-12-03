@@ -52,6 +52,18 @@ static int bind_vcheck_hits (bind_table_t *table, const char *match, struct flag
 static void bind_table_really_del(bind_table_t *table);
 static void bind_entry_really_del(bind_table_t *table, bind_entry_t *entry);
 
+bd::Array<bd::String> bind_tables() {
+	bind_table_t* table = NULL;
+	bd::Array<bd::String> tables;
+
+	for (table = bind_table_list_head; table; table = table->next) {
+		if (table->flags & BIND_DELETED)
+			continue;
+		tables << table->name;
+	}
+	return tables;
+}
+
 static int internal_bind_cleanup()
 {
 	bind_table_t *table = NULL, *next_table = NULL;

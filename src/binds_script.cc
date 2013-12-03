@@ -71,7 +71,13 @@ bd::String script_bind(const bd::String type, const bd::String flags, const bd::
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {
-    throw bd::String("invalid type: ") + type;
+    bd::String error;
+    bd::Array<bd::String> tables;
+
+    error = bd::String("invalid type: ") + type + ", should be one of: ";
+    tables = bind_tables();
+    error += tables.join(", ");
+    throw error;
   }
 
   if (callback_command) {
