@@ -78,6 +78,7 @@ bd::String script_bind(const bd::String type, const bd::String flags, const bd::
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
     script_callback* callback_data = new script_callback(callback_command, table);
     bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) script_bind_callback, (void*) callback_data);
+    return mask;
   }
 
   return bd::String();
