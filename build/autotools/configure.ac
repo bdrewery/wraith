@@ -266,4 +266,4 @@ fi
 echo ""
 echo ""
 echo "------------ Configuring BDLIB ------------"
-test -f lib/bdlib/configure && cd lib/bdlib && CXX="$CXX" ./configure
+AC_CONFIG_SUBDIRS([lib/bdlib])
