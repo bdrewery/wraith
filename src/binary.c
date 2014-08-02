@@ -226,10 +226,14 @@ bin_checksum(const char *fname, int todo)
     if (!newbin->open(fname, BINMOD)) {
       goto fatal;
     }
-    if (ftruncate(newbin->fd(), size)) {
+    if (ftruncate(newbin->fd(), size) != 0) {
       goto fatal;
     }
-
+#ifdef HAVE_POSIX_FALLOCATE
+    if (posix_fallocate(newbin->fd(), 0, size) != 0) {
+      goto fatal;
+    }
+#endif
     /* Copy everything up to this point into the new binary (including the settings header/prefix) */
     outmap = (unsigned char*) mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED,
         newbin->fd(), 0);

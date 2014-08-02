@@ -119,6 +119,9 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
+/* Define to 1 if you have the `posix_fallocate' function. */
+#undef HAVE_POSIX_FALLOCATE
+
 /* Define to 1 if you have the `random' function. */
 #undef HAVE_RANDOM
 
