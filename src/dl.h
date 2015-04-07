@@ -10,7 +10,17 @@
 #define DLSYM(_handle, x) \
   dlerror(); \
   x##_t x; \
-  *(void **) (&x) = dlsym(_handle, #x); \
+  x = (x##_t) dlsym(_handle, #x); \
+  dlsym_error = dlerror(); \
+  if (dlsym_error) { \
+    sdprintf("%s", dlsym_error); \
+    return(1); \
+  }
+
+#define DLSYM_LOCAL(_handle, x) \
+  dlerror(); \
+  x##_t _##x; \
+  _##x = (x##_t) dlsym(_handle, #x); \
   dlsym_error = dlerror(); \
   if (dlsym_error) { \
     sdprintf("%s", dlsym_error); \

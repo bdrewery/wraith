@@ -46,7 +46,7 @@ $(top_builddir)/lib/libelf/lib/libelf.a: libelf_notice
 libelf: $(LIBELF_BUNDLED)
 
 $(top_builddir)/lib/bdlib/libbdlib.a:
-	+@cd bdlib && $(MAKE)
+	+@cd bdlib && $(MAKE) CPPFLAGS='$(CPPFLAGS) -DUSE_TCL_STUBS'
 
 bdlib: $(top_builddir)/lib/bdlib/libbdlib.a
 
