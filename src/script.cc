@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include "main.h"
+#include "libtcl.h"
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 #include <bdlib/src/HashTable.h>
@@ -35,7 +36,6 @@
 #include "script.h"
 #include "script_misc.h"
 #include "script_user.h"
-#include "libtcl.h"
 
 bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
 
