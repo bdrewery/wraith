@@ -170,7 +170,7 @@ int socket_set_nonblock(int sock, int value)
 int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int src_port, int flags)
 {
         char *passive[] = {"::", "0.0.0.0"};
-        int sock = -1, pfamily, try_ok;
+        int sock = -1, pfamily, try_ok, i = -1;
         sockname_t dest_name, src_name;
 
         /* If no source ip address is given, try :: and 0.0.0.0 (passive). */
@@ -197,7 +197,7 @@ int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int sr
 
         if (sock < 0) return(-2);
 
-        allocsock(sock, 0);
+        i = allocsock(sock, 0);
 
         if (flags & SOCKET_NONBLOCK) socket_set_nonblock(sock, 1);
 
@@ -215,12 +215,9 @@ int socket_create(const char *dest_ip, int dest_port, const char *src_ip, int sr
 
 
         if (flags & SOCKET_CLIENT) {
-			int i = -1;
-			if ((i = findanysnum(sock)) != -1) {
-				socklist[i].flags = (socklist[i].flags & ~SOCK_VIRTUAL) | SOCK_CONNECT | SOCK_PASS;
-				socklist[i].host = strdup(dest_ip);
-				socklist[i].port = dest_port;
-			}
+		socklist[i].flags = (socklist[i].flags & ~SOCK_VIRTUAL) | SOCK_CONNECT | SOCK_PASS;
+		socklist[i].host = strdup(dest_ip);
+		socklist[i].port = dest_port;
 
           if (connect(sock, &dest_name.u.addr, dest_name.len) != 0) {
 		if (errno != EINPROGRESS) {
