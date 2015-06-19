@@ -53,14 +53,17 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>	
-#include <errno.h>
 #include <sys/stat.h>
+#include <errno.h>
+#include <pthread.h>
 
 #if HAVE_UNISTD_H
 #  include <unistd.h>
 #endif /* HAVE_UNITSTD_H */
 
 extern egg_traffic_t 	traffic;
+
+pthread_rwlock_t socklist_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 union sockaddr_union cached_myip4_so;
 #ifdef USE_IPV6
@@ -144,6 +147,7 @@ void init_net()
 {
   MAXSOCKS = max_dcc + 10;
 
+  pthread_rwlock_wrlock(&socklist_lock);
   if (socklist)
     socklist = (sock_list *) my_realloc((void *) socklist, sizeof(sock_list) * MAXSOCKS);
   else
@@ -152,11 +156,13 @@ void init_net()
   for (int i = 0; i < MAXSOCKS; i++) {
     bzero(&socklist[i], sizeof(socklist[i]));
     socklist[i].flags = SOCK_UNUSED;
+    socklist[i].mtx = PTHREAD_MUTEX_INITIALIZER;
 #ifdef EGG_SSL_EXT
     socklist[i].ssl = NULL;
 #endif
     socklist[i].sock = -1;
   }
+  pthread_rwlock_unlock(&socklist_lock);
 }
 
 /* Get my ipv? ip
@@ -303,6 +309,7 @@ sock_read(bd::Stream& stream)
         socklist[fd].host = strdup(buf.c_str());
       if (type == STR("port"))
         socklist[fd].port = atoi(buf.c_str());
+      pthread_mutex_unlock(&socklist[fd].mtx);
     }
   }
   return -1;
@@ -327,16 +334,19 @@ sock_write(bd::Stream &stream, int fd)
   }    
 }
 
-/* Return a free entry in the socket entry
+/* Return a locked free entry in the socket entry
  */
 int allocsock(int sock, int options)
 {
+  pthread_rwlock_wrlock(&socklist_lock);
   for (int i = 0; i < MAXSOCKS; i++) {
     if (socklist[i].flags & SOCK_UNUSED) {
       /* yay!  there is table space */
+      socklist[i].flags = options;
+      pthread_rwlock_unlock(&socklist_lock);
+      pthread_mutex_lock(&socklist[i].mtx);
       socklist[i].inbuf = NULL;
       socklist[i].outbuf = NULL;
-      socklist[i].flags = options;
       socklist[i].sock = sock;
       socklist[i].encstatus = 0;
       socklist[i].enclink = -1;
@@ -348,6 +358,7 @@ int allocsock(int sock, int options)
       return i;
     }
   }
+  pthread_rwlock_unlock(&socklist_lock);
   fatal("Socket table is full!", 0);
   return -1; /* Never reached */
 }
@@ -359,6 +370,7 @@ void setsock(int sock, int options)
   int i = allocsock(sock, options);
   bool parm;
 
+  pthread_mutex_unlock(&socklist[i].mtx);
   if (((sock != STDOUT) || backgrd) && !(socklist[i].flags & SOCK_NONSOCK)) {
     parm = 1;
     setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *) &parm, sizeof(int));

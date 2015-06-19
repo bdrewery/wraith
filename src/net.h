@@ -11,6 +11,7 @@
 #include <sys/un.h>
 #include <setjmp.h>
 #include <bdlib/src/String.h>
+#include <pthread.h>
 
 #include "openssl.h"
 
@@ -77,6 +78,7 @@ union sockaddr_union {			/* replaced by sockname_t */
  * queued on them
  */
 typedef struct {
+  pthread_mutex_t mtx;
 #ifdef USE_IPV6
   unsigned int af;
 #endif /* USE_IPV6 */
