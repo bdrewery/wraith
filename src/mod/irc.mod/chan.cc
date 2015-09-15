@@ -1226,7 +1226,8 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
     if (m->user && !u_pass_match(m->user, "-") && chk_autoop(*fr, chan)) {
       do_op(m->nick, chan, 1, 0);
     } else if (hchan && chan->homechan_user == CHAN_FLAG_OP &&
-       homechan_nicks.contains(m->nick) && channel_active(hchan)) {
+        !(m->user && m->user->bot) && homechan_nicks.contains(m->nick) &&
+        channel_active(hchan)) {
       putlog(LOG_DEBUG, "*", "Opping %s in %s as they are in homechan %s",
           m->nick, chan->dname, homechan);
       do_op(m->nick, chan, 1, 0);
@@ -1244,7 +1245,8 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
         if (m->flags & EVOICE)
           m->flags &= ~EVOICE;
       } else if (hchan && chan->homechan_user == CHAN_FLAG_VOICE &&
-          homechan_nicks.contains(m->nick) && channel_active(hchan)) {
+          !(m->user && m->user->bot) && homechan_nicks.contains(m->nick) &&
+          channel_active(hchan)) {
         putlog(LOG_DEBUG, "*", "Voicing %s in %s as they are in homechan %s",
             m->nick, chan->dname, homechan);
         add_mode(chan, '+', 'v', m->nick);
