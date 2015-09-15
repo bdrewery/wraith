@@ -1246,14 +1246,12 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
         if (m->flags & EVOICE)
           m->flags &= ~EVOICE;
       } else if (hchan && chan->homechan_user == CHAN_FLAG_VOICE &&
-          !chk_devoice(*fr) &&
+          !chk_devoice(*fr) && !(m->flags & EVOICE) &&
           !(m->user && m->user->bot) && homechan_nicks.contains(m->nick) &&
           channel_active(hchan)) {
         putlog(LOG_DEBUG, "*", "Voicing %s in %s as they are in homechan %s",
             m->nick, chan->dname, homechan);
         add_mode(chan, '+', 'v', m->nick);
-        if (m->flags & EVOICE)
-          m->flags &= ~EVOICE;
       }
     }
   }
