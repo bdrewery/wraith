@@ -1225,13 +1225,11 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
   } else if (!chan_hasop(m) && dovoice(chan)) {
     if (m->user && !u_pass_match(m->user, "-") && chk_autoop(*fr, chan)) {
       do_op(m->nick, chan, 1, 0);
-    } else if (chan->homechan_user == CHAN_FLAG_OP && homechan[0]) {
-      struct chanset_t *hchan = findchan_by_dname(homechan);
-      if (hchan && ismember(hchan, m->nick)) {
-        putlog(LOG_DEBUG, "*", "Opping %s in %s as they are in homechan %s",
-            m->nick, chan->dname, homechan);
-        do_op(m->nick, chan, 1, 0);
-      }
+    } else if (hchan && chan->homechan_user == CHAN_FLAG_OP &&
+       homechan_nicks.contains(m->nick) && channel_active(hchan)) {
+      putlog(LOG_DEBUG, "*", "Opping %s in %s as they are in homechan %s",
+          m->nick, chan->dname, homechan);
+      do_op(m->nick, chan, 1, 0);
     }
   }
   if (dovoice(chan)) {
@@ -1245,15 +1243,13 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
         add_mode(chan, '+', 'v', m->nick);
         if (m->flags & EVOICE)
           m->flags &= ~EVOICE;
-      } else if (chan->homechan_user == CHAN_FLAG_VOICE && homechan[0]) {
-        struct chanset_t *hchan = findchan_by_dname(homechan);
-        if (hchan && ismember(hchan, m->nick)) {
-          putlog(LOG_DEBUG, "*", "Voicing %s in %s as they are in homechan %s",
-              m->nick, chan->dname, homechan);
-          add_mode(chan, '+', 'v', m->nick);
-          if (m->flags & EVOICE)
-            m->flags &= ~EVOICE;
-        }
+      } else if (hchan && chan->homechan_user == CHAN_FLAG_VOICE &&
+          homechan_nicks.contains(m->nick) && channel_active(hchan)) {
+        putlog(LOG_DEBUG, "*", "Voicing %s in %s as they are in homechan %s",
+            m->nick, chan->dname, homechan);
+        add_mode(chan, '+', 'v', m->nick);
+        if (m->flags & EVOICE)
+          m->flags &= ~EVOICE;
       }
     }
   }
@@ -1967,6 +1963,9 @@ static int got352or4(struct chanset_t *chan, char *user, char *host, char *nick,
 //  bool waschanop = 0;
 //  struct chanset_t *ch = NULL;
 //  memberlist *ml = NULL;
+
+  if (hchan && chan == hchan)
+    homechan_nicks[nick] = 1;
 
   if (!m) {			/* Nope, so update */
     m = newmember(chan, nick);	/* Get a new channel entry */
@@ -2729,6 +2728,9 @@ static int gotjoin(char *from, char *chname)
       memberlist *m = ismember(chan, nick);
       bool splitjoin = 0;
 
+      if (hchan && chan == hchan && channel_active(hchan))
+        homechan_nicks[nick] = 1;
+
       /* Net-join */
       if (m && m->split && !strcasecmp(m->userhost, uhost)) {
         splitjoin = 1;
@@ -3067,6 +3069,10 @@ static int gotnick(char *from, char *msg)
   if (auth)
     auth->NewNick(msg);
 
+  if (homechan_nicks.contains(nick)) {
+    homechan_nicks[msg] = 1;
+    homechan_nicks.remove(nick);
+  }
 
   /* Compose a nick!user@host for the new nick */
   simple_snprintf(s1, sizeof(s1), "%s!%s", msg, uhost);
@@ -3207,6 +3213,8 @@ static int gotquit(char *from, char *msg)
 
     m = ismember(chan, nick);
     if (m) {
+      if (hchan == chan)
+        homechan_nicks.remove(nick);
       member_getuser(m);
       u = m->user;
       if (u) {

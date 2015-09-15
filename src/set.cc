@@ -375,6 +375,12 @@ sdprintf("var (mem): %s -> %s", var->name, datain ? datain : "(NULL)");
             should_reset_monitor = 1;
           }
         }
+      } else if (!strcmp(var->name, "homechan")) {
+        if (data)
+          hchan = findchan_by_dname(homechan);
+        else
+          hchan = NULL;
+        homechan_nicks.clear();
       }
       if (server_online && should_reset_monitor)
         rehash_monitor_list();

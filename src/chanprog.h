@@ -7,6 +7,9 @@
 #define DO_NET		2
 #define CMD		4
 
+extern bd::HashTable<bd::String, int> homechan_nicks;
+extern struct chanset_t *hchan;
+
 int do_chanset(char *, struct chanset_t *, const char *, int);
 void checkchans(int);
 void tell_verbose_uptime(int);

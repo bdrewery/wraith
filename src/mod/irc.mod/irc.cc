@@ -1177,6 +1177,9 @@ killmember(struct chanset_t *chan, char *nick, bool cacheMember)
     delete_member(x);
   }
 
+  if (chan == hchan)
+    homechan_nicks.remove(nick);
+
   --chan->channel.members;
 
   /* The following two errors should NEVER happen. We will try to correct
@@ -1287,6 +1290,9 @@ reset_chan_info(struct chanset_t *chan)
 
   if (!chan->name[0])
     strlcpy(chan->name, chan->dname, sizeof(chan->name));
+
+  if (chan == hchan)
+    homechan_nicks.clear();
 
   /* Don't reset the channel if we're already resetting it */
   if (!shouldjoin(chan)) {

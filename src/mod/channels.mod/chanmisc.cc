@@ -1012,6 +1012,12 @@ void clear_channel(struct chanset_t *chan, bool reset)
 {
   memberlist *m = NULL, *m1 = NULL;
 
+  if (chan == hchan) {
+    homechan_nicks.clear();
+    if (reset == 0)
+      hchan = NULL;
+  }
+
   free(chan->channel.topic);
   for (m = chan->channel.member; m; m = m1) {
     m1 = m->next;
@@ -1185,6 +1191,9 @@ int channel_add(char *result, const char *newname, char *options, bool isdefault
      * the server knows it, when we join the channel. <cybah>
      */
     strlcpy(chan->dname, newname, sizeof(chan->dname));
+
+    if (homechan[0] && !strcasecmp(chan->dname, homechan))
+      hchan = chan;
 
     /* Initialize chan->channel info */
     if (isdefault) {

@@ -140,11 +140,7 @@ static int msg_op(char *nick, char *host, struct userrec *u, char *par)
   bd::String msg;
 
   if (homechan[0]) {
-    struct chanset_t *hchan = NULL;
-
-    hchan = findchan_by_dname(homechan);
-
-    if (hchan && channel_active(hchan) && !ismember(hchan, nick)) {
+    if (hchan && channel_active(hchan) && !homechan_nicks.contains(nick)) {
       putlog(LOG_CMDS, "*", "(%s!%s) !*! failed OP %s (not in %s)", nick, host, par, homechan);
       if (par[0]) 
         msg = bd::String::printf("---- (%s!%s) attempted to OP for %s but is not currently in %s.", nick, host, par, homechan);

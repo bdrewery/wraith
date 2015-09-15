@@ -69,6 +69,8 @@ in_port_t     		my_port = 0;
 int			reset_chans = 0;
 bool                    cookies_disabled = 0;
 char s2_4[3] = "",s1_6[3] = "",s1_11[3] = "";
+bd::HashTable<bd::String, int> homechan_nicks;
+struct chanset_t *hchan;
 
 /* Remove leading and trailing whitespaces.
  */
