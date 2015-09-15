@@ -36,7 +36,7 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-void script_bind_callback(script_callback* callback_data, ...) {
+void script_bind_callback(struct script_callback* callback_data, ...) {
   va_list va;
   char *type;
   bind_table_t* table = (bind_table_t*)callback_data->cdata;
@@ -83,7 +83,9 @@ void script_bind_callback(script_callback* callback_data, ...) {
   }
 }
 
-bd::String script_bind(const bd::String type, const bd::String flags, const bd::String mask, bd::ScriptCallbacker* callback_command) {
+bd::String script_bind(const bd::String type, const bd::String flags,
+    const bd::String mask, bd::ScriptCallbackerPtr callback_command)
+{
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {

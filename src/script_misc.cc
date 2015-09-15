@@ -30,6 +30,7 @@
 #include "net.h"
 #include "userent.h"
 #include <bdlib/src/base64.h>
+#include <bdlib/src/HashTable.h>
 #include <bdlib/src/String.h>
 
 bd::String script_decrypt(const bd::String key, const bd::String enc) {
@@ -80,6 +81,8 @@ void script_putloglev(const bd::String levels, const bd::String channel, const b
   putlog(lev, channel.c_str(), text.c_str());
 }
 
+static bd::HashTable<bd::ScriptCallbacker*, bd::ScriptCallbackerPtr> _timer_callbacks;
+
 void script_timer_callback(bd::ScriptCallbacker* callback_command) {
   // Forward to the Script callback
   ContextNote("timer callback", callback_command->cmd.c_str());
@@ -87,10 +90,11 @@ void script_timer_callback(bd::ScriptCallbacker* callback_command) {
 }
 
 void script_timer_destroy_callback(bd::ScriptCallbacker* callback_command) {
-  delete callback_command;
+  /* This may free the ScriptCallbackerPtr. */
+  _timer_callbacks.remove(callback_command);
 }
 
-static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int count, int type) {
+static bd::String _script_timer(int seconds, bd::ScriptCallbackerPtr cmd, int count, int type) {
   bd::String timer_name;
   egg_timeval_t howlong;
   int timer_id;
@@ -113,18 +117,20 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbacker* cmd, int coun
   else
     type |= TIMER_ONCE;
 
+  /* Store the shared_ptr for later and remove in a destructor callback. */
+  _timer_callbacks[cmd.get()] = cmd;
   timer_id = timer_create_complex(&howlong, timer_name.c_str(),
       (Function) script_timer_callback,
-      (Function) script_timer_destroy_callback, cmd, TIMER_SCRIPT|type, count);
+      (Function) script_timer_destroy_callback, cmd.get(), TIMER_SCRIPT|type, count);
 
   return bd::String::printf("timer%lu", (unsigned long) timer_id);
 }
 
-bd::String script_timer(int minutes, bd::ScriptCallbacker* cmd, int count) {
+bd::String script_timer(int minutes, bd::ScriptCallbackerPtr cmd, int count) {
   return _script_timer(minutes * 60, cmd, count, TIMER_SCRIPT_MINUTELY);
 }
 
-bd::String script_utimer(int seconds, bd::ScriptCallbacker* cmd, int count) {
+bd::String script_utimer(int seconds, bd::ScriptCallbackerPtr cmd, int count) {
   return _script_timer(seconds, cmd, count, TIMER_SCRIPT_SECONDLY);
 }
 
