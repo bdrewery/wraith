@@ -1222,8 +1222,17 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
        (!loading && userlist && chan_bitch(chan) && !chk_op(*fr, chan)) ) ) {
     /* if (target_priority(chan, m, 1)) */
       add_mode(chan, '-', 'o', m->nick);
-  } else if (!chan_hasop(m) && dovoice(chan) && m->user && !u_pass_match(m->user, "-") && chk_autoop(*fr, chan)) {
-    do_op(m->nick, chan, 1, 0);
+  } else if (!chan_hasop(m) && dovoice(chan)) {
+    if (m->user && !u_pass_match(m->user, "-") && chk_autoop(*fr, chan)) {
+      do_op(m->nick, chan, 1, 0);
+    } else if (chan->homechan_user == CHAN_FLAG_OP && homechan[0]) {
+      struct chanset_t *hchan = findchan_by_dname(homechan);
+      if (hchan && ismember(hchan, m->nick)) {
+        putlog(LOG_DEBUG, "*", "Opping %s in %s as they are in homechan %s",
+            m->nick, chan->dname, homechan);
+        do_op(m->nick, chan, 1, 0);
+      }
+    }
   }
   if (dovoice(chan)) {
     if (chan_hasvoice(m) && !chan_hasop(m)) {
@@ -1236,6 +1245,15 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
         add_mode(chan, '+', 'v', m->nick);
         if (m->flags & EVOICE)
           m->flags &= ~EVOICE;
+      } else if (chan->homechan_user == CHAN_FLAG_VOICE && homechan[0]) {
+        struct chanset_t *hchan = findchan_by_dname(homechan);
+        if (hchan && ismember(hchan, m->nick)) {
+          putlog(LOG_DEBUG, "*", "Voicing %s in %s as they are in homechan %s",
+              m->nick, chan->dname, homechan);
+          add_mode(chan, '+', 'v', m->nick);
+          if (m->flags & EVOICE)
+            m->flags &= ~EVOICE;
+        }
       }
     }
   }
