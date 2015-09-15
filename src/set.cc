@@ -381,6 +381,9 @@ sdprintf("var (mem): %s -> %s", var->name, datain ? datain : "(NULL)");
         else
           hchan = NULL;
         homechan_nicks.clear();
+        /* Need to reset homechan to populate the homechan_nicks list. */
+        if (server_online && hchan && channel_active(hchan))
+          reset_chan_info(hchan);
       }
       if (server_online && should_reset_monitor)
         rehash_monitor_list();
