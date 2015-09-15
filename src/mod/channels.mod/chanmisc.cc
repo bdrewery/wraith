@@ -597,6 +597,27 @@ int channel_modify(char *result, struct chanset_t *chan, int items, char **item,
         }
       } else
         chan->closed_exempt_mode = atoi(item[i]);
+    } else if (!strcmp(item[i], "homechan-user")) {
+      i++;
+      if (i >= items) {
+        if (result)
+          strlcpy(result, "channel homechan-user needs argument", RESULT_LEN);
+        return ERROR;
+      }
+      if (!str_isdigit(item[i])) {
+        if (!strcasecmp("Op",  item[i]))
+          chan->homechan_user = CHAN_FLAG_OP;
+        else if (!strcasecmp("Voice", item[i]))
+          chan->homechan_user = CHAN_FLAG_VOICE;
+        else if (!strcasecmp("None", item[i]))
+          chan->homechan_user = 0;
+        else {
+          if (result)
+            strlcpy(result, "channel homechan-user only accepts Op|Voice|None", RESULT_LEN);
+          return ERROR;
+        }
+      } else
+        chan->homechan_user = atoi(item[i]);
     } else if (!strcmp(item[i], "flood-lock-time")) {
       i++;
       if (i >= items) {

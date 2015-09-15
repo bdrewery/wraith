@@ -715,7 +715,7 @@ flood-kick %d:%d flood-deop %d:%d flood-nick %d:%d flood-mjoin %d:%d \
 flood-mpub %d:%d flood-mbytes %d:%d flood-mctcp %d:%d \
 capslimit %d colorlimit %d closed-ban %d closed-invite %d closed-private %d closed-exempt %d ban-time %d \
 exempt-time %d invite-time %d voice-non-ident %d voice-moderate %d auto-delay %d \
-flood-exempt %d flood-lock-time %d knock %d fish-key { %s } \
+flood-exempt %d flood-lock-time %d homechan-user %d knock %d fish-key { %s } \
 %cenforcebans %cdynamicbans %cuserbans %cbitch %cfloodban \
 %cprivate %ccycle %cinactive %cdynamicexempts %cuserexempts \
 %cdynamicinvites %cuserinvites %cnodesynch %cclosed %cvoice \
@@ -762,6 +762,7 @@ flood-exempt %d flood-lock-time %d knock %d fish-key { %s } \
         chan->auto_delay,
         chan->flood_exempt_mode,
         chan->flood_lock_time,
+        chan->homechan_user,
         chan->knock_flags,
         chan->fish_key,
  	PLSMNS(channel_enforcebans(chan)),

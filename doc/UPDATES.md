@@ -1,3 +1,5 @@
+* Add 'homechan-user' flag for auto-op/auto-voice of homechan users in other channels.
+
 # master
   * Require C++11 compiler support (G++ 4.7+, clang32+)
 

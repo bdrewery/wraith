@@ -407,6 +407,12 @@ See also: link%{+a}, newhub%{-}
                               Op/1           Ops (+o) are invited on /KNOCK
                               Voice/2        Voices (+v) are invited on /KNOCK
                               User/3         Users (not +dk) are invited on /KNOCK
+        $bhomechan-user$b     Should clients be auto voiced or opped if they are
+                              in the homechan?
+                              Valid values are:
+                              None/0         Do nothing special
+                              Op/1           Auto-op users from homechan
+                              Voice/2        Auto-voice users from homechan
         $bflood-exempt$b      Should clients be exempt from flood checks based
                               on their channel status? (not deop/kick floods)
                               Valid values are:

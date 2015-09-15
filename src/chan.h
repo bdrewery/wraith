@@ -249,6 +249,7 @@ struct chanset_t {
   interval_t auto_delay;
   int knock_flags;
   int protect_backup;
+  int homechan_user;
 /* Chanint template 
  *int temp;
  */
