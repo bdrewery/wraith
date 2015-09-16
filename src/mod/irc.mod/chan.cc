@@ -1222,6 +1222,7 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
        (!loading && userlist && chan_bitch(chan) && !chk_op(*fr, chan)) ) ) {
     /* if (target_priority(chan, m, 1)) */
       add_mode(chan, '-', 'o', m->nick);
+      /* XXX: Homechan checks needs to use bitch, voicebitch, privchan... */
   } else if (!chan_hasop(m) && dovoice(chan)) {
     if (m->user && !u_pass_match(m->user, "-") && chk_autoop(*fr, chan)) {
       do_op(m->nick, chan, 1, 0);
@@ -2886,6 +2887,8 @@ static int gotjoin(char *from, char *chname)
 #endif /* CACHE */
         if (!splitjoin) {
           bool common_checks = dovoice(chan) && !glob_bot(fr);
+
+          /* Need homechan checks here. Why not use 1 logic?? */
 
           /* Autoop */
           if (!chan_hasop(m) && 

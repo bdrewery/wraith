@@ -1138,6 +1138,7 @@ int channel_add(char *result, const char *newname, char *options, bool isdefault
     chan->auto_delay = 5;
     chan->ban_type = 3;
     chan->revenge = DEFLAG_REACT;
+    chan->homechan_user = CHAN_FLAG_VOICE;
 /* Chanint template
  *  chan->temp = 0;
  */
