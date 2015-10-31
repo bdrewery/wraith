@@ -576,7 +576,7 @@ int simple_exec(const char* argv[]) {
     default:		//parent
       savedpid = pid;
       do {
-        pid = wait4(savedpid, &status, 0, (struct rusage *)0);
+        pid = waitpid(savedpid, &status, 0);
       } while (pid == -1 && errno == EINTR);
       break;
   }
