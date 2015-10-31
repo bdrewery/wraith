@@ -460,9 +460,32 @@ int shell_exec(char *cmdline, char *input, char **output, char **erroutput, bool
     return 0;
   }
 
-  x = fork();
+  /* Set this up in parent to avoid modifying memory in vforked child. */
+  char *argv[15];
+  char *mycmdlinep = NULL;
+
+  if (simple) {
+    char *p = NULL;
+    int n = 0;
+    char *mycmdline = strdup(cmdline);
+
+    mycmdlinep = mycmdline;
+
+    while (mycmdline[0] && (p = newsplit(&mycmdline)))
+      argv[n++] = p;
+    argv[n] = NULL;
+
+  } else {
+    argv[0] = "/bin/sh";
+    argv[1] = "-c";
+    argv[2] = cmdline;
+    argv[3] = NULL;
+  }
+
+  x = vfork();
   if (x == -1) {
-    putlog(LOG_ERRORS, "*", "exec: fork() failed: %s", strerror(errno));
+    putlog(LOG_ERRORS, "*", "exec: vfork() failed: %s", strerror(errno));
+    free(mycmdlinep);
     delete in;
     delete err;
     delete out;
@@ -482,6 +505,7 @@ int shell_exec(char *cmdline, char *input, char **output, char **erroutput, bool
     while (waitpid(x, &st, 0) == -1 && errno == EINTR)
       ;
     /* child is now complete, read the files into buffers */
+    free(mycmdlinep);
     delete in;
     fflush(out->f);
     fflush(err->f);
@@ -528,37 +552,19 @@ int shell_exec(char *cmdline, char *input, char **output, char **erroutput, bool
 //    errd = fileno(errFile);
 
     if (dup2(in->fd, STDIN_FILENO) == (-1)) {
-      exit(1);
+      _exit(1);
     }
     if (dup2(out->fd, STDOUT_FILENO) == (-1)) {
-      exit(1);
+      _exit(1);
     }
     if (dup2(err->fd, STDERR_FILENO) == (-1)) {
-      exit(1);
+      _exit(1);
     }
 
     // Close all sockets
     for (int fd = 3; fd < MAX_SOCKETS; ++fd) close(fd);
-
-    char *argv[15];
-    if (simple) {
-      char *p = NULL;
-      int n = 0;
-      char *mycmdline = strdup(cmdline);
-
-      while (mycmdline[0] && (p = newsplit(&mycmdline)))
-        argv[n++] = p;
-      argv[n] = NULL;
-
-    } else {
-      argv[0] = "/bin/sh";
-      argv[1] = "-c";
-      argv[2] = cmdline;
-      argv[3] = NULL;
-    }
-
     execvp(argv[0], &argv[0]);
-    exit(1);
+    _exit(1);
   }
 }
 
