@@ -213,7 +213,7 @@ AC_CHECK_FUNCS([clock fsync getrusage isascii getpassphrase posix_madvise madvis
 AC_CHECK_FUNCS([memcpy memmem memset random rename snprintf srandom gettime])
 #checkpoint
 AC_CACHE_SAVE
-AC_CHECK_FUNCS([strcasecmp strncasecmp vsnprintf inet_ntop prctl procctl])
+AC_CHECK_FUNCS([strcasecmp strncasecmp vsnprintf inet_ntop prctl procctl rfork])
 
 #autoscan suggested this....
 #These are recommended by autoscan, but no code supports it currently

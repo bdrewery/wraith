@@ -59,7 +59,11 @@ int close_tty()
 
 static int my_daemon()
 {
+#ifdef HAVE_RFORK
+  switch (rfork(RFFDG | RFPROC | RFMEM)) {
+#else
   switch (fork()) {
+#endif
     case -1:
       return (-1);
     case 0:
