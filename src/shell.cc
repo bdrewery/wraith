@@ -479,7 +479,8 @@ int shell_exec(char *cmdline, char *input, char **output, char **erroutput, bool
     prctl(PR_SET_PTRACER, x, 0, 0, 0);
 #endif
 
-    waitpid(x, &st, 0);
+    while (waitpid(x, &st, 0) == -1 && errno == EINTR)
+      ;
     /* child is now complete, read the files into buffers */
     delete in;
     fflush(out->f);
