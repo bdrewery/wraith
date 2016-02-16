@@ -859,80 +859,37 @@ char *iptostr(in_addr_t ip)
  * by open_listen ... returns hostname of the caller & the new socket
  * does NOT dispose of old "public" socket!
  */
-int answer(int sock, char *caller, in_addr_t *ip, in_port_t *port, int binary)
+int answer(int sock, sockaddr_storage *caller, in_port_t *port, int binary)
 {
   int new_sock;
   socklen_t addrlen;
-  struct sockaddr_in from;
-  int af_ty = sockprotocol(sock);
-#ifdef USE_IPV6
-  struct sockaddr_in6 from6;
 
-  bzero(&from6, sizeof(struct sockaddr_in6));
-  if (af_ty == AF_INET6) {
-    addrlen = sizeof(from6);
-    new_sock = accept(sock, (struct sockaddr *) &from6, &addrlen);
-  } else {
-#endif /* USE_IPV6 */
-    addrlen = sizeof(struct sockaddr);
-    new_sock = accept(sock, (struct sockaddr *) &from, &addrlen);
-#ifdef USE_IPV6
-  }
-#endif /* USE_IPV6 */
+  addrlen = sizeof(*caller);
+  new_sock = accept(sock, (struct sockaddr *)caller, &addrlen);
   
   if (new_sock < 0)
     return -1;
-  if (ip != NULL) {
-#ifdef USE_IPV6
-    /* Detect IPv4 in IPv6 mapped address .... */
-    if (af_ty == AF_INET6 && (!IN6_IS_ADDR_V4MAPPED(&from6.sin6_addr))) {
-      inet_ntop(AF_INET6, &from6.sin6_addr, caller, 119);
-      caller[120] = 0;
-      *ip = 0L;
-    } else if (IN6_IS_ADDR_V4MAPPED(&from6.sin6_addr)) {    /* ...and convert it to plain (AF_INET) IPv4 address (openssh) */
-      struct sockaddr_in *from4 = (struct sockaddr_in *)&from6;
-      struct in_addr addr;
 
-      memcpy(&addr, ((char *)&from6.sin6_addr) + 12, sizeof(addr));
-      memset(&from, 0, sizeof(from));
-
-      from4->sin_family = AF_INET;
-      addrlen = sizeof(*from4);
-      memcpy(&from4->sin_addr, &addr, sizeof(addr));
-
-      *ip = from4->sin_addr.s_addr;
-      strlcpy(caller, iptostr(*ip), 121);
-      *ip = ntohl(*ip);
-    } else {
-#endif /* USE_IPV6 */
-      if (af_ty == AF_UNIX) {
-        struct sockaddr_un sock_un;
-        socklen_t socklen = sizeof(sock_un);
-
-        bzero(&sock_un, socklen);
-        getsockname(sock, (struct sockaddr*) &sock_un, &socklen);
-        strcpy(caller, sock_un.sun_path);
-        *port = 0;
-      } else {
-        *ip = from.sin_addr.s_addr;
-        strlcpy(caller, iptostr(*ip), 121);
-        *ip = ntohl(*ip);
-      }
-#ifdef USE_IPV6 
-    }
-#endif /* USE_IPV6 */
-  }
   if (port != NULL) {
-#ifdef USE_IPV6
-      if (af_ty == AF_INET6)
-        *port = ntohs(from6.sin6_port);
-      else if (af_ty == AF_INET)
-#endif /* USE_IPV6 */
-        *port = ntohs(from.sin_port);
+    if (caller->ss_family == AF_INET) {
+      *port = ntohs(((struct sockaddr_in *)caller)->sin_port);
+    } else if (caller->ss_family == AF_INET6) {
+      *port = ntohs(((struct sockaddr_in6 *)caller)->sin6_port);
+    } else {
+      *port = 0;
     }
+  }
   /* Set up all the normal socket crap */
   setsock(new_sock, (binary ? SOCK_BINARY : 0));
-  sdprintf("Answered socket %d: %s", new_sock, caller);
+
+#ifdef DEBUG
+  char hbuf[NI_MAXHOST];
+
+  getnameinfo((struct sockaddr *)caller, caller->ss_len, hbuf,
+      sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+
+  sdprintf("Answered socket %d: [%s]:%d", new_sock, hbuf, *port);
+#endif
   return new_sock;
 }
 

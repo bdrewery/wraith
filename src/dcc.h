@@ -5,6 +5,10 @@
 #  include "config.h"
 #endif
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include "types.h"
 #include "enclink.h"
 #include "crypt.h"
@@ -44,6 +48,8 @@ struct dcc_t {
     int ident_sock;
   } uint;
 
+  sockaddr_storage sockname;	/* Connection host/port */
+  /* XXX: Remove this */
   in_addr_t addr;                      /* IP address in host byte order         */
   time_t simultime;             /* the time when the simul dcc is initiated, expires after a number of seconds */
   time_t timeval;               /* Use for any timing stuff
@@ -67,8 +73,9 @@ struct dcc_t {
   char shahash[SHA_HASH_LENGTH + 1];
   char nick[NICKLEN];
   char whois[UHOSTLEN];
-  char host[UHOSTLEN];
+  char host[NI_MAXHOST];	/* Resolved host. */
 #ifdef USE_IPV6
+  /* XXX: Remove this */
   char host6[121];              /* easier.. ipv6 address in regular notation (3ffe:80c0:225::) */
 #endif /* USE_IPV6 */
   int8_t cflags;	 	/* Color status flags. */

@@ -624,21 +624,19 @@ struct dcc_table DCC_IDENTD = {
 static void
 dcc_identd_connect(int idx, char *buf, int atr)
 {
-  in_addr_t ip;
   in_port_t port;
   int j, sock;
-  char s[UHOSTLEN + 1] = "";
 
   if (dcc_total + 1 > max_dcc) {
-    j = answer(dcc[idx].sock, s, &ip, &port, 0);
+    j = answer(dcc[idx].sock, &dcc[idx].sockname, &port, 0);
     if (j != -1)
       killsock(j);
     return;
   }
-  sock = answer(dcc[idx].sock, s, &ip, &port, 0);
+  sock = answer(dcc[idx].sock, &dcc[idx].sockname, &port, 0);
 
   while ((sock == -1) && (errno == EAGAIN))
-    sock = answer(sock, s, &ip, &port, 0);
+    sock = answer(sock, &dcc[idx].sockname, &port, 0);
 
   if (sock < 0) {
     putlog(LOG_MISC, "*", "Failed TELNET incoming (%s)", strerror(errno));
@@ -651,6 +649,7 @@ dcc_identd_connect(int idx, char *buf, int atr)
   dcc[j].sock = sock;
   dcc[j].port = port;
   dcc[j].addr = dcc[idx].addr;
+  memcpy(&dcc[j].sockname, &dcc[idx].sockname, sizeof(dcc[j].sockname));
   strlcpy(dcc[j].host, dcc[idx].host, sizeof(dcc[j].host));
   strlcpy(dcc[j].nick, "*", sizeof(dcc[j].nick));
   /* dcc[j].uint.ident_sock = dcc[idx].sock; */
@@ -1395,16 +1394,14 @@ static void dcc_telnet_dns_forward_callback(int, void *, const char *, bd::Array
 static void
 dcc_telnet(int idx, char *buf, int ii)
 {
-  in_addr_t ip;
   in_port_t port;
-  char s[UHOSTLEN + 1] = "";
   int i;
   char x[1024] = "";
 
   if (unlikely(dcc_total + 1 > max_dcc)) {
     int j;
 
-    j = answer(dcc[idx].sock, s, &ip, &port, 0);
+    j = answer(dcc[idx].sock, &dcc[idx].sockname, &port, 0);
     if (j != -1) {
       dprintf(-j, "Sorry, too many connections already.\r\n");
       killsock(j);
@@ -1412,10 +1409,10 @@ dcc_telnet(int idx, char *buf, int ii)
     return;
   }
 
-  int sock = answer(dcc[idx].sock, s, &ip, &port, 0);
+  int sock = answer(dcc[idx].sock, &dcc[idx].sockname, &port, 0);
 
   while ((sock == -1) && (errno == EAGAIN))
-    sock = answer(dcc[idx].sock, s, &ip, &port, 0);
+    sock = answer(dcc[idx].sock, &dcc[idx].sockname, &port, 0);
   if (unlikely(sock < 0)) {
     putlog(LOG_MISC, "*", "Failed TELNET incoming (%s)", strerror(errno));
 //    killsock(dcc[idx].sock);
@@ -1423,6 +1420,9 @@ dcc_telnet(int idx, char *buf, int ii)
   }
   /* Buffer data received on this socket.  */
   sockoptions(sock, EGG_OPTION_SET, SOCK_BUFFER);
+
+  getnameinfo((struct sockaddr *)&dcc[idx].sockname, dcc[idx].sockname.ss_len,
+      (char*)&dcc[idx].host, sizeof(dcc[idx].host), NULL, 0, NI_NUMERICHOST);
 
   int af_type = sockprotocol(sock);
 
@@ -1437,21 +1437,21 @@ dcc_telnet(int idx, char *buf, int ii)
     dcc[i].port = 0;
     dcc[i].timeval = now;
     strlcpy(dcc[i].nick, "*", sizeof(dcc[i].nick));
-    putlog(LOG_BOTS, "*", "Connection over local socket: %s", s);
+    putlog(LOG_BOTS, "*", "Connection over local socket: %s", dcc[idx].host);
     dcc_telnet_got_ident(i, x);
     return;
   }
 
   if (port < 1024 || port > 65534) {
-    putlog(LOG_BOTS, "*", "Refused %s/%d (bad src port)", s, port);
+    putlog(LOG_BOTS, "*", "Refused %s/%d (bad src port)", dcc[idx].host, port);
     killsock(sock);
     return;
   }
 
-  putlog(LOG_DEBUG, "*", "Telnet connection: %s/%d", s, port);
+  putlog(LOG_DEBUG, "*", "Telnet connection: %s/%d", dcc[idx].host, port);
 
   // Are they ignored by IP?
-  simple_snprintf(x, sizeof(x), "-telnet!telnet@%s", iptostr(htonl(ip)));
+  simple_snprintf(x, sizeof(x), "-telnet!telnet@%s", dcc[idx].host);
 
   if (unlikely(match_ignore(x) || detect_telnet_flood(x))) {
     putlog(LOG_DEBUG, "*", "Ignored telnet connection from: %s", x);
@@ -1466,13 +1466,21 @@ dcc_telnet(int idx, char *buf, int ii)
 
   i = new_dcc(&DCC_DNSWAIT, sizeof(struct dns_info));
 
-  dcc[i].addr = ip;
+  memcpy(&dcc[i].sockname, &dcc[idx].sockname, sizeof(dcc[i].sockname));
+  /* XXX: Remove this */
+  if (dcc[i].sockname.ss_family == AF_INET) {
+    dcc[i].addr = ntohl(((struct sockaddr_in*)&dcc[i].sockname)->sin_addr.s_addr);
+  } else {
+    dcc[i].addr = 0;
+  }
+
   dcc[i].sock = sock;
   dcc[i].user = get_user_by_host(x);		/* check for matching -telnet!telnet@ip */
-  strlcpy(dcc[i].host, s, sizeof(dcc[i].host));
+  strlcpy(dcc[i].host, dcc[idx].host, sizeof(dcc[i].host));
+  /* XXX: Remove this */
 #ifdef USE_IPV6
   if (af_type == AF_INET6)
-    strlcpy(dcc[i].host6, s, sizeof(dcc[i].host6));
+    strlcpy(dcc[i].host6, dcc[i].host, sizeof(dcc[i].host6));
 #endif /* USE_IPV6 */
   dcc[i].port = port;
   dcc[i].timeval = now;
@@ -1480,7 +1488,8 @@ dcc_telnet(int idx, char *buf, int ii)
 
   dcc[i].u.dns->ibuf = idx;
 
-  int dns_id = egg_dns_reverse(s, 20, dcc_telnet_dns_callback, (void *) (long) i);
+  int dns_id = egg_dns_reverse(dcc[idx].host, 20, dcc_telnet_dns_callback,
+      (void *) (long) i);
   if (dns_id >= 0)
     dcc[i].dns_id = dns_id;
 }

@@ -119,7 +119,7 @@ int real_getsock(int, const char *, int);
 
 int sockprotocol(int);
 void real_killsock(int, const char *, int);
-int answer(int, char *, in_addr_t *, in_port_t *, int);
+int answer(int, sockaddr_storage *, in_port_t *, int);
 int findanysnum(int);
 int findanyidx(int sock);
 int open_listen(in_port_t *);

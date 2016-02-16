@@ -736,15 +736,18 @@ struct dcc_table DCC_GET_PENDING =
 
 static void dcc_get_pending(int idx, char *buf, int len)
 {
-  in_addr_t ip;
   in_port_t port;
   int i;
-  char s[UHOSTLEN] = "";
 
-  i = answer(dcc[idx].sock, s, &ip, &port, 1);
+  i = answer(dcc[idx].sock, &dcc[idx].sockname, &port, 1);
   killsock(dcc[idx].sock);
   dcc[idx].sock = i;
-  dcc[idx].addr = ip;
+  /* XXX: Remove this */
+  if (dcc[idx].sockname.ss_family == AF_INET) {
+    dcc[idx].addr = ntohl(((struct sockaddr_in*)&dcc[idx].sockname)->sin_addr.s_addr);
+  } else {
+    dcc[idx].addr = 0;
+  }
   dcc[idx].port = (int) port;
   if (dcc[idx].sock == -1) {
     bd::String msg;

@@ -534,6 +534,7 @@ dcc_read(bd::Stream& stream)
     }
 
     if (idx >= 0) {
+      /* XXX: Need to read sockname */
       if (type == STR("addr"))
         dcc[idx].addr = my_atoul(buf.c_str());
       if (type == STR("sock")) {
