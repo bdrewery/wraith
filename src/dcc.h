@@ -74,6 +74,7 @@ struct dcc_t {
   char nick[NICKLEN];
   char whois[UHOSTLEN];
   char host[NI_MAXHOST];	/* Resolved host. */
+  char ip[NI_MAXHOST];		/* Connection IP. */
 #ifdef USE_IPV6
   /* XXX: Remove this */
   char host6[121];              /* easier.. ipv6 address in regular notation (3ffe:80c0:225::) */

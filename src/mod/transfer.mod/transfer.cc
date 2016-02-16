@@ -748,6 +748,7 @@ static void dcc_get_pending(int idx, char *buf, int len)
   } else {
     dcc[idx].addr = 0;
   }
+  strlcpy(dcc[idx].ip, dcc[idx].host, sizeof(dcc[idx].ip));
   dcc[idx].port = (int) port;
   if (dcc[idx].sock == -1) {
     bd::String msg;

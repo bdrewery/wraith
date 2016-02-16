@@ -548,6 +548,8 @@ dcc_read(bd::Stream& stream)
         strlcpy(dcc[idx].nick, buf.c_str(), sizeof(dcc[idx].nick));
       if (type == STR("host"))
         strlcpy(dcc[idx].host, buf.c_str(), sizeof(dcc[idx].host));
+      if (type == STR("ip"))
+        strlcpy(dcc[idx].ip, buf.c_str(), sizeof(dcc[idx].ip));
     }
   }
   return -1;
@@ -564,6 +566,7 @@ dcc_write(bd::Stream &stream, int idx)
       stream << bd::String::printf(STR("type %s\n"), dcc[idx].type->name);
 //  if (user)
 //  stream << bd::String::printf(STR("user %s\n"), dcc[idx].user->handle);
+    /* XXX: Need to write sockname */
     if (dcc[idx].addr)
       stream << bd::String::printf(STR("addr %u\n"), dcc[idx].addr);
     if (dcc[idx].status)
@@ -576,6 +579,8 @@ dcc_write(bd::Stream &stream, int idx)
       stream << bd::String::printf(STR("nick %s\n"), dcc[idx].nick);
     if (dcc[idx].host[0])
       stream << bd::String::printf(STR("host %s\n"), dcc[idx].host);
+    if (dcc[idx].ip[0])
+      stream << bd::String::printf(STR("ip %s\n"), dcc[idx].ip);
     stream << bd::String::printf(STR("+dcc\n"));
   }
 }
