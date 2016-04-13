@@ -135,12 +135,12 @@ bd::String script_chanlist(bd::String channel, bd::String flags) {
 }
 
 static void irc_script_init() {
+  script_add_command("bot_onchan", script_bot_onchan, "?channel?", 0);
   script_add_command("botisop", script_botisop, "?channel?", 0);
   script_add_command("botisvoice", script_botisvoice, "?channel?", 0);
-  script_add_command("bot_onchan", script_bot_onchan, "?channel?", 0);
+  script_add_command("chanlist", script_chanlist, "channel ?flags?", 1);
   script_add_command("onchan", script_onchan, "nickname ?channel?", 1);
   script_add_command("privmsg", script_privmsg, "channel msg");
-  script_add_command("chanlist", script_chanlist, "channel ?flags?", 1);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
