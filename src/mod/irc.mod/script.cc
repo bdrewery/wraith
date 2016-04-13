@@ -29,7 +29,7 @@
 #include <bdlib/src/Array.h>
 
 static int _script_botisflag(bd::String channel, int type) {
-  chanset_t *chan, *thechan = NULL;
+  struct chanset_t *chan, *thechan = NULL;
 
   if (channel) {
     chan = findchan_by_dname(channel.c_str());
@@ -59,7 +59,7 @@ int script_botisvoice(bd::String channel) {
 }
 
 static int _script_onchan(const bd::String nick, const bd::String channel) {
-  chanset_t *chan, *thechan = NULL;
+  struct chanset_t *chan, *thechan = NULL;
 
   if (channel) {
     chan = findchan_by_dname(channel.c_str());
@@ -95,7 +95,7 @@ void script_privmsg(bd::String channel, bd::String msg) {
 }
 
 bd::String script_chanlist(bd::String channel, bd::String flags) {
-  chanset_t *chan = findchan_by_dname(channel.c_str());
+  struct chanset_t *chan = findchan_by_dname(channel.c_str());
   if (!chan) {
     throw bd::String("invalid channel ") + channel;
   }
