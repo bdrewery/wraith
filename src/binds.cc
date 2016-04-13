@@ -249,8 +249,10 @@ int bind_entry_add(bind_table_t *table, const char *flags, int cflags, const cha
 		}
 		else {
 			entry = old_entry;
-			if (entry->function_name) free(entry->function_name);
-			if (entry->mask) free(entry->mask);
+			free(entry->function_name);
+			entry->function_name = NULL;
+			free(entry->mask);
+			entry->mask = NULL;
 		}
 	}
 	else {
