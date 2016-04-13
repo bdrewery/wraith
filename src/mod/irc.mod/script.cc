@@ -28,6 +28,65 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
+static int _script_botisflag(bd::String channel, int type) {
+  chanset_t *chan, *thechan = NULL;
+
+  if (channel) {
+    chan = findchan_by_dname(channel.c_str());
+    thechan = chan;
+    if (!chan) {
+      throw bd::String("invalid channel ") + channel;
+    }
+  } else
+    chan = chanset;
+
+  while (chan && (thechan == NULL || thechan == chan)) {
+    if ((type == CHAN_FLAG_OP && me_op(chan)) ||
+        (type == CHAN_FLAG_VOICE && me_voice(chan))) {
+      return 1;
+    }
+    chan = chan->next;
+  }
+  return 0;
+}
+
+int script_botisop(bd::String channel) {
+  return _script_botisflag(channel, CHAN_FLAG_OP);
+}
+
+int script_botisvoice(bd::String channel) {
+  return _script_botisflag(channel, CHAN_FLAG_VOICE);
+}
+
+static int _script_onchan(const bd::String nick, const bd::String channel) {
+  chanset_t *chan, *thechan = NULL;
+
+  if (channel) {
+    chan = findchan_by_dname(channel.c_str());
+    thechan = chan;
+    if (!chan) {
+      throw bd::String("invalid channel ") + channel;
+    }
+  } else
+    chan = chanset;
+
+  while (chan && (thechan == NULL || thechan == chan)) {
+    if (ismember(chan, nick.c_str())) {
+      return 1;
+    }
+    chan = chan->next;
+  }
+  return 0;
+}
+
+int script_bot_onchan(bd::String channel) {
+  return _script_onchan(botname, channel);
+}
+
+int script_onchan(bd::String nick, bd::String channel) {
+  return _script_onchan(nick, channel);
+}
+
 void script_privmsg(bd::String channel, bd::String msg) {
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
     throw bd::String("invalid channel ") + channel;
@@ -76,6 +135,10 @@ bd::String script_chanlist(bd::String channel, bd::String flags) {
 }
 
 static void irc_script_init() {
+  script_add_command("botisop", script_botisop, "?channel?", 0);
+  script_add_command("botisvoice", script_botisvoice, "?channel?", 0);
+  script_add_command("bot_onchan", script_bot_onchan, "?channel?", 0);
+  script_add_command("onchan", script_onchan, "nickname ?channel?", 1);
   script_add_command("privmsg", script_privmsg, "channel msg");
   script_add_command("chanlist", script_chanlist, "channel ?flags?", 1);
 }
