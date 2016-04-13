@@ -87,6 +87,45 @@ int script_onchan(bd::String nick, bd::String channel) {
   return _script_onchan(nick, channel);
 }
 
+long script_getchanidle(bd::String nick, bd::String channel) {
+  memberlist *m;
+  struct chanset_t *chan;
+
+  chan = findchan_by_dname(channel.c_str());
+  if (!chan) {
+    throw bd::String("invalid channel ") + channel;
+  }
+  m = ismember(chan, nick.c_str());
+
+  if (m) {
+    return (now - (m->last)) / 60;
+  }
+  return -1;
+}
+
+bd::String script_getchanhost(bd::String nick, bd::String channel) {
+  struct chanset_t *chan, *thechan = NULL;
+  memberlist *m;
+
+  if (channel) {
+    chan = findchan_by_dname(channel.c_str());
+    thechan = chan;
+    if (!chan) {
+      throw bd::String("invalid channel ") + channel;
+    }
+  } else
+    chan = chanset;
+
+  while (chan && (thechan == NULL || thechan == chan)) {
+    m = ismember(chan, nick.c_str());
+    if (m) {
+      return m->userhost;
+    }
+    chan = chan->next;
+  }
+  return "";
+}
+
 void script_privmsg(bd::String channel, bd::String msg) {
   if (strchr(CHANMETA, channel[0]) && !findchan_by_dname(channel.c_str())) {
     throw bd::String("invalid channel ") + channel;
@@ -139,6 +178,8 @@ static void irc_script_init() {
   script_add_command("botisop", script_botisop, "?channel?", 0);
   script_add_command("botisvoice", script_botisvoice, "?channel?", 0);
   script_add_command("chanlist", script_chanlist, "channel ?flags?", 1);
+  script_add_command("getchanhost", script_getchanhost, "nickname ?channel?", 1);
+  script_add_command("getchanidle", script_getchanidle, "nickname channel");
   script_add_command("onchan", script_onchan, "nickname ?channel?", 1);
   script_add_command("privmsg", script_privmsg, "channel msg");
 }
