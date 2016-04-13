@@ -180,10 +180,11 @@ int timer_create_complex(egg_timeval_t *howlong, const char *name, Function call
 }
 
 static void timer_free(egg_timer_t* timer) {
-	TimerFunc callback = timer->callback;
+	TimerFunc callback = timer->destroy_callback;
 	void *client_data = timer->client_data;
 
-	callback(client_data);
+	if (callback)
+		callback(client_data);
 	free(timer->name);
 	free(timer);
 }
