@@ -254,6 +254,10 @@ bd::String script_strftime(const bd::String format, long time) {
     throw bd::String("error with strftime");
 }
 
+bd::String script_md5(const bd::String string) {
+  return MD5(string.c_str());
+}
+
 long script_myip() {
   return getmyip();
 }
@@ -281,6 +285,7 @@ void init_script_misc() {
   script_add_command("putloglev",	script_putloglev,	"level(s) channel text");
   script_add_command("killtimer",	script_killtimer,	"timerID");
   script_add_command("killutimer",	script_killutimer,	"timerID");
+  script_add_command("md5",		script_md5,		"string");
   script_add_command("myip",		script_myip);
   script_add_command("rand",		script_rand,		"limit");
   script_add_command("strftime",	script_strftime,	"formatstring ?time?",		1);
