@@ -192,7 +192,7 @@ static bind_entry_t *bind_entry_lookup(bind_table_t *table, int id, const char *
 
 	for (entry = table->entries; entry; entry = entry->next) {
 		if (entry->flags & BIND_DELETED) continue;
-		if (entry->id >= 0) {
+		if (id != -1 && entry->id >= 0) {
 			if (entry->id == id) break;
 		}
 		else {
