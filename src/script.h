@@ -14,9 +14,12 @@ bd::String script_eval(const bd::String& interp, const bd::String& script);
 struct script_callback {
   public:
     bd::ScriptCallbacker* callback_command;
-    void *cdata;
+    const bd::String mask;
+    const void *cdata;
     script_callback() = delete;
-    script_callback(bd::ScriptCallbacker* _callback_command, void *_cdata = nullptr) : callback_command(_callback_command), cdata(_cdata) {};
+    script_callback(bd::ScriptCallbacker* _callback_command,
+        bd::String _mask, void *_cdata = nullptr) :
+          callback_command(_callback_command), mask(_mask), cdata(_cdata) {};
 };
 
 template <typename T>

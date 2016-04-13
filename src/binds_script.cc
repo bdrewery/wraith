@@ -62,6 +62,12 @@ void script_bind_callback(script_callback* callback_data, ...) {
   }
   va_end(va);
 
+  /* Set the lastbind variable before evaluating the proc so that the name
+   * of the command that triggered the bind will be available to the proc.
+   * This feature is used by scripts such as userinfo.tcl
+   */
+  script_eval("tcl", bd::String::printf("set lastbind %s", callback_data->mask.c_str()));
+
   // Forward to the Script callback
   ContextNote("bind callback", callback_data->callback_command->cmd.c_str());
   callback_data->callback_command->call(args);
@@ -82,7 +88,7 @@ bd::String script_bind(const bd::String type, const bd::String flags, const bd::
 
   if (callback_command) {
     bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
-    script_callback* callback_data = new script_callback(callback_command, table);
+    script_callback* callback_data = new script_callback(callback_command, mask, table);
     bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) script_bind_callback, (void*) callback_data);
     return mask;
   }
