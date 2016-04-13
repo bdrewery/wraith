@@ -197,6 +197,9 @@ static void irc_script_init() {
   script_add_command("isvoice", script_isvoice, "nickname ?channel?", 1);
   script_add_command("onchan", script_onchan, "nickname ?channel?", 1);
   script_add_command("privmsg", script_privmsg, "channel msg");
+#if defined(USE_SCRIPT_TCL) && defined(DEBUG)
+  script_eval("tcl", "source script.tcl");
+#endif
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */
