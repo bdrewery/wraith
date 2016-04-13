@@ -66,6 +66,7 @@ int unload_script() {
 bd::String script_eval(const bd::String& interp, const bd::String& script) {
   if (!ScriptInterps.contains(interp)) return bd::String();
   ContextNote(interp.c_str(), script.c_str());
+  /* XXX: Log errors like in script_bind_callback */
   return ScriptInterps[interp]->eval(script);
 }
 

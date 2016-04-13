@@ -70,7 +70,17 @@ void script_bind_callback(script_callback* callback_data, ...) {
 
   // Forward to the Script callback
   ContextNote("bind callback", callback_data->callback_command->cmd.c_str());
+  script_eval("tcl", "set errorInfo {}");
+
   callback_data->callback_command->call(args);
+
+  /* XXX: This sucks, should detect error from above. */
+  bd::String result(script_eval("tcl", "set errorInfo"));
+  if (result) {
+    putlog(LOG_MISC, "*", "Tcl error [%s]: %s",
+        callback_data->callback_command->cmd.c_str(),
+        result.c_str());
+  }
 }
 
 bd::String script_bind(const bd::String type, const bd::String flags, const bd::String mask, bd::ScriptCallbacker* callback_command) {
