@@ -28,7 +28,9 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-static int _script_botisflag(bd::String channel, int type) {
+static int _script_isflag(const bd::String nick, const bd::String channel,
+    int type) {
+  memberlist *m;
   struct chanset_t *chan, *thechan = NULL;
 
   if (channel) {
@@ -41,9 +43,12 @@ static int _script_botisflag(bd::String channel, int type) {
     chan = chanset;
 
   while (chan && (thechan == NULL || thechan == chan)) {
-    if ((type == CHAN_FLAG_OP && me_op(chan)) ||
-        (type == CHAN_FLAG_VOICE && me_voice(chan))) {
-      return 1;
+    m = ismember(chan, nick.c_str());
+    if (m) {
+      if ((type == CHAN_FLAG_OP && chan_hasop(m)) ||
+          (type == CHAN_FLAG_VOICE && chan_hasvoice(m))) {
+        return 1;
+      }
     }
     chan = chan->next;
   }
@@ -51,11 +56,19 @@ static int _script_botisflag(bd::String channel, int type) {
 }
 
 int script_botisop(bd::String channel) {
-  return _script_botisflag(channel, CHAN_FLAG_OP);
+  return _script_isflag(botname, channel, CHAN_FLAG_OP);
 }
 
 int script_botisvoice(bd::String channel) {
-  return _script_botisflag(channel, CHAN_FLAG_VOICE);
+  return _script_isflag(botname, channel, CHAN_FLAG_VOICE);
+}
+
+int script_isop(bd::String nick, bd::String channel) {
+  return _script_isflag(nick, channel, CHAN_FLAG_OP);
+}
+
+int script_isvoice(bd::String nick, bd::String channel) {
+  return _script_isflag(nick, channel, CHAN_FLAG_VOICE);
 }
 
 static int _script_onchan(const bd::String nick, const bd::String channel) {
@@ -180,6 +193,8 @@ static void irc_script_init() {
   script_add_command("chanlist", script_chanlist, "channel ?flags?", 1);
   script_add_command("getchanhost", script_getchanhost, "nickname ?channel?", 1);
   script_add_command("getchanidle", script_getchanidle, "nickname channel");
+  script_add_command("isop", script_isop, "nickname ?channel?", 1);
+  script_add_command("isvoice", script_isvoice, "nickname ?channel?", 1);
   script_add_command("onchan", script_onchan, "nickname ?channel?", 1);
   script_add_command("privmsg", script_privmsg, "channel msg");
 }
