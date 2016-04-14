@@ -878,6 +878,10 @@ struct chanset_t* find_common_opped_chan(bd::String nick) {
 void privmsg(bd::String target, bd::String msg, int idx) {
   struct chanset_t* chan = NULL;
   bool talking_to_chan = strchr(CHANMETA, target[0]);
+
+  if (!msg)
+    return;
+
   if (have_cprivmsg && !talking_to_chan)
     chan = find_common_opped_chan(target);
   bool cleartextPrefix = (msg(0, 3) == "+p ");
@@ -900,6 +904,10 @@ void privmsg(bd::String target, bd::String msg, int idx) {
 void notice(bd::String target, bd::String msg, int idx) {
   struct chanset_t* chan = NULL;
   bool talking_to_chan = strchr(CHANMETA, target[0]);
+
+  if (!msg)
+    return;
+
   if (have_cnotice && !talking_to_chan)
     chan = find_common_opped_chan(target);
   bool cleartextPrefix = (msg(0, 3) == "+p ");
