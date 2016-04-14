@@ -33,8 +33,8 @@
 #include "core_binds.h"
 #include "binds.h"
 
-#include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
+#include <bdlib/src/String.h>
 
 void script_bind_callback(struct script_callback* callback_data, ...) {
   va_list va;
@@ -98,18 +98,25 @@ bd::String script_bind(const bd::String type, const bd::String flags,
     throw error;
   }
 
-  if (callback_command) {
-    bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
-    script_callback* callback_data = new script_callback(callback_command, mask, table);
-    bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(), name.c_str(), 0, (Function) script_bind_callback, (void*) callback_data);
-    return mask;
+  bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
+
+  if (!callback_command) {
+    bd::Array<bd::String> entries;
+
+    entries = bind_entries(table, mask);
+    return entries.join(" ");
   }
 
-  return bd::String();
+  script_callback* callback_data = new script_callback(callback_command, mask, table);
+  bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(),
+      name.c_str(), 0, (Function) script_bind_callback,
+      callback_data);
+
+  return mask;
 }
 
 void binds_script_init() {
-  script_add_command("bind", script_bind, "type flags cmd/mask ?procname?");
+  script_add_command("bind",	script_bind,	"type flags cmd/mask ?procname?",		3);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */

@@ -64,6 +64,20 @@ bd::Array<bd::String> bind_tables() {
 	return tables;
 }
 
+bd::Array<bd::String> bind_entries(const bind_table_t* table, const bd::String mask) {
+	bind_entry_t* entry = NULL;
+	bd::Array<bd::String> entries;
+
+	for (entry = table->entries; entry; entry = entry->next) {
+		if (entry->flags & BIND_DELETED)
+			continue;
+		if (!strcasecmp(entry->mask, mask.c_str())) {
+			entries << entry->function_name;
+		}
+	}
+	return entries;
+}
+
 static int internal_bind_cleanup()
 {
 	bind_table_t *table = NULL, *next_table = NULL;
