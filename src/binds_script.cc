@@ -26,6 +26,7 @@
  */
 
 #include <stdarg.h>
+#include <memory>
 
 #include "common.h"
 #include "binds_script.h"
@@ -34,6 +35,7 @@
 #include "binds.h"
 
 #include <bdlib/src/Array.h>
+#include <bdlib/src/HashTable.h>
 #include <bdlib/src/String.h>
 
 void script_bind_callback(struct script_callback* callback_data, ...) {
@@ -83,6 +85,9 @@ void script_bind_callback(struct script_callback* callback_data, ...) {
   }
 }
 
+static bd::HashTable<struct script_callback*,
+  std::shared_ptr<struct script_callback>> _bind_callback_datas;
+
 bd::String script_bind(const bd::String type, const bd::String flags,
     const bd::String mask, bd::ScriptCallbackerPtr callback_command)
 {
@@ -107,10 +112,25 @@ bd::String script_bind(const bd::String type, const bd::String flags,
     return entries.join(" ");
   }
 
-  script_callback* callback_data = new script_callback(callback_command, mask, table);
+  if (!table->flags & BIND_STACKABLE) {
+    /*
+     * This is a layer violation but there's not really a better way without
+     * major overhaul.
+     */
+    bind_entry_t *old_entry = bind_entry_lookup(table, -1, mask.c_str(),
+        name.c_str(), (Function) script_bind_callback);
+    /* There's an old entry that needs to have its callback_data freed first. */
+    if (old_entry->client_data)
+      _bind_callback_datas.remove(
+          static_cast<struct script_callback*>(old_entry->client_data));
+  }
+
+  auto callback_data = std::make_shared<struct script_callback>(
+      callback_command, mask, table);
   bind_entry_add(table, flags.c_str(), BIND_WANTS_CD, mask.c_str(),
       name.c_str(), 0, (Function) script_bind_callback,
-      callback_data);
+      callback_data.get());
+  _bind_callback_datas[callback_data.get()] = callback_data;
 
   return mask;
 }

@@ -199,7 +199,7 @@ bind_table_t *bind_table_lookup_or_fake(const char *name)
 
 
 /* Look up a bind entry based on either function name or id. */
-static bind_entry_t *bind_entry_lookup(bind_table_t *table, int id, const char *mask, const char *function_name, Function callback)
+bind_entry_t *bind_entry_lookup(bind_table_t *table, int id, const char *mask, const char *function_name, Function callback)
 {
 	bind_entry_t *entry = NULL;
 	int hit;
