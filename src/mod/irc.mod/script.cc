@@ -28,7 +28,7 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/Array.h>
 
-static int _script_isflag(const bd::String nick, const bd::String channel,
+static int _script_isflag(const bd::String& nick, const bd::String& channel,
     int type) {
   memberlist *m;
   struct chanset_t *chan, *thechan = NULL;
@@ -71,7 +71,7 @@ int script_isvoice(bd::String nick, bd::String channel) {
   return _script_isflag(nick, channel, CHAN_FLAG_VOICE);
 }
 
-static int _script_onchan(const bd::String nick, const bd::String channel) {
+static int _script_onchan(const bd::String& nick, const bd::String& channel) {
   struct chanset_t *chan, *thechan = NULL;
 
   if (channel) {
