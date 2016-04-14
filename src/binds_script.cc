@@ -135,8 +135,37 @@ bd::String script_bind(const bd::String type, const bd::String flags,
   return mask;
 }
 
+bd::String script_unbind(const bd::String type, const bd::String flags,
+    const bd::String mask, bd::ScriptCallbackerPtr callback_command)
+{
+  bind_table_t* table = bind_table_lookup(type.c_str());
+  bd::String name(bd::String::printf("*%s:%s", table->name, mask.c_str()));
+  bind_entry_t *entry = bind_entry_lookup(table, -1, mask.c_str(),
+        name.c_str(), (Function) script_bind_callback);
+
+  if (entry && entry->client_data)
+      _bind_callback_datas.remove(
+          static_cast<struct script_callback*>(entry->client_data));
+  if (!entry) {
+    /* (eggdrop) Don't error if trying to re-unbind a builtin */
+    if (callback_command->cmd[0] != '*' || callback_command->cmd[4] != ':' ||
+        strcmp(mask.c_str(), &(*callback_command->cmd)[5]) ||
+        strncmp(type.c_str(), &(*callback_command->cmd)[1], 3)) {
+      throw bd::String("no such binding");
+    }
+    /* Eggdrop returns mask here but whatever. */
+    return "";
+  }
+
+  bind_entry_del(table, entry ? entry->id : -1, mask.c_str(), name.c_str(),
+      (Function) script_bind_callback);
+
+  return mask;
+}
+
 void binds_script_init() {
   script_add_command("bind",	script_bind,	"type flags cmd/mask ?procname?",		3);
+  script_add_command("unbind",	script_unbind,	"type flags cmd/mask procname");
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */

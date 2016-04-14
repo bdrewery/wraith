@@ -221,7 +221,7 @@ bind_entry_t *bind_entry_lookup(bind_table_t *table, int id, const char *mask, c
 	return(entry);
 }
 
-static int bind_entry_del(bind_table_t *table, int id, const char *mask, const char *function_name, Function callback)
+int bind_entry_del(bind_table_t *table, int id, const char *mask, const char *function_name, Function callback)
 {
 	bind_entry_t *entry = NULL;
 
@@ -256,6 +256,7 @@ int bind_entry_add(bind_table_t *table, const char *flags, int cflags, const cha
 	if (old_entry) {
 		if (table->flags & BIND_STACKABLE) {
 			entry = (bind_entry_t *) my_calloc(1, sizeof(*entry));
+			entry->id = -1;
 			entry->prev = old_entry;
 			entry->next = old_entry->next;
 			old_entry->next = entry;
@@ -274,6 +275,7 @@ int bind_entry_add(bind_table_t *table, const char *flags, int cflags, const cha
 			; /* empty loop */
 		}
 		entry = (bind_entry_t *) my_calloc(1, sizeof(*entry));
+		entry->id = -1;
 		if (old_entry) old_entry->next = entry;
 		else table->entries = entry;
 		entry->prev = old_entry;
