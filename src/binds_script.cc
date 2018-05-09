@@ -112,7 +112,7 @@ bd::String script_bind(const bd::String type, const bd::String flags,
     return entries.join(" ");
   }
 
-  if (!table->flags & BIND_STACKABLE) {
+  if (!(table->flags & BIND_STACKABLE)) {
     /*
      * This is a layer violation but there's not really a better way without
      * major overhaul.
