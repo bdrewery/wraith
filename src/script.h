@@ -23,7 +23,7 @@ struct script_callback {
 };
 
 template <typename T>
-void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook = nullptr);
+void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook_t = nullptr);
 
 int init_script();
 int unload_script();

@@ -70,10 +70,10 @@ bd::String script_eval(const bd::String& interp, const bd::String& script) {
   return ScriptInterps[interp]->eval(script);
 }
 
-template void script_link_var(const bd::String& name, bd::String& data, bd::ScriptInterp::link_var_hook var_hook_func);
+template void script_link_var(const bd::String& name, bd::String& data, bd::ScriptInterp::link_var_hook_t var_hook_func);
 
 template <typename T>
-void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook var_hook_func) {
+void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook_t var_hook_func) {
   bd::Array<bd::String> interps(ScriptInterps.keys());
 
   for (auto key : interps) {
