@@ -40,7 +40,6 @@ void *libtcl_handle = NULL;
 
 static int load_symbols(void *handle) {
 #if defined(USE_SCRIPT_TCL)
-  const char *dlsym_error = NULL;
   typedef Tcl_Interp *(*Tcl_CreateInterp_t)(void);
   Tcl_Interp *interp;
 

@@ -70,9 +70,9 @@ init_dcc()
   if (max_dcc < 1)
     max_dcc = 1;
   if (dcc)
-    dcc = (struct dcc_t *) my_realloc(dcc, sizeof(struct dcc_t) * max_dcc);
+    dcc = (struct dcc_t *) realloc(dcc, sizeof(struct dcc_t) * max_dcc);
   else
-    dcc = (struct dcc_t *) my_calloc(1, sizeof(struct dcc_t) * max_dcc);
+    dcc = (struct dcc_t *) calloc(1, sizeof(struct dcc_t) * max_dcc);
 }
 
 /* Replace \n with \r\n */
@@ -375,7 +375,7 @@ dprintf_real(int idx, char* buf, size_t len, size_t bufsiz, const char* target)
       bounce_simul(idx, buf);
     } else if (unlikely(dcc[idx].irc)) {
 //      size_t size = strlen(dcc[idx].simulbot) + strlen(buf) + 20;
-//      char *ircbuf = (char *) my_calloc(1, size);
+//      char *ircbuf = (char *) calloc(1, size);
 
 //      simple_snprintf(ircbuf, size, "PRIVMSG %s :%s", dcc[idx].simulbot, buf);
 //      tputs(dcc[idx].sock, ircbuf, strlen(ircbuf));
@@ -590,14 +590,6 @@ lostdcc(int n)
   if (n < 0 || n >= max_dcc)
     return;
 
-  if (n == uplink_idx)
-    uplink_idx = -1;
-  else if (n == dns_idx)
-    dns_idx = -1;
-  else if (n == servidx)
-    servidx = -1;
-
-
   if (dcc[n].type && dcc[n].type->kill)
     dcc[n].type->kill(n, dcc[n].u.other);
   else if (dcc[n].u.other)
@@ -605,12 +597,16 @@ lostdcc(int n)
 
   dcc[n].u.other = NULL;
 
-//  This is also done when we new_dcc(), so don't bother for now, we set sock/type to NULL, so it won't even be 
-//  parsed by anything.
-//  bzero(&dcc[n], sizeof(struct dcc_t));
+  if (n == uplink_idx)
+    uplink_idx = -1;
+  else if (n == dns_idx)
+    dns_idx = -1;
+  else if (n == servidx)
+    servidx = -1;
+
+  bzero(&dcc[n], sizeof(struct dcc_t));
 
   dcc[n].sock = -1;
-  dcc[n].type = NULL;
 
   dccn--;
 
@@ -771,7 +767,7 @@ new_dcc(struct dcc_table *type, int xtra_size)
 
   dcc[i].type = type;
   if (xtra_size)
-    dcc[i].u.other = (char *) my_calloc(1, xtra_size);
+    dcc[i].u.other = (char *) calloc(1, xtra_size);
   else
     dcc[i].u.other = NULL;
   dcc[i].simul = -1;
@@ -795,7 +791,7 @@ changeover_dcc(int i, struct dcc_table *type, int xtra_size)
   }
   dcc[i].type = type;
   if (xtra_size)
-    dcc[i].u.other = (char *) my_calloc(1, xtra_size);
+    dcc[i].u.other = (char *) calloc(1, xtra_size);
 }
 
 int
@@ -983,7 +979,7 @@ listen_all(in_port_t lport, bool off, bool should_v6)
           if (i > 0) {
 #endif /* USE_IPV6 */
             if (!pmap) {
-              pmap = (struct portmap *) my_calloc(1, sizeof(struct portmap));
+              pmap = (struct portmap *) calloc(1, sizeof(struct portmap));
               pmap->next = root;
               root = pmap;
             }
@@ -1210,7 +1206,7 @@ void set_cmd_pass(char *ln, int shareit)
       free(cp);
   } else if (ln[0]) {
     /* create */
-    cp = (struct cmd_pass *) my_calloc(1, sizeof(struct cmd_pass));
+    cp = (struct cmd_pass *) calloc(1, sizeof(struct cmd_pass));
     cp->next = cmdpass;
     cmdpass = cp;
     cp->name = strdup(cmd);

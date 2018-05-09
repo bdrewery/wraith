@@ -157,12 +157,15 @@ static int msg_op(char *nick, char *host, struct userrec *u, char *par)
 
   if (u_pass_match(u, pass)) {
     if (!u_pass_match(u, "-")) {
+      memberlist *m = NULL;
+
       if (par[0]) {
         chan = findchan_by_dname(par);
         if (chan && channel_active(chan)) {
+          m = ismember(chan, nick);
           get_user_flagrec(u, &fr, par, chan);
           if (chk_op(fr, chan)) {
-            if (do_op(nick, chan, 0, 1)) {
+            if (do_op(m, chan, 0, 1)) {
               stats_add(u, 0, 1);
               putlog(LOG_CMDS, "*", "(%s!%s) !%s! OP %s", nick, host, u->handle, par);
               if (manop_warn && chan->manop) {
@@ -176,9 +179,10 @@ static int msg_op(char *nick, char *host, struct userrec *u, char *par)
       } else {
         int stats = 0;
         for (chan = chanset; chan; chan = chan->next) {
+          m = ismember(chan, nick);
           get_user_flagrec(u, &fr, chan->dname, chan);
           if (chk_op(fr, chan)) {
-            if (do_op(nick, chan, 0, 1)) {
+            if (do_op(m, chan, 0, 1)) {
               stats++;
               if (manop_warn && chan->manop) {
                 msg = bd::String::printf("%s is currently set to punish for manual op.", chan->dname);
@@ -290,9 +294,11 @@ static int msg_invite(char *nick, char *host, struct userrec *u, char *par)
 static void logc(const char *cmd, Auth *a, char *chname, char *par)
 {
   if (chname && chname[0])
-    putlog(LOG_CMDS, "*", "(%s!%s) !%s! %s %c%s %s", a->nick, a->host, a->handle, chname, auth_prefix[0], cmd, par ? par : "");
+    putlog(LOG_CMDS, "*", "(%s!%s) !%s! %s %c%s %s", a->nick, a->host,
+        a->user ? a->user->handle : "*", chname, auth_prefix[0], cmd, par ? par : "");
   else
-    putlog(LOG_CMDS, "*", "(%s!%s) !%s! %c%s %s", a->nick, a->host, a->handle, auth_prefix[0], cmd, par ? par : "");
+    putlog(LOG_CMDS, "*", "(%s!%s) !%s! %c%s %s", a->nick, a->host,
+        a->user ? a->user->handle : "*", auth_prefix[0], cmd, par ? par : "");
 }
 #define LOGC(cmd) logc(cmd, a, chname, par)
   
@@ -334,7 +340,7 @@ static int msg_authstart(char *nick, char *host, struct userrec *u, char *par)
 static void
 AuthFinish(Auth *auth)
 {
-  putlog(LOG_CMDS, "*", STR("(%s!%s) !%s! +AUTH"), auth->nick, auth->host, auth->handle);
+  putlog(LOG_CMDS, "*", STR("(%s!%s) !%s! +AUTH"), auth->nick, auth->host, auth->user ? auth->user->handle : "*");
   auth->Done();
   bd::String msg;
   msg = bd::String::printf(STR("You are now authorized for cmds, see %chelp"), auth_prefix[0]);

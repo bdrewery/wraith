@@ -75,6 +75,8 @@ char homechan[51] = "";
 char usermode[15] = "";
 bool fish_auto_keyx = 0;
 bool fish_paranoid = 0;
+int server_cycle_wait;
+int wait_split;
 
 ////// THIS MUST REMAIN SORTED: !LC_ALL=C sort
 // VAR("bad-process",	&badprocess,		VAR_INT|VAR_DETECTED,				0, 4, "ignore"),
@@ -126,6 +128,7 @@ static variable_t vars[] = {
  VAR("promisc",		&promisc,		VAR_INT|VAR_DETECTED,				0, 4, "ignore"),
  VAR("rbl-servers",	rbl_servers,		VAR_STRING|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB,	0, 0, DEFAULT_RBL),
  VAR("realname",	botrealname,		VAR_STRING|VAR_NOLHUB,				0, 0, "* I'm too lame to read BitchX.doc *"),
+ VAR("server-cycle-wait",&server_cycle_wait,	VAR_INT|VAR_NOLHUB,				5, 500, "30"),
  VAR("server-port",	&default_port,		VAR_INT|VAR_SHORT|VAR_NOLHUB,			0, 65535, "6667"),
  VAR("server-port-ssl",	&default_port_ssl,	VAR_INT|VAR_SHORT|VAR_NOLHUB,			0, 65535, "6697"),
  VAR("server-use-ssl",	&ssl_use,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "0"),
@@ -135,6 +138,7 @@ static variable_t vars[] = {
  VAR("servers6-ssl",	&serverlist,		VAR_SERVERS|VAR_LIST|VAR_SHUFFLE|VAR_NOLHUB|VAR_NOLDEF,	0, 0, DEFAULT_SERVERS6_SSL),
  VAR("trace",		&trace,			VAR_INT|VAR_DETECTED,				0, 4, "die"),
  VAR("usermode",	&usermode,		VAR_WORD|VAR_NOLHUB,				0, 0, "+iws"),
+ VAR("wait-split",	&wait_split,		VAR_INT|VAR_NOLHUB,				0, 86400, "1000"),
  VAR(NULL,		NULL,			0,						0, 0, NULL)
 };
 
@@ -175,7 +179,7 @@ char *var_sanitize(variable_t *var, const char *data)
     else if (var->b && (number > var->b))
       number = var->b;
 
-    dataout = (char*) my_calloc(1, 11);
+    dataout = (char*) calloc(1, 11);
     simple_snprintf(dataout, 11, "%d", number);
   } else if (var->flags & VAR_DETECTED) {
     if (data) {
@@ -205,7 +209,7 @@ char *var_sanitize(variable_t *var, const char *data)
       else if (num < 0 || !strcasecmp(data, "false") || !strcasecmp(data, "off"))
         num = 0;
     }
-    dataout = (char*) my_calloc(1, 2);
+    dataout = (char*) calloc(1, 2);
     simple_snprintf(dataout, 2, "%u", num ? 1 : 0);
   } else if (var->flags & VAR_STRING) {
     dataout = data ? strdup(data) : NULL;
@@ -236,7 +240,7 @@ char *var_sanitize(variable_t *var, const char *data)
     }
 
     /* No limit enforcing yet */
-    dataout = (char*) my_calloc(1, 21);
+    dataout = (char*) calloc(1, 21);
     simple_snprintf(dataout, 21, "%d:%d", rate.count, rate.time);
   } else if ((var->flags & VAR_SERVERS)) {
     dataout = data ? strdup(data) : NULL;
@@ -455,7 +459,7 @@ const char *var_string(variable_t *var)
       data = strdup(det_translate_num(*(int *) (var->mem)));
     } else {
       if (*(int *) (var->mem)) {
-        data = (char *) my_calloc(1, 11);
+        data = (char *) calloc(1, 11);
         simple_snprintf(data, 11, "%d", *(int *) (var->mem));
       }
     }
@@ -463,7 +467,7 @@ const char *var_string(variable_t *var)
     /* only bother setting if we have a value that's not 0 */
     if (*(int *) (var->mem)) {
       bool num = *(bool *) (var->mem);
-      data = (char *) my_calloc(1, 2);
+      data = (char *) calloc(1, 2);
       /* Only actually set 0 or 1 */
       simple_snprintf(data, 2, "%d", num ? 1 : 0);
     }
@@ -474,7 +478,7 @@ const char *var_string(variable_t *var)
   } else if (var->flags & VAR_RATE) {
     /* only bother setting if we don't have 0:0 */
     if ((*(rate_t *) (var->mem)).count && (*(rate_t *) (var->mem)).time) {
-      data = (char *) my_calloc(1, 21);
+      data = (char *) calloc(1, 21);
       simple_snprintf(data, 21, "%d:%d", (*(rate_t *) (var->mem)).count, (*(rate_t *) (var->mem)).time);
     }
   } else if (var->flags & VAR_SERVERS) {
@@ -537,8 +541,17 @@ const char *var_get_gdata(const char *name) {
 
 void var_set(variable_t *var, const char *target, const char *datain)
 {
-  /* Don't set locally if the variable doesn't permit it. */
   if (target) {
+    /*
+     * Setting user entry despite possibly not setting memory due to
+     * historically setting this after var_set() without checking
+     * return value.
+     */
+    if (!parsing_botset) {
+      var_set_userentry(target, var->name, datain);
+    }
+
+    /* Don't set locally if the variable doesn't permit it. */
     if (var->flags & VAR_NOLOC)
       return;
 
@@ -643,10 +656,10 @@ void var_set_userentry(const char *target, const char *name, const char *data)
     u = get_user_by_handle(userlist, (char *) target);
 
   if (u) {
-    struct xtra_key *xk = (struct xtra_key *) my_calloc(1, sizeof(struct xtra_key));
+    struct xtra_key *xk = (struct xtra_key *) calloc(1, sizeof(struct xtra_key));
 
     xk->key = strdup(name);
-    xk->data = data ? strdup(data) : NULL;
+    xk->data = (data && data[0]) ? strdup(data) : NULL;
     set_user(&USERENTRY_SET, u, xk);                //This will send the change to the specified bot
   }
 }
@@ -680,10 +693,6 @@ void init_vars()
     if (!vars[i].gdata && !vars[i].ldata && !(!conf.bot->hub && (vars[i].flags & VAR_NOLDEF)))
       var_set(&vars[i], NULL, NULL);		//empty out and set to defaults
   }
-#ifdef DEBUG
-  if (!strncmp(conf.bot->nick, "wtest", 5))
-    var_set_by_name(NULL, "homechan", "#bryan");
-#endif
 }
 
 /* This is used to parse (GLOBAL) userfile var lines and changes via .set from a remote hub */
@@ -833,14 +842,12 @@ static int var_add_list(const char *botnick, variable_t *var, const char *elemen
   if (olddata && osiz) {
     size_t esiz = strlen(element) + 1;		// element + ,
 
-    data = (char *) my_calloc(1, osiz + esiz + 1);
+    data = (char *) calloc(1, osiz + esiz + 1);
     simple_snprintf(data, osiz + esiz + 1, "%s,%s", olddata, element);
   } else /* otherwise, just set the data to the element to be added */
     data = strdup(element);
 
   var_set(var, botnick, data);
-  if (botnick)
-    var_set_userentry(botnick, var->name, data);
   free(data);
   return 1;
 }
@@ -877,7 +884,7 @@ static char *var_rem_list(const char *botnick, variable_t *var, const char *elem
   olddata = olddatap = strdup(olddatacp);
   size_t tsiz = strlen(olddata) + 1;
 
-  char *data = (char *) my_calloc(1, tsiz);
+  char *data = (char *) calloc(1, tsiz);
   char *word = NULL;
   while ((word = strsep(&olddata, delim))) {
     ++i;
@@ -900,8 +907,6 @@ static char *var_rem_list(const char *botnick, variable_t *var, const char *elem
 
   if (num <= i && ret[0]) {
     var_set(var, botnick, data);
-    if (botnick)
-      var_set_userentry(botnick, var->name, data);
   } else
     ret[0] = 0;
  
@@ -1188,8 +1193,6 @@ int cmd_set_real(const char *botnick, int idx, char *par)
       }
 
       var_set(var, botnick, data);
-      if (botnick)
-        var_set_userentry(botnick, name, data);
 
       display_set_value(idx, var, botnick);
 

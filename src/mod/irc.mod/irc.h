@@ -75,6 +75,7 @@ static char *getchanmode(struct chanset_t *);
 static void flush_mode(struct chanset_t *, int);
 static bool member_getuser(memberlist* m, bool act_on_lookup = 0);
 static void do_protect(struct chanset_t* chan, const char* reason);
+static void rebalance_roles_chan(struct chanset_t* chan);
 
 /* reset(bans|exempts|invites) are now just macros that call resetmasks
  * in order to reduce the code duplication. <cybah>
@@ -85,7 +86,7 @@ static void do_protect(struct chanset_t* chan, const char* reason);
 
 static int detect_offense(memberlist*, struct chanset_t *, char *);
 /* static int target_priority(struct chanset_t *, memberlist *, int); */
-static bool do_op(char *, struct chanset_t *, bool, bool);
+static bool do_op(memberlist *, struct chanset_t *, bool, bool);
 static void request_op(struct chanset_t *);
 static void request_in(struct chanset_t *);
 static bool detect_chan_flood(memberlist *m, const char* from, struct chanset_t *chan, flood_t which, const char *msg = NULL);
@@ -121,9 +122,18 @@ void join_chan(struct chanset_t* chan, int idx = DP_MODE);
 
 int check_bind_authc(char *, Auth *, char *, char *);
 void notice_invite(struct chanset_t *, char *, char *, char *, bool);
-void real_add_mode(struct chanset_t *, const char, const char, const char *, bool);
-#define add_mode(chan, pls, mode, nick) real_add_mode(chan, pls, mode, nick, 0)
-#define add_cookie(chan, nick) real_add_mode(chan, '+', 'o', nick, 1)
+void real_add_mode(struct chanset_t *, const char, const char, const char *, bool, memberlist *);
+inline void add_mode(struct chanset_t *chan, const char plus, const char mode,
+    const char *op)
+{
+  real_add_mode(chan, plus, mode, op, 0, NULL);
+}
+inline void add_mode(struct chanset_t *chan, const char plus, const char mode,
+    memberlist *m)
+{
+  real_add_mode(chan, plus, mode, m->nick, 0, m);
+}
+#define add_cookie(chan, member) real_add_mode(chan, '+', 'o', member->nick, 1, member)
 /* Check if I am a chanop. Returns boolean 1 or 0.
  */
 inline bool me_op(const struct chanset_t *chan)

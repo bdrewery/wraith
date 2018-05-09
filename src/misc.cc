@@ -267,6 +267,12 @@ void maskaddr(const char *s, char *nw, int type)
       *nw++ = '*';
       if (strchr("~+-^=", *u))
         u++; /* trim leading crap */
+      /*
+       * Take last 9 chars to avoid running up against 10-char limit for
+       * username on ratbox.  The older eggdrop code used this limit as well.
+       */
+      while (h - u > 9)
+        u++;
     }
     strncpy(nw, u, h - u);
     nw += h - u;
@@ -541,13 +547,13 @@ char *str_escape(const char *str, const char divc, const char mask)
   char		*buf = NULL, *b = NULL;
   const char	*s = NULL;
 
-  b = buf = (char *) my_calloc(1, buflen + 1);
+  b = buf = (char *) calloc(1, buflen + 1);
 
   for (s = str; *s; s++) {
     /* Resize buffer. */
     if ((buflen - blen) <= 3) {
       buflen <<= 1;		/* * 2 */
-      buf = (char *) my_realloc(buf, buflen + 1);
+      buf = (char *) realloc(buf, buflen + 1);
       if (!buf)
 	return NULL;
       b = buf + blen;
@@ -653,8 +659,9 @@ readsocks(const char *fname)
   if (!conf.bot->hub)
     restarting = 1;
 
-  char *nick = NULL, *jnick = NULL, *ip4 = NULL, *ip6 = NULL;
-  time_t old_buildts = 0;
+  char *_botname = NULL, *ip4 = NULL, *ip6 = NULL,
+       *_origbotname = NULL, *_jupenick = NULL;
+  time_t old_buildts = 0, _server_online = 0;
 
   bool cached_005 = 0;
   const char salt1[] = SALT1;
@@ -676,7 +683,7 @@ readsocks(const char *fname)
     else if (type == STR("+online_since"))
       online_since = strtol(str.c_str(), NULL, 10);
     else if (type == STR("+server_online"))
-      server_online = strtol(str.c_str(), NULL, 10);
+      _server_online = strtol(str.c_str(), NULL, 10);
     else if (type == STR("+server_floodless"))
       floodless = 1;
     else if (type == STR("+in_deaf"))
@@ -695,7 +702,11 @@ readsocks(const char *fname)
     else if (type == STR("+buildts"))
       old_buildts = strtol(str.c_str(), NULL, 10);
     else if (type == STR("+botname"))
-      nick = str.dup();
+      _botname = str.dup();
+    else if (type == STR("+origbotname"))
+      _origbotname = str.dup();
+    else if (type == STR("+jupenick"))
+      _jupenick = str.dup();
     else if (type == STR("+rolls"))
       rolls = atoi(str.c_str());
     else if (type == STR("+altnick_char"))
@@ -728,6 +739,13 @@ readsocks(const char *fname)
 
   unlink(fname);
 
+  /* server_online is not yet set so these will safely not send NICK. */
+  if (_origbotname) {
+    var_set_by_name(conf.bot->nick, "nick", _origbotname);
+  }
+  if (_jupenick) {
+    var_set_by_name(conf.bot->nick, "jupenick", _jupenick);
+  }
   if (servidx >= 0) {
     char nserv[50] = "";
 
@@ -750,8 +768,10 @@ readsocks(const char *fname)
       curserv = 0;
       keepnick = 0; /* Wait to change nicks until relinking, fixes nick/jupenick switching issues during restart */
       reset_flood();
-      if (!server_online) server_online = now;
-      rehash_server(dcc[servidx].host, nick);
+      if (!_server_online)
+	_server_online = now;
+      server_online = _server_online;
+      rehash_server(dcc[servidx].host, _botname);
       if (cached_005)
         replay_cache(servidx, NULL);
       else
@@ -760,11 +780,11 @@ readsocks(const char *fname)
         reset_chans = 1;
     }
   }
-  delete[] nick;
+  delete[] _botname;
+  delete[] _origbotname;
+  delete[] _jupenick;
   delete[] ip4;
   delete[] ip6;
-  if (jnick)
-    free(jnick);
   if (socksfile)
     free(socksfile);
 }
@@ -786,6 +806,9 @@ restart(int idx)
     botnet_send_chat(-1, conf.bot->nick, (char *) reason);
     botnet_send_bye(reason);
   }
+
+  /* Stop sharing to prevent writing LASTON to lostdcc() DCC_BOT sockets. */
+  noshare = 1;
 
   /* kill all connections except STDOUT/server */
   for (fd = 0; fd < dcc_total; fd++) {
@@ -812,6 +835,10 @@ restart(int idx)
   if (server_online) {
     if (botname[0])
       stream << bd::String::printf(STR("+botname %s\n"), botname);
+    if (origbotname[0])
+      stream << bd::String::printf(STR("+origbotname %s\n"), origbotname);
+    if (jupenick[0])
+      stream << bd::String::printf(STR("+jupenick %s\n"), jupenick);
     if (rolls)
       stream << bd::String::printf(STR("+rolls %d\n"), rolls);
     if (altnick_char)
@@ -906,7 +933,7 @@ int updatebin(int idx, char *par, int secs)
   }
 
   size_t path_siz = strlen(binname) + strlen(par) + 2;
-  char *path = (char *) my_calloc(1, path_siz);
+  char *path = (char *) calloc(1, path_siz);
   char *newbin = NULL, buf[DIRMAX] = "";
   const char* argv[5];
   int i;
@@ -1165,7 +1192,7 @@ void showhelp(int idx, struct flag_record *flags, const char *string)
 {
   struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   size_t help_siz = strlen(string) + 1000 + 1;
-  char *helpstr = (char *) my_calloc(1, help_siz);
+  char *helpstr = (char *) calloc(1, help_siz);
   char tmp[2] = "", flagstr[10] = "";
   bool ok = 1;
 
@@ -1394,11 +1421,11 @@ char *step_thru_file(FILE *fd)
     if (fgets(tempBuf, sizeof(tempBuf), fd) && !feof(fd)) {
       if (retStr == NULL) {
         ret_siz = strlen(tempBuf) + 2;
-        retStr = (char *) my_calloc(1, ret_siz);
+        retStr = (char *) calloc(1, ret_siz);
         strlcpy(retStr, tempBuf, ret_siz);
       } else {
         ret_siz = strlen(retStr) + strlen(tempBuf);
-        retStr = (char *) my_realloc(retStr, ret_siz);
+        retStr = (char *) realloc(retStr, ret_siz);
         strlcat(retStr, tempBuf, ret_siz);
       }
       if (retStr[strlen(retStr)-1] == '\n') {

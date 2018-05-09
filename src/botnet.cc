@@ -29,6 +29,10 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "common.h"
 #include "botnet.h"
@@ -64,7 +68,7 @@ static int		share_unlinks = 1;		/* Allow remote unlinks of my
 
 void init_party()
 {
-  party = (party_t *) my_calloc(1, maxparty * sizeof(party_t));
+  party = (party_t *) calloc(1, maxparty * sizeof(party_t));
 }
 
 tand_t *findbot(const char *who)
@@ -79,7 +83,7 @@ extern void counter_clear(const char* botnick);
 
 /* Add a tandem bot to our chain list
  */
-void addbot(char *who, char *from, char *next, char flag, int vlocalhub, time_t vbuildts, char *vcommit, char *vversion)
+void addbot(char *who, char *from, char *next, char flag, int vlocalhub, time_t vbuildts, char *vcommit, char *vversion, int fflags)
 {
   tand_t **ptr = &tandbot, *ptr2 = NULL;
 
@@ -88,7 +92,7 @@ void addbot(char *who, char *from, char *next, char flag, int vlocalhub, time_t 
       putlog(LOG_BOTS, "*", "!!! Duplicate botnet bot entry!!");
     ptr = &((*ptr)->next);
   }
-  ptr2 = (tand_t *) my_calloc(1, sizeof(tand_t));
+  ptr2 = (tand_t *) calloc(1, sizeof(tand_t));
   strlcpy(ptr2->bot, who, HANDLEN + 1);
   ptr2->bot[HANDLEN] = 0;
   ptr2->share = flag;
@@ -105,6 +109,13 @@ void addbot(char *who, char *from, char *next, char flag, int vlocalhub, time_t 
   ptr2->hub = is_hub(who);
   /* Cache user record */
   ptr2->u = userlist ? get_user_by_handle(userlist, who) : NULL;
+  ptr2->fflags = fflags;
+  if (fflags != -1) {
+    char buf[15];
+
+    simple_snprintf(buf, sizeof(buf), "%d", ptr2->fflags);
+    set_user(&USERENTRY_FFLAGS, ptr2->u ? ptr2->u : get_user_by_handle(userlist, who), buf);
+  }
   if (!strcasecmp(next, conf.bot->nick))
     ptr2->uplink = (tand_t *) 1;
   else
@@ -128,7 +139,7 @@ void check_should_backup()
 }
 #endif /* G_BACKUP */
 
-void updatebot(int idx, char *who, char share, int vlocalhub, time_t vbuildts, char *vcommit, char *vversion)
+void updatebot(int idx, char *who, char share, int vlocalhub, time_t vbuildts, char *vcommit, char *vversion, int fflags)
 {
   tand_t *ptr = findbot(who);
 
@@ -143,6 +154,15 @@ void updatebot(int idx, char *who, char share, int vlocalhub, time_t vbuildts, c
       strlcpy(ptr->commit, vcommit, sizeof(ptr->commit));
     if (vversion && vversion[0])
       strlcpy(ptr->version, vversion, 121);
+    /* -1 = unknown (do not modify) */
+    if (fflags != -1) {
+      char buf[15];
+
+      ptr->fflags = fflags;
+      simple_snprintf(buf, sizeof(buf), "%d", ptr->fflags);
+      set_user(&USERENTRY_FFLAGS, ptr->u ? ptr->u : get_user_by_handle(userlist, who), buf);
+    }
+    /* Assign flags here */
     botnet_send_update(idx, ptr);
   }
 }
@@ -175,7 +195,7 @@ int addparty(char *bot, char *nick, int chan, char flag, int sock, char *from, i
   /* New member */
   if (parties == maxparty) {
     maxparty += 50;
-    party = (party_t *) my_realloc((void *) party, maxparty * sizeof(party_t));
+    party = (party_t *) realloc((void *) party, maxparty * sizeof(party_t));
   }
   strlcpy(party[parties].nick, nick, sizeof(party[parties].nick));
   strlcpy(party[parties].bot, bot, sizeof(party[parties].bot));
@@ -305,8 +325,11 @@ void rembot(const char *whoin)
 
   struct userrec *u = get_user_by_handle(userlist, (char *) who);
 
-  if (u)
+  if (u) {
+    noshare++;
     touch_laston(u, "unlinked", now);
+    noshare--;
+  }
 
   ptr2 = *ptr;
   *ptr = ptr2->next;
@@ -384,7 +407,7 @@ int nextbot(const char *who)
     return -1;
 
   for (int j = 0; j < dcc_total; j++) {
-    if (dcc[j].type && bot->via && !strcasecmp(bot->via->bot, dcc[j].nick) && (dcc[j].type == &DCC_BOT))
+    if (dcc[j].type && bot->via && (dcc[j].type == &DCC_BOT) && !strcasecmp(bot->via->bot, dcc[j].nick))
       return j;
   }
 
@@ -1230,7 +1253,7 @@ void tandem_relay(int idx, char *nick, int i)
 
   struct chat_info *ci = dcc[idx].u.chat;
 
-  dcc[idx].u.relay = (struct relay_info *) my_calloc(1, sizeof(struct relay_info));
+  dcc[idx].u.relay = (struct relay_info *) calloc(1, sizeof(struct relay_info));
   dcc[idx].u.relay->chat = ci;
   dcc[idx].u.relay->old_status = dcc[idx].status;
   dcc[idx].u.relay->idx = i;
@@ -1313,7 +1336,7 @@ static void tandem_relay_dns_callback(int id, void *client_data, const char *hos
 
   dcc[i].addr = inet_addr(ip_from_dns.c_str());
 
-  dcc[i].u.relay->chat = (struct chat_info *) my_calloc(1, sizeof(struct chat_info));
+  dcc[i].u.relay->chat = (struct chat_info *) calloc(1, sizeof(struct chat_info));
   dcc[i].u.relay->sock = dcc[idx].sock;
   dcc[i].u.relay->port = dcc[i].port;
 #ifdef USE_IPV6
@@ -1789,46 +1812,8 @@ void zapfbot(int idx)
   lostdcc(idx);
 }
 
-static int get_role(char *bot)
-{
-  struct userrec *u2 = NULL;
-
-  if (!(u2 = get_user_by_handle(userlist, bot)))
-    return 1;
-  if (bot_hublevel(u2) != 999)
-    return 0;
-
-  int rl, i;
-  struct bot_addr *ba = NULL;
-  int r[5] = { 0, 0, 0, 0, 0 };
-  struct userrec *u = NULL;
-
-  for (u = userlist; u; u = u->next) {
-    if (u->bot && bot_hublevel(u) == 999) {
-      if (strcmp(u->handle, bot)) {
-        ba = (struct bot_addr *) get_user(&USERENTRY_BOTADDR, u);
-        if ((nextbot(u->handle) >= 0) && (ba) && (ba->roleid > 0) && (ba->roleid < 5))
-          r[(ba->roleid - 1)]++;
-      }
-    }
-  }
-  rl = 0;
-  for (i = 1; i <= 4; i++)
-    if (r[i] < r[rl])
-      rl = i;
-  rl++;
-  ba = (struct bot_addr *) get_user(&USERENTRY_BOTADDR, u2);
-  if (ba)
-    ba->roleid = rl;
-  return rl;
-}
-
 void lower_bot_linked(int idx)
 {
-  char tmp[6] = "";
-
-  simple_snprintf(tmp, sizeof(tmp), "rl %d", get_role(dcc[idx].nick));
-  putbot(dcc[idx].nick, tmp);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */

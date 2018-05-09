@@ -95,7 +95,6 @@ char	git_version[50] = "";
 
 bool	used_B = 0;		/* did we get started with -B? */
 bool	safe_to_log = 0;
-int 	role;
 bool 	loading = 0;
 int	default_flags = 0;	/* Default user flags and */
 bool     have_linked_to_hub = 0;  /* Have we ever been linked to a hub? */
@@ -168,7 +167,7 @@ have_cwd:
   if (!realpath(bin, buf))
     fatal(STR("realpath() failed on getting current working directory."), 0);
   size_t len = strlen(buf);
-  bin = (char *) my_realloc(bin, len + 1);
+  bin = (char *) realloc(bin, len + 1);
   strlcpy(bin, buf, len + 1);
 
   return bin;
@@ -206,6 +205,8 @@ void fatal(const char *s, int recoverable)
 //    if (conf.bot && conf.bot->pid_file)
 //      unlink(conf.bot->pid_file);
     exit(1);
+  } else {
+    ContextNote(__func__, s);
   }
 }
 

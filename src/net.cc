@@ -145,9 +145,9 @@ void init_net()
   MAXSOCKS = max_dcc + 10;
 
   if (socklist)
-    socklist = (sock_list *) my_realloc((void *) socklist, sizeof(sock_list) * MAXSOCKS);
+    socklist = (sock_list *) realloc((void *) socklist, sizeof(sock_list) * MAXSOCKS);
   else
-    socklist = (sock_list *) my_calloc(1, sizeof(sock_list) * MAXSOCKS);
+    socklist = (sock_list *) calloc(1, sizeof(sock_list) * MAXSOCKS);
 
   for (int i = 0; i < MAXSOCKS; i++) {
     bzero(&socklist[i], sizeof(socklist[i]));
@@ -1354,17 +1354,6 @@ void tputs(int z, const char *s, size_t len)
     if (len && socklist[i].encstatus)
       s = link_write(i, s, &len);
 
-#ifdef HAVE_ZLIB_H
-    /*
-       if (socklist[i].gz) {
-       FILE *fp;
-       fp = gzdopen(z, "wb0");
-       x = gzwrite(fp, s, len);
-
-       } else
-       */
-#endif /* HAVE_ZLIB_H */
-
     if (socklist[i].outbuf != NULL) {
       /* Already queueing: just add it */
       *(socklist[i].outbuf) += bd::String(s, len);
@@ -1416,14 +1405,14 @@ void tputs(int z, const char *s, size_t len)
   static int inhere = 0;
 
   if (unlikely(!inhere)) {
+    char *tmp;
+
     inhere = 1;
 
+    tmp = strldup(s, len); /* To null-terminate */
     putlog(LOG_MISC, "*", "!!! writing to nonexistent socket: %d", z);
-    if (strlen(s)) {
-      char *tmp = strdup(s); /* To null-terminate */
-      putlog(LOG_MISC, "*", "!-> '%s'", tmp);
-      free(tmp);
-    }
+    putlog(LOG_MISC, "*", "!-> '%s'", tmp);
+    free(tmp);
 
     inhere = 0;
   }

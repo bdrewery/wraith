@@ -11,7 +11,7 @@
 BF_KEY bf_e_key, bf_d_key;
 
 static const char eggdrop_blowfish_base64[65] = "./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-static const char eggdrop_blowfish_base64_index[256] = {
+static const int eggdrop_blowfish_base64_index[256] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0,  1,
@@ -107,7 +107,7 @@ bd::String egg_bf_decrypt(bd::String in, const bd::String& key)
 
   BF_set_key(&bf_d_key, key.length(), (unsigned char *)key.data());
   bf_data data;
-  char val;
+  int val;
   size_t part;
   char *s = (char *)in.data();
   for (size_t i = 0; i < in.length(); i += 12) {
@@ -115,11 +115,11 @@ bd::String egg_bf_decrypt(bd::String in, const bd::String& key)
     data.lr.right = 0;
     for (part = 0; part < 6; part++) {
       if ((val = eggdrop_blowfish_base64_index[int(*s++)]) == -1) return out;
-      data.lr.right |= val << part * 6;
+      data.lr.right |= (char)val << part * 6;
     }
     for (part = 0; part < 6; part++) {
       if ((val = eggdrop_blowfish_base64_index[int(*s++)]) == -1) return out;
-      data.lr.left |= val << part * 6;
+      data.lr.left |= (char)val << part * 6;
     }
     BF_decrypt(&data.bf_long, &bf_d_key);
     for (part = 0; part < 4; part++) {
@@ -153,7 +153,7 @@ bf_encrypt_ecb_binary(const char *keydata, unsigned char *in, size_t *inlen)
   if (len % CRYPT_BLOCKSIZE)             /* more than 1 block? */
     len += (CRYPT_BLOCKSIZE - (len % CRYPT_BLOCKSIZE));
 
-  out = (unsigned char *) my_calloc(1, len + 1);
+  out = (unsigned char *) calloc(1, len + 1);
   memcpy(out, in, *inlen);
   *inlen = len;
 
@@ -179,7 +179,7 @@ bf_decrypt_ecb_binary(const char *keydata, unsigned char *in, size_t *len)
   unsigned char *out = NULL;
 
   *len -= *len % CRYPT_BLOCKSIZE;
-  out = (unsigned char *) my_calloc(1, *len + 1);
+  out = (unsigned char *) calloc(1, *len + 1);
   memcpy(out, in, *len);
 
   if (!keydata || !*keydata) {
@@ -209,7 +209,7 @@ bf_encrypt_cbc_binary(const char *keydata, unsigned char *in, size_t *inlen, uns
   if (len % CRYPT_BLOCKSIZE)             /* more than 1 block? */
     len += (CRYPT_BLOCKSIZE - (len % CRYPT_BLOCKSIZE));
 
-  out = (unsigned char *) my_calloc(1, len + 1);
+  out = (unsigned char *) calloc(1, len + 1);
   *inlen = len;
 
   if (!keydata || !*keydata) {
@@ -230,7 +230,7 @@ bf_decrypt_cbc_binary(const char *keydata, unsigned char *in, size_t *len, unsig
   unsigned char *out = NULL;
 
   *len -= *len % CRYPT_BLOCKSIZE;
-  out = (unsigned char *) my_calloc(1, *len + 1);
+  out = (unsigned char *) calloc(1, *len + 1);
 
   if (!keydata || !*keydata) {
     /* No key, no decryption */

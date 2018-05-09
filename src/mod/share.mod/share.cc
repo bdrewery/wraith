@@ -111,7 +111,7 @@ static void new_tbuf(char *bot)
 {
   tandbuf **old = &tbuf, *newbuf = NULL;
 
-  newbuf = (tandbuf *) my_calloc(1, sizeof(tandbuf));
+  newbuf = (tandbuf *) calloc(1, sizeof(tandbuf));
   strlcpy(newbuf->bot, bot, sizeof(newbuf->bot));
   newbuf->q = NULL;
   newbuf->timer = now;
@@ -165,11 +165,11 @@ static struct share_msgq *q_addmsg(struct share_msgq *qq, char *s)
   size_t siz = 0;
 
   if (!qq) {
-    q = (share_msgq *) my_calloc(1, sizeof *q);
+    q = (share_msgq *) calloc(1, sizeof *q);
 
     q->next = NULL;
     siz = strlen(s) + 1;
-    q->msg = (char *) my_calloc(1, siz);
+    q->msg = (char *) calloc(1, siz);
     strlcpy(q->msg, s, siz);
     return q;
   }
@@ -178,12 +178,12 @@ static struct share_msgq *q_addmsg(struct share_msgq *qq, char *s)
     cnt++;
   if (cnt > 1000)
     return NULL;                /* Return null: did not alter queue */
-  q->next = (share_msgq *) my_calloc(1, sizeof *q->next);
+  q->next = (share_msgq *) calloc(1, sizeof *q->next);
 
   q = q->next;
   q->next = NULL;
   siz = strlen(s) + 1;
-  q->msg = (char *) my_calloc(1, siz);
+  q->msg = (char *) calloc(1, siz);
   strlcpy(q->msg, s, siz);
   return qq;
 }
@@ -253,13 +253,13 @@ void dump_resync(int idx)
 static void
 add_delay(struct chanset_t *chan, int plsmns, int mode, char *mask)
 {
-  struct delay_mode *d = (struct delay_mode *) my_calloc(1, sizeof(struct delay_mode));
+  struct delay_mode *d = (struct delay_mode *) calloc(1, sizeof(struct delay_mode));
 
   d->chan = chan;
   d->plsmns = plsmns;
   d->mode = mode;
   size_t mlen = strlen(mask) + 1;
-  d->mask = (char *) my_calloc(1, mlen);
+  d->mask = (char *) calloc(1, mlen);
 
   strlcpy(d->mask, mask, mlen);
   d->seconds = (int) (now + randint(20));
@@ -657,7 +657,7 @@ share_change(int idx, char *par)
 
       if (uet->got_share) {
         if (!(e = find_user_entry(uet, u))) {
-          e = (struct user_entry *) my_calloc(1, sizeof(struct user_entry));
+          e = (struct user_entry *) calloc(1, sizeof(struct user_entry));
 
           e->type = uet;
           e->name = NULL;
@@ -929,7 +929,7 @@ share_ufyes(int idx, char *par)
         dcc[idx].u.bot->uff_flags |= UFF_CHDEFAULT;
 
     if (strstr(par, "stream")) {
-      updatebot(-1, dcc[idx].nick, '+', 0, 0, 0, NULL);
+      updatebot(-1, dcc[idx].nick, '+', 0, 0, 0, NULL, -1);
       /* Start up a tbuf to queue outgoing changes for this bot until the
        * userlist is done transferring.
        */
@@ -1233,7 +1233,33 @@ shareout_prot(struct userrec *u, const char *format, ...)
     if (dcc[i].type && (dcc[i].type->flags & DCT_BOT) && 
        (dcc[i].status & STAT_SHARE) && !(dcc[i].status & (STAT_GETTING | STAT_SENDING)) &&
        /* only send to hubs, the bot itself, or the localhub in the chain */
-       (dcc[i].hub || dcc[i].user == u || (localhub != -1 && i == localhub))) {
+       /* SA set_write_userfile */
+       (dcc[i].hub || dcc[i].user == u || (localhub == -1 || i == localhub))) {
+      tputs(dcc[i].sock, s, l + 2);
+    }
+  }
+  q_resync(s);
+}
+
+void
+shareout_hub(const char *format, ...)
+{
+  char s[601] = "";
+  int l;
+  va_list va;
+
+  va_start(va, format);
+
+  strlcpy(s, "s ", 3);
+  if ((l = egg_vsnprintf(s + 2, 509, format, va)) < 0)
+    s[2 + (l = 509)] = 0;
+  va_end(va);
+
+  for (int i = 0; i < dcc_total; i++) {
+    if (dcc[i].type && (dcc[i].type->flags & DCT_BOT) &&
+       (dcc[i].status & STAT_SHARE) && !(dcc[i].status & (STAT_GETTING | STAT_SENDING)) &&
+       /* only send to hubs */
+       dcc[i].hub) {
       tputs(dcc[i].sock, s, l + 2);
     }
   }
@@ -1307,7 +1333,7 @@ finish_share(int idx)
   int i, j = -1;
 
   for (i = 0; i < dcc_total; i++)
-    if (dcc[i].type && !strcasecmp(dcc[i].nick, dcc[idx].host) && (dcc[i].type->flags & DCT_BOT)) {
+    if (dcc[i].type && (dcc[i].type->flags & DCT_BOT) && !strcasecmp(dcc[i].nick, dcc[idx].host)) {
       j = i;
       break;
     }
@@ -1342,7 +1368,6 @@ finish_share(int idx)
 static void share_read_stream(int idx, bd::Stream& stream) {
   struct userrec *u = NULL, *ou = NULL;
   struct chanset_t *chan = NULL;
-  int i;
 
   /*
    * This is where we remove all global and channel bans/exempts/invites and
@@ -1373,23 +1398,7 @@ static void share_read_stream(int idx, bd::Stream& stream) {
   //userlist = (struct userrec *) -1;       /* Do this to prevent .user messups     */
   userlist = NULL;
 
-  /* Bot user pointers are updated to point to the new list, all others
-   * are set to NULL. If our userfile will be overriden, just set _all_
-   * to NULL directly.
-   */
-  for (i = 0; i < dcc_total; i++)
-    if (dcc[i].type)
-      dcc[i].user = NULL;
-
-  for (tand_t* bot = tandbot; bot; bot = bot->next)
-    bot->u = NULL;
-
-  if (!conf.bot->hub) {
-    Auth::NullUsers();
-  }
-
-  if (conf.bot->u)
-    conf.bot->u = NULL;
+  clear_cached_users();
 
   struct cmd_pass *old_cmdpass = cmdpass;
   cmdpass = NULL;
@@ -1406,22 +1415,11 @@ static void share_read_stream(int idx, bd::Stream& stream) {
 
     Context;
     clear_userlist(u);          /* Clear new, obsolete, user list.      */
-    clear_chanlist();           /* Remove all user references from the
-                                 * channel lists.                       */
-    for (i = 0; i < dcc_total; i++)
-      if (dcc[i].type)
-        dcc[i].user = get_user_by_handle(ou, dcc[i].nick);
-
-    for (tand_t* bot = tandbot; bot; bot = bot->next)
-      bot->u = get_user_by_handle(ou, bot->bot);
-
-    conf.bot->u = get_user_by_handle(ou, conf.bot->nick);
 
     userlist = ou;              /* Revert to old user list.             */
     lastuser = NULL;            /* Reset last accessed user ptr.        */
 
-    Auth::FillUsers();
-
+    cache_users();
     cmdpass = old_cmdpass;
 
     checkchans(2);              /* un-flag the channels, we are keeping them.. */
@@ -1442,8 +1440,7 @@ static void share_read_stream(int idx, bd::Stream& stream) {
   /* SUCCESS! */
 
   loading = 0;
-  clear_chanlist();             /* Remove all user references from the
-                                 * channel lists.                       */
+
   userlist = u;                 /* Set new user list.                   */
   lastuser = NULL;              /* Reset last accessed user ptr.        */
   putlog(LOG_BOTS, "*", "%s.", "Userlist transfer complete; switched over");
@@ -1461,17 +1458,10 @@ static void share_read_stream(int idx, bd::Stream& stream) {
   if (conf.bot->localhub)
     add_child_bots();
 
+  cache_users();
+
   /* Make sure no removed users/bots are still connected. */
   check_stale_dcc_users();
-
-  /* Refill tand list with cached user entries */
-  for (tand_t* bot = tandbot; bot; bot = bot->next)
-    bot->u = get_user_by_handle(userlist, bot->bot);
-
-  if (!conf.bot->hub) {  
-    /* copy over any auth users */
-    Auth::FillUsers();
-  }
 
   write_userfile(-1);
 
@@ -1480,7 +1470,7 @@ static void share_read_stream(int idx, bd::Stream& stream) {
   checkchans(1);                /* remove marked channels */
   var_parse_my_botset();
   reaffirm_owners();            /* Make sure my owners are +a   */
-  updatebot(-1, dcc[idx].nick, '+', 0, 0, 0, NULL);
+  updatebot(-1, dcc[idx].nick, '+', 0, 0, 0, NULL, -1);
   send_sysinfo();
 
   if (restarting && !keepnick) {
@@ -1590,7 +1580,7 @@ start_sending_users(int idx)
            i == DCCSEND_BADFN ? "BAD FILE" : i == DCCSEND_FEMPTY ? "EMPTY FILE" : "UNKNOWN REASON!");
     dcc[idx].status &= ~(STAT_SHARE | STAT_SENDING | STAT_AGGRESSIVE);
   } else {
-    updatebot(-1, dcc[idx].nick, '+', 0, 0, 0, NULL);
+    updatebot(-1, dcc[idx].nick, '+', 0, 0, 0, NULL, -1);
     dcc[idx].status |= STAT_SENDING;
     strlcpy(dcc[j].host, dcc[idx].nick, sizeof(dcc[j].host)); /* Store bot's nick */
     dprintf(idx, "s us %lu %d %lu\n", iptolong(getmyip()), dcc[j].port, dcc[j].u.xfer->length);
@@ -1615,7 +1605,7 @@ cancel_user_xfer(int idx, void *x)
   int i, j = -1;
   if (cancel_user_xfer_staylinked) {
     /* turn off sharing flag */
-    updatebot(-1, dcc[idx].nick, '-', 0, 0, 0, NULL);
+    updatebot(-1, dcc[idx].nick, '-', 0, 0, 0, NULL, -1);
   }
   flush_tbuf(dcc[idx].nick);
 

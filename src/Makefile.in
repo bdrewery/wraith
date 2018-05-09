@@ -11,7 +11,7 @@ VPATH = @srcdir@
 CXXFLAGS = $(CXXFLAGS)
 CFLAGS = $(CFLGS)
 CPPFLAGS = @CPPFLAGS@ -I. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_srcdir)/pack @DEFS@ $(INCLUDES) '-DCOMMIT="$(COMMIT)"' '-DBRANCH="$(BRANCH)"' -DBUILDTS=$(BUILDTS) '-DVERSION="$(VERSION)"'
-LDFLAGS = @LDFLAGS@
+LDFLAGS = @LDFLAGS@ $(DEBLDFLAGS)
 SETTINGSFILE = $(top_srcdir)/doc/settings.txt
 RESPONSESFILE = $(top_srcdir)/doc/responses.txt
 HELPFILE = $(top_srcdir)/doc/help.txt
@@ -76,14 +76,10 @@ OBJS = auth.So \
 	mod/update.mod/update.So \
 	compat/dirname.o \
 	compat/dn_expand.o \
-	compat/inet_ntop.o \
 	compat/snprintf.o \
-	compat/memcpy.o \
 	compat/memmem.o \
-	compat/memset.o \
 	compat/memutil.o \
-	compat/strcasecmp.o \
-	compat/strftime.o \
+	compat/openssl.o \
 	compat/strlcpy.o \
 	compat/strsep.o \
 	crypto/aes_util.o \
@@ -115,7 +111,7 @@ help.h: $(HELPFILE) $(top_srcdir)/build/makehelp.sh $(STRINGFIX)
 	@echo -e "{GEN}	\033[1m$<\033[0m -> \033[1m$@\033[0m"
 	$(top_srcdir)/build/makehelp.sh < $(HELPFILE) | $(STRINGFIX) help > $@
 
-sorthelp: sorthelp.cc $(top_builddir)/lib/bdlib/src/libbdlib.a
+sorthelp: sorthelp.cc $(top_builddir)/lib/bdlib/libbdlib.a
 	@echo -e "[CXX]	\033[1m$<\033[0m"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(top_builddir)/lib/bdlib/libbdlib.a $(LDFLAGS) -o $@
 	@$(STRIP) $@@EXEEXT@

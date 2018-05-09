@@ -95,7 +95,7 @@ static void resolv_member_callback(int id, void *client_data, const char *host, 
 
 void resolve_to_member(struct chanset_t *chan, char *nick, char *host)
 {
-  resolv_member *r = (resolv_member *) my_calloc(1, sizeof(resolv_member));
+  resolv_member *r = (resolv_member *) calloc(1, sizeof(resolv_member));
 
   r->chan = strdup(chan->dname);
   r->host = strdup(host);
@@ -130,21 +130,29 @@ static void resolve_rbl_callback(int id, void *client_data, const char *host, bd
 
   bd::String reason = "Listed in RBL: " + *(r->server);
 
-  u_addmask('b', chan, s1, conf.bot->nick, reason.c_str(), now + (60 * (chan->ban_time ? chan->ban_time : 300)), 0);
+  if (!(use_exempts && (u_match_mask(global_exempts, s1) || u_match_mask(chan->exempts, s1)))) {
 
-  if (me_op(chan)) {
-    do_mask(chan, chan->channel.ban, s1, 'b');
+    u_addmask('b', chan, s1, conf.bot->nick, reason.c_str(), now + (60 * (chan->ban_time ? chan->ban_time : 300)), 0);
 
-    memberlist *m = NULL;
-    char *pe = NULL;
+    if (me_op(chan)) {
+      do_mask(chan, chan->channel.ban, s1, 'b');
 
-    /* Apply lookup results to all matching members by host */
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
-      if (!m->user && !chan_sentkick(m) && m->userip[0]) {
-        pe = strchr(m->userip, '@');
-        if (pe && !strcmp(pe + 1, r->host)) {
-          m->flags |= SENTKICK;
-          dprintf(DP_MODE, "KICK %s %s :%s%s\n", chan->name, m->nick, bankickprefix, reason.c_str());
+      memberlist *m = NULL;
+      char *pe = NULL;
+
+      /* Apply lookup results to all matching members by host */
+      for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+        if (!m->user && !chan_sentkick(m) && m->userip[0]) {
+          pe = strchr(m->userip, '@');
+          if (pe && !strcmp(pe + 1, r->host)) {
+            simple_snprintf(s1, sizeof(s1), "%s!%s", m->nick, m->userhost);
+            // Don't kick if exempted
+            if (!(use_exempts && (u_match_mask(global_exempts, s1) || u_match_mask(chan->exempts, s1)) &&
+                                  isexempted(chan, s1))) {
+              m->flags |= SENTKICK;
+              dprintf(DP_MODE, "KICK %s %s :%s%s\n", chan->name, m->nick, bankickprefix, reason.c_str());
+            }
+          }
         }
       }
     }
@@ -167,7 +175,7 @@ void resolve_to_rbl(struct chanset_t *chan, const char *host, resolv_member *r)
   if (p)
     host = p + 1;
   if (!r) {
-    r = (resolv_member *) my_calloc(1, sizeof(resolv_member));
+    r = (resolv_member *) calloc(1, sizeof(resolv_member));
 
     r->chan = strdup(chan->dname);
     r->host = strdup(host);
@@ -197,7 +205,7 @@ void resolve_to_rbl(struct chanset_t *chan, const char *host, resolv_member *r)
   } else
     iplen += strlen(host) + 1;
 
-  char *ip = (char *) my_calloc(1, iplen);
+  char *ip = (char *) calloc(1, iplen);
   if (v6)
     socket_ipv6_to_dots(host, ip);
   else {
@@ -248,7 +256,7 @@ static memberlist *newmember(struct chanset_t *chan, char *nick)
 {
   memberlist *x = chan->channel.member, 
              *lx = NULL, 
-             *n = (memberlist *) my_calloc(1, sizeof(memberlist));
+             *n = (memberlist *) calloc(1, sizeof(memberlist));
 
   /* This sorts the list */
   while (x && x->nick[0] && (rfc_casecmp(x->nick, nick) < 0)) {
@@ -447,7 +455,7 @@ static void priority_do(struct chanset_t * chan, bool opsonly, int action, bool 
             if ((action == PRIO_DEOP) && !chan_sentdeop(m)) {
               ++actions;
               ++sent;
-              add_mode(chan, '-', 'o', m->nick);
+              add_mode(chan, '-', 'o', m);
               if (!floodless && (actions >= ct || (n == 1 && sent > 20))) {
                 if (flush)
                   flush_mode(chan, QUICK);
@@ -554,7 +562,8 @@ static bool detect_chan_flood(memberlist* m, const char *from, struct chanset_t 
   /* Do not punish non-existant channel members and IRC services like
    * ChanServ
    */
-  if (!chan || (which < 0) || (which >= FLOOD_CHAN_MAX) || !m)
+  if (!chan || (which < 0) || (which >= FLOOD_CHAN_MAX) || !m ||
+      !(chan->role & ROLE_FLOOD))
     return 0;
 
   /* Okay, make sure i'm not flood-checking myself */
@@ -892,12 +901,12 @@ static void refresh_ban_kick(struct chanset_t* chan, memberlist *m, const char *
   for (int cycle = 0; cycle < 2; cycle++) {
     for (maskrec* b = cycle ? chan->bans : global_bans; b; b = b->next) {
       if (wild_match(b->mask, user) || match_cidr(b->mask, user)) {
-        if (role == 1 && chan_hasop(m))
-  	  add_mode(chan, '-', 'o', m->nick);	/* Guess it can't hurt.	*/
+        if ((chan->role & ROLE_DEOP) && chan_hasop(m))
+          add_mode(chan, '-', 'o', m);	/* Guess it can't hurt.	*/
 	check_exemptlist(chan, user);
 	do_mask(chan, chan->channel.ban, b->mask, 'b');
 	b->lastactive = now;
-        if (role == 2) {
+        if (chan->role & ROLE_KICK) {
           char c[512] = "";		/* The ban comment.	*/
 
           if (b->desc && b->desc[0] != '@')
@@ -1038,7 +1047,7 @@ static void recheck_invites(struct chanset_t *chan)
        * only) or invite is sticky.
        */
       if (!isinvited(chan, ir->mask) && ((!channel_dynamicinvites(chan) &&
-          !(chan->channel.mode & CHANINV)) || ir->flags & MASKREC_STICKY))
+          (chan->channel.mode & CHANINV)) || ir->flags & MASKREC_STICKY))
 	add_mode(chan, '+', 'I', ir->mask);
 	/* do_mask(chan, chan->channel.invite, ir->mask, 'I');*/
     }
@@ -1206,13 +1215,10 @@ void recheck_channel_modes(struct chanset_t *chan)
   }
 }
 
-static void check_this_member(struct chanset_t *chan, char *nick, struct flag_record *fr)
+static void check_this_member(struct chanset_t *chan, memberlist *m,
+    struct flag_record *fr)
 {
-  if (match_my_nick(nick) || !me_op(chan))
-    return;
-
-  memberlist *m = ismember(chan, nick);
-  if (!m)
+  if (!m || m->is_me || !me_op(chan))
     return;
 
   /* +d or bitch and not an op
@@ -1221,19 +1227,19 @@ static void check_this_member(struct chanset_t *chan, char *nick, struct flag_re
       (chk_deop(*fr, chan) ||
        (!loading && userlist && chan_bitch(chan) && !chk_op(*fr, chan)) ) ) {
     /* if (target_priority(chan, m, 1)) */
-      add_mode(chan, '-', 'o', m->nick);
-  } else if (!chan_hasop(m) && dovoice(chan) && m->user && !u_pass_match(m->user, "-") && chk_autoop(*fr, chan)) {
-    do_op(m->nick, chan, 1, 0);
+      add_mode(chan, '-', 'o', m);
+  } else if (!chan_hasop(m) && (chan->role & ROLE_OP) && chk_autoop(m, *fr, chan)) {
+    do_op(m, chan, 1, 0);
   }
   if (dovoice(chan)) {
     if (chan_hasvoice(m) && !chan_hasop(m)) {
       /* devoice +q users .. */
       if (chk_devoice(*fr) || (channel_voicebitch(chan) && !chk_voice(*fr, chan)))
-        add_mode(chan, '-', 'v', m->nick);
+        add_mode(chan, '-', 'v', m);
     } else if (!chan_hasvoice(m) && !chan_hasop(m)) {
       /* voice +v users */
       if (chk_voice(*fr, chan)) {
-        add_mode(chan, '+', 'v', m->nick);
+        add_mode(chan, '+', 'v', m);
         if (m->flags & EVOICE)
           m->flags &= ~EVOICE;
       }
@@ -1286,12 +1292,26 @@ void check_this_user(char *hand, int del, char *host)
     for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
       bool check_member = 0;
       bool had_user = m->user ? 1 : 0;
+      struct userrec* u;
+      bool matches_hand = false;
+
       m->tried_getuser = 0;
       member_getuser(m);
-      struct userrec* u = m->user;
+      u = m->user;
+      if (u) {
+        matches_hand = (strcasecmp(u->handle, hand) == 0);
+      }
+
+      if (u && u->bot && matches_hand) {
+        /* Newly discovered bot, or deleted bot which fullfilled a role,
+         * need to rebalance. */
+        if (!del || (del && (*chan->bot_roles)[u->handle] != 0)) {
+          chan->needs_role_rebalance = 1;
+        }
+      }
       if (m->user && !had_user) // If a member is newly recognized, act on it
         check_member = 1;
-      else if (del != 2 && m->user && !strcasecmp(m->user->handle, hand)) { //general check / -user, match specified user
+      else if (del != 2 && m->user && matches_hand) { //general check / -user, match specified user
         check_member = 1;
         if (del == 1)
           u = NULL; // Pretend user doesn't exist when checking
@@ -1315,7 +1335,7 @@ void check_this_user(char *hand, int del, char *host)
       }
       if (check_member) {
         get_user_flagrec(u, &fr, chan->dname, chan);
-        check_this_member(chan, m->nick, &fr);
+        check_this_member(chan, m, &fr);
       }
     }
   }
@@ -1347,8 +1367,8 @@ inline static char *
 take_massopline(char *op, char **to_op)
 {
   const size_t modes_len = 31, nicks_len = 151;
-  char *nicks = (char *) my_calloc(1, nicks_len),
-       *modes = (char *) my_calloc(1, modes_len),
+  char *nicks = (char *) calloc(1, nicks_len),
+       *modes = (char *) calloc(1, modes_len),
        *nick = NULL;
   bool useop = 0;
   static char ret[182] = "";
@@ -1481,7 +1501,6 @@ do_take(struct chanset_t *chan)
     work[work_len] = 0;
 
     // Prevent excess flood
-    if (!HAVE_F1) usleep(1000 * 500);
     if (++lines >= max_lines) {
       tputs(serv, work, work_len);
       work[0] = 0;
@@ -1567,7 +1586,7 @@ void recheck_channel(struct chanset_t *chan, int dobans)
       //Already a bot opped, dont bother resetting masks
       if (glob_bot(fr) && chan_hasop(m) && !m->is_me)
         stop_reset = 1;
-      check_this_member(chan, m->nick, &fr);
+      check_this_member(chan, m, &fr);
     }
 
     //Only reset masks if the bot has already received the ban list before (meaning it has already been opped once)
@@ -1773,7 +1792,7 @@ static int got710(char *from, char *msg)
 
   chan = findchan(chname);
 
-  if (!chan->knock_flags || !dovoice(chan))
+  if (!chan->knock_flags || !(chan->role & ROLE_INVITE))
     return 0;
 
   struct userrec *u = get_user_by_host(uhost);
@@ -2127,7 +2146,9 @@ static int got315(char *from, char *msg)
     force_join_chan(chan);
   } else {
     me->is_me = 1;
-    me->joined = now;				/* set this to keep the whining masses happy */
+    if (!me->joined)
+      me->joined = now;				/* set this to keep the whining masses happy */
+    rebalance_roles_chan(chan);
     if (me_op(chan))
       recheck_channel(chan, 2);
     else if (chan->channel.members == 1)
@@ -2574,7 +2595,7 @@ static void set_topic(struct chanset_t *chan, char *k)
     free(chan->channel.topic);
   if (k && k[0]) {
     size_t tlen = strlen(k) + 1;
-    chan->channel.topic = (char *) my_calloc(1, tlen);
+    chan->channel.topic = (char *) calloc(1, tlen);
     strlcpy(chan->channel.topic, k, tlen);
   } else
     chan->channel.topic = NULL;
@@ -2652,7 +2673,7 @@ static int gotjoin(char *from, char *chname)
     size_t l_chname = strlen(chname);
 
     if (l_chname > (CHANNEL_ID_LEN + 1)) {
-      char* ch_dname = (char *) my_calloc(1, l_chname + 1);
+      char* ch_dname = (char *) calloc(1, l_chname + 1);
       simple_snprintf(ch_dname, l_chname + 2, "!%s", chname + (CHANNEL_ID_LEN + 1));
       chan = findchan_by_dname(ch_dname);
       if (!chan) {
@@ -2719,14 +2740,16 @@ static int gotjoin(char *from, char *chname)
 	m->last = now;
 	m->delay = 0L;
 	m->flags = (chan_hasop(m) ? WASOP : 0);
+        /* New bot available for roles, rebalance. */
+        if (is_bot(m->user)) {
+          chan->needs_role_rebalance = 1;
+        }
 	set_handle_laston(chan->dname, m->user, now);
 //	m->flags |= STOPWHO;
         irc_log(chan, "%s returned from netsplit", m->nick);
 
-
-        if (m && !m->user) {
-          m->user = get_user_by_host(from);
-          m->tried_getuser = 1;
+        if (!m->user) {
+          member_getuser(m);
  
           if (!m->user && !m->userip[0] && doresolv(chan)) {
             if (is_dotted_ip(host)) {
@@ -2750,8 +2773,7 @@ static int gotjoin(char *from, char *chname)
           strlcpy(m->userip, uhost, sizeof(m->userip));
           simple_snprintf(m->fromip, sizeof(m->fromip), "%s!%s", m->nick, m->userip);
         }
-        m->user = get_user_by_host(from);
-        m->tried_getuser = 1;
+        member_getuser(m);
 
         if (!m->userip[0] && doresolv(chan))
           resolve_to_member(chan, nick, host);
@@ -2781,6 +2803,10 @@ static int gotjoin(char *from, char *chname)
 	} else {
           irc_log(chan, "Join: %s (%s)", nick, uhost);
           detect_chan_flood(m, from, chan, FLOOD_JOIN);
+          /* New bot available for roles, rebalance. */
+          if (is_bot(m->user)) {
+            chan->needs_role_rebalance = 1;
+          }
 	  set_handle_laston(chan->dname, m->user, now);
 	}
       }
@@ -2794,7 +2820,8 @@ static int gotjoin(char *from, char *chname)
         bool is_op = chk_op(fr, chan);
 
         /* Check for a mass join */
-        if (!splitjoin && chan->flood_mjoin_time && chan->flood_mjoin_thr && !is_op) {
+        if (chan->role & ROLE_FLOOD &&
+            !splitjoin && chan->flood_mjoin_time && chan->flood_mjoin_thr && !is_op) {
           if (chan->channel.drone_jointime < now - chan->flood_mjoin_time) {      //expired, reset counter
             chan->channel.drone_joins = 0;
           }
@@ -2816,7 +2843,8 @@ static int gotjoin(char *from, char *chname)
 	    u_match_mask(chan->invites, from))
 	  refresh_invite(chan, from);
 
-	if (!(use_exempts && (u_match_mask(global_exempts,from) || u_match_mask(chan->exempts, from)))) {
+	if (chan->role & ROLE_BAN &&
+            !(use_exempts && (u_match_mask(global_exempts,from) || u_match_mask(chan->exempts, from)))) {
           if (channel_enforcebans(chan) && !chan_sentkick(m) && !is_op &&
               !(use_exempts && (isexempted(chan, from) || (chan->ircnet_status & CHAN_ASKED_EXEMPTS)))) {
             for (masklist* b = chan->channel.ban; b->mask[0]; b = b->next) {
@@ -2862,17 +2890,15 @@ static int gotjoin(char *from, char *chname)
         }
 #endif /* CACHE */
         if (!splitjoin) {
-          bool common_checks = dovoice(chan) && !glob_bot(fr);
-
           /* Autoop */
           if (!chan_hasop(m) && 
                (op || 
-               (common_checks && !u_pass_match(m->user, "-") && chk_autoop(fr, chan)))) {
-            do_op(m->nick, chan, 1, 0);
+               ((chan->role & ROLE_OP) && chk_autoop(m, fr, chan)))) {
+            do_op(m, chan, 1, 0);
           }
 
           /* +v or +voice */
-          if (!chan_hasvoice(m) && common_checks) {
+          if (!chan_hasvoice(m) && !glob_bot(fr) && dovoice(chan)) {
             if (m->user) {
               if (!(m->flags & EVOICE) &&
                   (
@@ -2929,6 +2955,10 @@ static int gotpart(char *from, char *msg)
       chan->ircnet_status |= CHAN_ACTIVE;
       chan->ircnet_status &= ~(CHAN_PEND | CHAN_JOINING);
       reset_chan_info(chan);
+    }
+    /* This bot fullfilled a role, need to rebalance. */
+    if (u && u->bot && (*chan->bot_roles)[u->handle] != 0) {
+      chan->needs_role_rebalance = 1;
     }
     set_handle_laston(chan->dname, u, now);
 
@@ -3005,7 +3035,7 @@ static int gotkick(char *from, char *origmsg)
     if (mv->user) {
       // Revenge kick clients that kick our bots
       if (chan->revenge && !mv->is_me && m && m != mv && mv->user->bot && !(m->user && m->user->bot)) {
-        if (role < 5 && !chan_sentkick(m) && me_op(chan)) {
+        if ((chan->role & ROLE_REVENGE) && !chan_sentkick(m) && me_op(chan)) {
           m->flags |= SENTKICK;
           dprintf(DP_MODE_NEXT, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_REVENGE));
         } else {
@@ -3018,6 +3048,10 @@ static int gotkick(char *from, char *origmsg)
       }
 
       set_handle_laston(chan->dname, mv->user, now);
+      /* This bot fullfilled a role, need to rebalance. */
+      if (mv->user->bot && (*chan->bot_roles)[mv->user->handle] != 0) {
+        chan->needs_role_rebalance = 1;
+      }
     }
     irc_log(chan, "%s was kicked by %s (%s)", s1, from, msg);
     /* Kicked ME?!? the sods! */
@@ -3080,22 +3114,13 @@ static int gotnick(char *from, char *msg)
 
       detect_chan_flood(m, from, chan, FLOOD_NICK);
 
-      /* don't fill the serverqueue with modes or kicks in a nickflood */
-      if (chan_sentkick(m) || chan_sentdeop(m) || chan_sentop(m) ||
-	  chan_sentdevoice(m) || chan_sentvoice(m))
-	m->flags |= STOPCHECK;
       /* Any pending kick or mode to the old nick is lost. */
-	m->flags &= ~(SENTKICK | SENTDEOP | SENTOP |
-		      SENTVOICE | SENTDEVOICE);
-
-
-      /* make sure they stay devoiced if EVOICE! */
+      m->flags &= ~(SENTKICK | SENTDEOP | SENTOP |
+          SENTVOICE | SENTDEVOICE);
 
       /* nick-ban or nick is +k or something? */
-      if (!chan_stopcheck(m)) {
-	get_user_flagrec(m->user, &fr, chan->dname, chan);
-	check_this_member(chan, m->nick, &fr);
-      }
+      get_user_flagrec(m->user, &fr, chan->dname, chan);
+      check_this_member(chan, m, &fr);
     }
   }
   return 0;
@@ -3192,8 +3217,13 @@ static int gotquit(char *from, char *msg)
       member_getuser(m);
       u = m->user;
       if (u) {
-        if (u->bot)
+        if (u->bot) {
           counter_clear(u->handle);
+          /* This bot fullfilled a role, need to rebalance. */
+          if ((*chan->bot_roles)[u->handle] != 0) {
+            chan->needs_role_rebalance = 1;
+          }
+        }
         set_handle_laston(chan->dname, u, now); /* If you remove this, the bot will crash when the user record in question
 						   is removed/modified during the tcl binds below, and the users was on more
 						   than one monitored channel */

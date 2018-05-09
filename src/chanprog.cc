@@ -166,24 +166,6 @@ struct userrec *check_chanlist_hand(const char *hand)
   return NULL;
 }
 
-/* Clear the user pointers in the chanlists.
- *
- * Necessary when a hostmask is added/removed, a user is added or a new
- * userfile is loaded.
- */
-void clear_chanlist(void)
-{
-  memberlist		*m = NULL;
-  struct chanset_t	*chan = NULL;
-
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
-      m->user = NULL;
-      m->tried_getuser = 0;
-    }
-
-}
-
 /* Clear the user pointer of a specific nick in the chanlists.
  *
  * Necessary when a hostmask is added/removed, a nick changes, etc.
@@ -194,13 +176,19 @@ void clear_chanlist_member(const char *nick)
   memberlist		*m = NULL;
   struct chanset_t	*chan = NULL;
 
-  for (chan = chanset; chan; chan = chan->next)
-    for (m = chan->channel.member; m && m->nick[0]; m = m->next)
-      if (!rfc_casecmp(m->nick, nick)) {
+  for (chan = chanset; chan; chan = chan->next) {
+    for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+      if (nick == NULL || !rfc_casecmp(m->nick, nick)) {
 	m->user = NULL;
         m->tried_getuser = 0;
-	break;
+        if (nick != NULL) {
+          break;
+        }
       }
+    }
+  }
+
+  Auth::NullUsers(nick);
 }
 
 /* If this user@host is in a channel, set it (it was null)
@@ -256,9 +244,7 @@ void tell_verbose_uptime(int idx)
 #if HAVE_GETRUSAGE
   struct rusage ru;
 #else
-# if HAVE_CLOCK
   clock_t cl;
-# endif
 #endif /* HAVE_GETRUSAGE */
 
   daysdur(now, online_since, s, sizeof(s), false);
@@ -285,14 +271,10 @@ void tell_verbose_uptime(int idx)
   min = (int) (total - (hr * 60));
   egg_snprintf(s2, sizeof(s2), "CPU %02d:%02d (load avg %3.1f%%)", (int) hr, (int) min, 100.0 * ((float) total / (float) (now - online_since)));
 #else
-# if HAVE_CLOCK
   cl = (clock() / CLOCKS_PER_SEC);
   hr = (int) (cl / 60);
   min = (int) (cl - (hr * 60));
   egg_snprintf(s2, sizeof(s2), "CPU %02d:%02d (load avg %3.1f%%)", (int) hr, (int) min,  100.0 * ((float) cl / (float) (now - online_since)));
-# else
-  simple_snprintf(s2, sizeof(s2), "CPU ???");
-# endif
 #endif /* HAVE_GETRUSAGE */
   dprintf(idx, "%s  (%s)  %s  cache hit %4.1f%%\n",
           outbuf, s1, s2,
@@ -416,7 +398,7 @@ void load_internal_users()
     simple_snprintf(tmp, sizeof(tmp), "%li [internal]", (long)now);
     set_user(&USERENTRY_ADDED, u, tmp);
 
-    struct bot_addr *bi = (struct bot_addr *) my_calloc(1, sizeof(struct bot_addr));
+    struct bot_addr *bi = (struct bot_addr *) calloc(1, sizeof(struct bot_addr));
 
     bi->address = strdup(address.c_str());
     bi->telnet_port = bi->relay_port = port;
@@ -424,7 +406,7 @@ void load_internal_users()
     if (conf.bot->hub && (!bi->hublevel) && (!strcasecmp(handle.c_str(), conf.bot->nick))) {
       bi->hublevel = 99;
     }
-    bi->uplink = (char *) my_calloc(1, 1);
+    bi->uplink = (char *) calloc(1, 1);
     set_user(&USERENTRY_BOTADDR, u, bi);
     /* set_user(&USERENTRY_PASS, get_user_by_handle(userlist, handle.c_str()), SALT2); */
   }
@@ -504,9 +486,9 @@ static struct userrec* add_bot_userlist(char* bot) {
     userlist = adduser(userlist, bot, "none", "-", USER_OP, 1);
     u = get_user_by_handle(userlist, bot);
 
-    struct bot_addr *bi = (struct bot_addr *) my_calloc(1, sizeof(struct bot_addr));
-    bi->uplink = (char *) my_calloc(1, 1);
-    bi->address = (char *) my_calloc(1, 1);
+    struct bot_addr *bi = (struct bot_addr *) calloc(1, sizeof(struct bot_addr));
+    bi->uplink = (char *) calloc(1, 1);
+    bi->address = (char *) calloc(1, 1);
     bi->telnet_port = 3333;
     bi->relay_port = 3333;
     bi->hublevel = 999;
@@ -516,7 +498,12 @@ static struct userrec* add_bot_userlist(char* bot) {
 }
 
 void add_myself_to_userlist() {
+  char buf[15];
+
   conf.bot->u = add_bot_userlist(conf.bot->nick);
+
+  simple_snprintf(buf, sizeof(buf), "%d", ALL_FEATURE_FLAGS);
+  set_user(&USERENTRY_FFLAGS, conf.bot->u, buf);
 }
 
 void add_child_bots() {
@@ -597,7 +584,6 @@ void chanprog()
 {
   struct utsname un;
 
-
   sdprintf("I am: %s", conf.bot->nick);
 
   /* Add the 'default' virtual channel.
@@ -674,15 +660,13 @@ void reload()
   else if (!conf.bot->hub)
     add_localhub();
 
+  cache_users();
+
   /* Make sure no removed users/bots are still connected. */
   check_stale_dcc_users();
 
-  for (tand_t* bot = tandbot; bot; bot = bot->next)
-    bot->u = get_user_by_handle(userlist, bot->bot);
-
   /* I don't think these will ever be called anyway. */
   if (!conf.bot->hub) {
-    Auth::FillUsers();
     check_hostmask();
   }
 
@@ -796,7 +780,7 @@ int do_chanset(char *result, struct chanset_t *chan, const char *options, int fl
     else
       bufsiz = strlen(options) + 1 + 5 + 1 + 1;
     
-    char *buf = (char*) my_calloc(1, bufsiz);
+    char *buf = (char*) calloc(1, bufsiz);
 
     strlcat(buf, "cset ", bufsiz);
     if (chan)
@@ -865,7 +849,7 @@ samechans(const char *nick, const char *delim)
   return ret;
 }
 
-struct chanset_t* find_common_opped_chan(bd::String nick) {
+static struct chanset_t* find_common_opped_chan(bd::String nick) {
   for (struct chanset_t* chan = chanset; chan; chan = chan->next) {
     if (channel_active(chan) && (me_op(chan) || me_voice(chan))) {
       if (ismember(chan, nick.c_str()))
@@ -927,14 +911,15 @@ void notice(bd::String target, bd::String msg, int idx) {
 }
 
 
-void keyx(const bd::String &target) {
+void keyx(const bd::String &target, const char *reason) {
   bd::String myPublicKeyB64, myPrivateKey, sharedKey;
 
   DH1080_gen(myPrivateKey, myPublicKeyB64);
 
   fish_data_t* fishData = FishKeys.contains(target) ? FishKeys[target] : new fish_data_t;
   fishData->sharedKey.clear();
-  putlog(LOG_MSGS, "*", "[FiSH] Initiating DH1080 key-exchange with %s - sending my public key", target.c_str());
+  putlog(LOG_MSGS, "*", "[FiSH] Initiating DH1080 key-exchange with %s - "
+      "sending my public key (%s)", target.c_str(), reason);
   notice(target, "DH1080_INIT " + myPublicKeyB64, DP_HELP);
   fishData->myPublicKeyB64 = myPublicKeyB64;
   fishData->myPrivateKey = myPrivateKey;
@@ -957,7 +942,7 @@ void set_fish_key(char *target, bd::String key)
     if (key == "rand") {
       // Set a RANDOM key
       const size_t randomKeyLength = 32;
-      char *rand_key = (char*)my_calloc(1, randomKeyLength+1);
+      char *rand_key = (char*)calloc(1, randomKeyLength+1);
       make_rand_str(rand_key, randomKeyLength);
       fishData->sharedKey = rand_key;
       free(rand_key);

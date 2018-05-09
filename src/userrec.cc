@@ -53,7 +53,7 @@
 #include <bdlib/src/AtomicFile.h>
 #include <bdlib/src/String.h>
 
-bool             noshare = 1;		/* don't send out to sharebots	    */
+int             noshare = 1;		/* don't send out to sharebots	    */
 struct userrec	*userlist = NULL;	/* user records are stored here	    */
 struct userrec	*lastuser = NULL;	/* last accessed user record	    */
 maskrec		*global_bans = NULL,
@@ -172,6 +172,53 @@ void clear_masks(maskrec *m)
 
 static void freeuser(struct userrec *);
 
+void clear_cached_users()
+{
+  for (int i = 0; i < dcc_total; i++) {
+    if (dcc[i].type) {
+      dcc[i].user = NULL;
+    }
+  }
+
+  conf.bot->u = NULL;
+
+  for (conf_bot *bot = conf.bots; bot; bot = bot->next) {
+    bot->u = NULL;
+  }
+
+  for (tand_t* bot = tandbot; bot; bot = bot->next) {
+    bot->u = NULL;
+  }
+
+  if (!conf.bot->hub) {
+    clear_chanlist();           /* Remove all user references from the
+                                 * channel lists.                       */
+  }
+}
+
+void cache_users()
+{
+  for (int i = 0; i < dcc_total; i++) {
+    if (dcc[i].type) {
+      dcc[i].user = get_user_by_handle(userlist, dcc[i].nick);
+    }
+  }
+
+  conf.bot->u = get_user_by_handle(userlist, conf.bot->nick);
+
+  for (conf_bot *bot = conf.bots; bot; bot = bot->next) {
+    bot->u = get_user_by_handle(userlist, bot->nick);
+  }
+
+  for (tand_t* bot = tandbot; bot; bot = bot->next) {
+    bot->u = get_user_by_handle(userlist, bot->bot);
+  }
+
+  if (!conf.bot->hub) {
+    Auth::FillUsers();
+  }
+}
+
 void clear_userlist(struct userrec *bu)
 {
   struct userrec *v = NULL;
@@ -183,13 +230,7 @@ void clear_userlist(struct userrec *bu)
   if (userlist == bu) {
     struct chanset_t *cst = NULL;
 
-    for (int i = 0; i < dcc_total; i++)
-      if (dcc[i].type)
-        dcc[i].user = NULL;
-
-    conf.bot->u = NULL;
-
-    clear_chanlist();
+    clear_cached_users();
     lastuser = NULL;
 
     while (global_ign)
@@ -609,7 +650,7 @@ struct userrec *adduser(struct userrec *bu, const char *handle, char *host, char
   int oldshare = noshare;
 
   noshare = 1;
-  u = (struct userrec *) my_calloc(1, sizeof(struct userrec));
+  u = (struct userrec *) calloc(1, sizeof(struct userrec));
 
   u->bot = bot;
 
@@ -814,7 +855,7 @@ void touch_laston(struct userrec *u, char *where, time_t timeval)
     struct laston_info *li = (struct laston_info *) get_user(&USERENTRY_LASTON, u);
 
     if (!li)
-      li = (struct laston_info *) my_calloc(1, sizeof(struct laston_info));
+      li = (struct laston_info *) calloc(1, sizeof(struct laston_info));
 
     else if (li->lastonplace)
       free(li->lastonplace);

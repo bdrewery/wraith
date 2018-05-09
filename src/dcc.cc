@@ -242,7 +242,9 @@ greet_new_bot(int idx)
     dcc[idx].status |= STAT_LEAF;
   dcc[idx].status |= STAT_LINKING;
 
-  dprintf(idx, "v 1001500 9 Wraith %s <%s> %d %li %s %s\n", egg_version, "-", conf.bot->localhub, (long)buildts, commit, egg_version);
+  dprintf(idx, "v 1001500 9 Wraith %s %d %d %li %s %s\n", egg_version,
+      conf.bot->u->fflags, conf.bot->localhub, (long)buildts, commit,
+      egg_version);
 
   for (int i = 0; i < dcc_total; i++) {
     if (dcc[i].type && dcc[i].type == &DCC_FORK_BOT) {
@@ -255,6 +257,8 @@ greet_new_bot(int idx)
 static void
 bot_version(int idx, char *par)
 {
+  char *work;
+
   dcc[idx].timeval = now;
   if (in_chain(dcc[idx].nick)) {
     dprintf(idx, "error Sorry, already connected.\n");
@@ -265,8 +269,6 @@ bot_version(int idx, char *par)
   }
 
   if ((par[0] >= '0') && (par[0] <= '9')) {
-    char *work = NULL;
-
     work = newsplit(&par);
     dcc[idx].u.bot->numver = atoi(work);
     /* old numver crap */
@@ -293,11 +295,22 @@ bot_version(int idx, char *par)
   char x[1024] = "", *vversion = NULL, *vcommit = NULL;
   int vlocalhub = -1;
   time_t vbuildts = 0;
+  int fflags = -1;
 
   strlcpy(dcc[idx].u.bot->version, par, 120);
   newsplit(&par);               /* 'ver' */
   newsplit(&par);               /* handlen */
-  newsplit(&par);               /* network */
+  /* fflags / (backward compat: network) */
+  if (par[0]) {
+    work = newsplit(&par);
+    /* Must support older bots which sent '<->' here for network. */
+    if (strcmp(work, "<->")) {
+      fflags = atoi(work);
+    } else {
+      /* Older bot doesn't have feature flags. */
+      fflags = 0;
+    }
+  }
   if (par[0])
     vlocalhub = atoi(newsplit(&par));
   if (par[0])
@@ -334,7 +347,7 @@ bot_version(int idx, char *par)
       dcc[idx].hub = 1;
     }
 
-    botnet_send_nlinked(idx, dcc[idx].nick, conf.bot->nick, '!', vlocalhub, vbuildts, vcommit, vversion);
+    botnet_send_nlinked(idx, dcc[idx].nick, conf.bot->nick, '!', vlocalhub, vbuildts, vcommit, vversion, fflags);
   } else {
         // This is now done in share_endstartup
         //have_linked_to_hub = 1;
@@ -346,7 +359,7 @@ bot_version(int idx, char *par)
 
   touch_laston(dcc[idx].user, "linked", now);
   dcc[idx].type = &DCC_BOT;
-  addbot(dcc[idx].nick, dcc[idx].nick, conf.bot->nick, '-', vlocalhub, vbuildts, vcommit, vversion);
+  addbot(dcc[idx].nick, dcc[idx].nick, conf.bot->nick, '-', vlocalhub, vbuildts, vcommit, vversion, fflags);
   simple_snprintf(x, sizeof x, "v 1001500");
   bot_share(idx, x);
   dprintf(idx, "el\n");
@@ -461,6 +474,8 @@ free_dcc_bot_(int n, void *x)
 {
   if (dcc[n].type == &DCC_BOT) {
     unvia(n, findbot(dcc[n].nick));
+    /* Stop sharing with this bot in case rembot->laston is shared out. */
+    dcc[n].status &= ~STAT_SHARE;
     rembot(dcc[n].nick);
   }
   free(x);
@@ -920,10 +935,10 @@ append_line(int idx, char *line)
   } else {
     ++c->current_lines;
 
-    p = (struct msgq *) my_calloc(1, sizeof(struct msgq));
+    p = (struct msgq *) calloc(1, sizeof(struct msgq));
 
     p->len = l;
-    p->msg = (char *) my_calloc(1, l + 1);
+    p->msg = (char *) calloc(1, l + 1);
     p->next = NULL;
     strlcpy(p->msg, line, l + 1);
 
@@ -997,7 +1012,7 @@ dcc_chat_pass(int idx, char *buf, int atr)
       dcc[idx].encrypt = 2;
       if (dcc[idx].bot) {
         dcc[idx].type = &DCC_BOT_NEW;
-        dcc[idx].u.bot = (struct bot_info *) my_calloc(1, sizeof(struct bot_info));
+        dcc[idx].u.bot = (struct bot_info *) calloc(1, sizeof(struct bot_info));
         if (dcc[idx].status & STAT_UNIXDOMAIN)
           dcc[idx].status = STAT_UNIXDOMAIN|STAT_CALLED;
         else
@@ -1806,11 +1821,11 @@ dcc_telnet_id(int idx, char *buf, int atr)
     } else if (in_chain(dcc[idx].nick)) {
 
       dcc[idx].type = &DCC_DUPWAIT;
-      dcc[idx].u.dupwait = (struct dupwait_info *) my_calloc(1, sizeof(struct dupwait_info));
+      dcc[idx].u.dupwait = (struct dupwait_info *) calloc(1, sizeof(struct dupwait_info));
       dcc[idx].u.dupwait->atr = atr;
       return;
     }
-//    dcc[idx].u.enc = (struct enc_link_dcc *) my_calloc(1, sizeof(struct enc_link_dcc));
+//    dcc[idx].u.enc = (struct enc_link_dcc *) calloc(1, sizeof(struct enc_link_dcc));
 //    dcc[idx].u.enc->method_number = 0;
 //    link_get_method(idx);
   } else {
@@ -1879,7 +1894,7 @@ dcc_telnet_pass(int idx, int atr)
 
   if (!dcc[idx].bot) {
     //bots dont need this
-    dcc[idx].u.chat = (struct chat_info *) my_calloc(1, sizeof(struct chat_info));
+    dcc[idx].u.chat = (struct chat_info *) calloc(1, sizeof(struct chat_info));
     struct chat_info dummy;
     strlcpy(dcc[idx].u.chat->con_chan, chanset ? chanset->dname : "*", sizeof(dummy.con_chan));
   }

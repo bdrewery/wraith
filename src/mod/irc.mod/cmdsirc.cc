@@ -305,8 +305,8 @@ static void cmd_kickban(int idx, char *par)
       dprintf(idx, "%s is permanently exempted!\n", nick);
       return;
     }
-    if (m->flags & CHANOP)
-      add_mode(chan, '-', 'o', m->nick);
+    if (chan_hasop(m))
+      add_mode(chan, '-', 'o', m);
     check_exemptlist(chan, s);
     switch (bantype) {
       case '@':
@@ -396,7 +396,7 @@ static void cmd_voice(int idx, char *par)
       dprintf(idx, "%s is not on %s.\n", nick, chan->dname);
       return;
     }
-    add_mode(chan, '+', 'v', nick);
+    add_mode(chan, '+', 'v', m);
     dprintf(idx, "Gave voice to %s on %s\n", nick, chan->dname);
     next:;
     if (!all)
@@ -459,7 +459,7 @@ static void cmd_devoice(int idx, char *par)
     return;
   }
 
-  add_mode(chan, '-', 'v', nick);
+  add_mode(chan, '-', 'v', m);
   dprintf(idx, "Devoiced %s on %s\n", nick, chan->dname);
   next:;
   if (!all)
@@ -543,7 +543,7 @@ static void cmd_op(int idx, char *par)
     return;
   }
 
-  if (do_op(nick, chan, 0, 1)) {
+  if (do_op(m, chan, 0, 1)) {
     dprintf(idx, "Gave op to %s on %s.\n", nick, chan->dname);
     stats_add(u, 0, 1);
   }
@@ -679,9 +679,9 @@ static void cmd_mmode(int idx, char *par)
   }
 
 
-  memberlist** targets = (memberlist**) my_calloc(1, chan->channel.members * sizeof(memberlist *));
-  int* overlaps = (int *) my_calloc(1, chan->channel.members * sizeof(int *));
-  memberlist** chanbots = (memberlist **) my_calloc(1, chan->channel.members * sizeof(memberlist *));
+  memberlist** targets = (memberlist**) calloc(1, chan->channel.members * sizeof(memberlist *));
+  int* overlaps = (int *) calloc(1, chan->channel.members * sizeof(int *));
+  memberlist** chanbots = (memberlist **) calloc(1, chan->channel.members * sizeof(memberlist *));
   memberlist *m = NULL;
   int chanbotcount = 0, targetcount = 0;
 
@@ -888,13 +888,13 @@ static void cmd_mmode(int idx, char *par)
   dprintf(idx, "  %d assumed modes per target nick.\n", overlap);
 
   int tpos = 0, bpos = 0, i = 0;
-  char **work_list = (char**) my_calloc((int)bots, sizeof(char**));
+  char **work_list = (char**) calloc((int)bots, sizeof(char**));
   char *work = NULL;
   size_t work_size = 2048;
 
   /* now use bots/modes to distribute nicks to MODE on */
   while (bots) {
-    work = work_list[bpos] = (char*) my_calloc(1, work_size);
+    work = work_list[bpos] = (char*) calloc(1, work_size);
 
     if (local) {
       strlcpy(work, mode, work_size);
@@ -1041,7 +1041,7 @@ static void cmd_deop(int idx, char *par)
       if (all) goto next;  
       return;
     }
-    add_mode(chan, '-', 'o', nick);
+    add_mode(chan, '-', 'o', m);
     dprintf(idx, "Deopped %s on %s.\n", nick, chan->dname);
     next:;
     if (!all)
@@ -1235,7 +1235,7 @@ static void cmd_mop(int idx, char *par)
         if (!chan_hasop(m) && !glob_bot(victim) && chk_op(victim, chan)) {
           found = 1;
           dprintf(idx, "Gave op to '%s' as '%s' on %s\n", m->user->handle, m->nick, chan->dname);
-          do_op(m->nick, chan, 0, 0);
+          do_op(m, chan, 0, 0);
         }
       }
     } else {
@@ -1290,8 +1290,8 @@ static void cmd_find(int idx, char *par)
         if ((!lookup_user && wild_match(par, m->from)) || (lookup_user && m->user == u)) {
           fcount++;
           if (!found) {
-            found = (memberlist **) my_calloc(1, sizeof(memberlist *) * 100);
-            cfound = (struct chanset_t **) my_calloc(1, sizeof(struct chanset_t *) * 100);
+            found = (memberlist **) calloc(1, sizeof(memberlist *) * 100);
+            cfound = (struct chanset_t **) calloc(1, sizeof(struct chanset_t *) * 100);
           }
           found[fcount - 1] = m;
           cfound[fcount - 1] = chan;
@@ -1420,6 +1420,39 @@ static void cmd_authed(int idx, char *par)
 
   dprintf(idx, STR("Authed:\n"));
   Auth::TellAuthed(idx);
+}
+
+static void cmd_roles(int idx, char *par)
+{
+  struct chanset_t* chan = NULL;
+  size_t roleidx;
+  int role;
+
+  chan = get_channel(idx, par);
+  if (!chan) {
+    return;
+  }
+
+  putlog(LOG_CMDS, "*", "#%s# (%s) roles", dcc[idx].nick, chan->dname);
+
+  if (!channel_active(chan)) {
+    dprintf(idx, "I'm not on %s right now!\n", chan->dname);
+    return;
+  }
+
+  if (chan->bot_roles->size() == 0) {
+    dprintf(idx, "Roles for %s are not yet calculated.\n", chan->dname);
+    return;
+  }
+
+  dprintf(idx, "Roles for %s:\n", chan->dname);
+
+  /* Advertise roles */
+  for (roleidx = 0; role_counts[roleidx].name; roleidx++) {
+    role = role_counts[roleidx].role;
+    dprintf(idx, "  %-8s: %s\n", role_counts[roleidx].name,
+        static_cast<bd::String>((*chan->role_bots)[role].join(" ")).c_str());
+  }
 }
 
 static void cmd_channel(int idx, char *par)
@@ -1973,6 +2006,7 @@ static cmd_t irc_dcc[] =
   {"resetbans",		"o|o",	 (Function) cmd_resetbans,	NULL, LEAF|AUTH},
   {"resetexempts",	"o|o",	 (Function) cmd_resetexempts,	NULL, LEAF|AUTH},
   {"resetinvites",	"o|o",	 (Function) cmd_resetinvites,	NULL, LEAF|AUTH},
+  {"roles",		"o|o",	 (Function) cmd_roles,		NULL, LEAF},
   {"say",		"o|o",	 (Function) cmd_say,		NULL, LEAF},
   {"swhois",		"",	 (Function) cmd_swhois,		NULL, LEAF|AUTH},
   {"topic",		"o|o",	 (Function) cmd_topic,		NULL, LEAF|AUTH},

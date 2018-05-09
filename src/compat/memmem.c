@@ -29,7 +29,11 @@
 #include <sys/types.h>
 /* $FreeBSD: head/lib/libc/string/memmem.c 188080 2009-02-03 17:58:20Z danger $ */
 #include <string.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
+#ifndef HAVE_MEMMEM
 /*
  * Find the first occurrence of the byte string s in byte string l.
  */
@@ -62,3 +66,4 @@ memmem(const void *l, size_t l_len, const void *s, size_t s_len)
 
 	return NULL;
 }
+#endif

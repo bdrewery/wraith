@@ -254,7 +254,7 @@ int SplitList(char *resultBuf, const char *list, int *argcPtr, const char ***arg
         }
     }
 
-    argv = (const char **) my_calloc(1, (unsigned) ((size * sizeof(char *)) + (l - list) + 1 + 15));	/* 15 cuz the tcl src is hard to follow */
+    argv = (const char **) calloc(1, (unsigned) ((size * sizeof(char *)) + (l - list) + 1 + 15));	/* 15 cuz the tcl src is hard to follow */
 
     length = strlen(list);
 
@@ -385,7 +385,13 @@ int channel_modify(char *result, struct chanset_t *chan, int items, char **item,
           strlcpy(result, "channel limit needs argument", RESULT_LEN);
         return ERROR;
       }
-      if (chan->limitraise && !atoi(item[i]) && dolimit(chan)) //limitraise was disabled by the user
+      int limitraise = atoi(item[i]);
+      if (limitraise < 0) {
+        if (result)
+          strlcpy(result, "channel limit must be a positive number", RESULT_LEN);
+        return ERROR;
+      }
+      if (chan->limitraise && limitraise == 0 && dolimit(chan)) //limitraise was disabled by the user
         add_mode(chan, '-', 'l', "");
       chan->limitraise = atoi(item[i]);
       chan->limit_prot = 0;
@@ -938,7 +944,7 @@ int channel_modify(char *result, struct chanset_t *chan, int items, char **item,
 
 static void init_masklist(masklist *m)
 {
-  m->mask = (char *) my_calloc(1, 1);
+  m->mask = (char *) calloc(1, 1);
   m->who = NULL;
   m->next = NULL;
 }
@@ -955,22 +961,30 @@ static void init_channel(struct chanset_t *chan, bool reset)
   if (!reset)
     my_setkey(chan, NULL);
 
-  chan->channel.ban = (masklist *) my_calloc(1, sizeof(masklist));
+  chan->channel.ban = (masklist *) calloc(1, sizeof(masklist));
   init_masklist(chan->channel.ban);
 
-  chan->channel.exempt = (masklist *) my_calloc(1, sizeof(masklist));
+  chan->channel.exempt = (masklist *) calloc(1, sizeof(masklist));
   init_masklist(chan->channel.exempt);
 
-  chan->channel.invite = (masklist *) my_calloc(1, sizeof(masklist));
+  chan->channel.invite = (masklist *) calloc(1, sizeof(masklist));
   init_masklist(chan->channel.invite);
 
-  chan->channel.member = (memberlist *) my_calloc(1, sizeof(memberlist));
+  chan->channel.member = (memberlist *) calloc(1, sizeof(memberlist));
   chan->channel.member->nick[0] = 0;
   chan->channel.member->next = NULL;
   chan->channel.topic = NULL;
   chan->channel.floodtime = new bd::HashTable<bd::String, bd::HashTable<flood_t, time_t> >;
   chan->channel.floodnum  = new bd::HashTable<bd::String, bd::HashTable<flood_t, int> >;
   chan->channel.cached_members = new bd::HashTable<bd::String, memberlist*>;
+  /* Don't clear out existing roles, keep them until rebalancing
+   * to not create a window of missing roles. */
+  if (!chan->bot_roles) {
+    chan->bot_roles = new bd::HashTable<bd::String, int>;
+    chan->role_bots = new bd::HashTable<short, bd::Array<bd::String> >;
+    chan->role = 0;
+  }
+  chan->needs_role_rebalance = 1;
 }
 
 static void clear_masklist(masklist *m)
@@ -1013,6 +1027,14 @@ void clear_channel(struct chanset_t *chan, bool reset)
   chan->channel.floodtime = NULL;
   delete chan->channel.floodnum;
   chan->channel.floodnum = NULL;
+  /* Don't clear out existing roles if resetting, keep them until rebalancing
+   * to not create a window of missing roles. */
+  if (!reset) {
+    delete chan->bot_roles;
+    chan->bot_roles = NULL;
+    delete chan->role_bots;
+    chan->role_bots = NULL;
+  }
 
   if (chan->channel.cached_members) {
     if (chan->channel.cached_members->size()) {
@@ -1098,7 +1120,7 @@ int channel_add(char *result, const char *newname, char *options, bool isdefault
     /* Already existing channel, maybe a reload of the channel file */
     chan->status &= ~CHAN_FLAGGED;	/* don't delete me! :) */
   } else {
-    chan = (struct chanset_t *) my_calloc(1, sizeof(struct chanset_t));
+    chan = (struct chanset_t *) calloc(1, sizeof(struct chanset_t));
 
     /* These are defaults, bzero already set them 0, but we set them for future reference */
     chan->limit_prot = 0;
@@ -1149,15 +1171,6 @@ int channel_add(char *result, const char *newname, char *options, bool isdefault
     chan->ban_time = global_ban_time;
     chan->exempt_time = global_exempt_time;
     chan->invite_time = global_invite_time;
-    chan->channel.jointime = 0;
-    chan->channel.parttime = 0;
-    chan->channel.fighting = 0;
-    chan->channel.drone_set_mode = 0;
-    chan->channel.drone_jointime = 0;
-    chan->channel.drone_joins = 0;
-    chan->channel.last_eI = 0;
-    chan->channel.floodtime = NULL;
-    chan->channel.floodnum = NULL;
 
     /* We _only_ put the dname (display name) in here so as not to confuse
      * any code later on. chan->name gets updated with the channel name as

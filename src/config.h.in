@@ -19,14 +19,11 @@
 /* Defines the current pack version */
 #undef EGG_VERSION
 
-/* Define to 1 if you have the `alarm' function. */
-#undef HAVE_ALARM
-
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
-/* Define to 1 if you have the `clock' function. */
-#undef HAVE_CLOCK
+/* Define to 1 if you have the `closefrom' function. */
+#undef HAVE_CLOSEFROM
 
 /* define if the compiler supports basic C++11 syntax */
 #undef HAVE_CXX11
@@ -45,12 +42,6 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define to 1 if you have the `fork' function. */
-#undef HAVE_FORK
-
-/* Define to 1 if you have the `fsync' function. */
-#undef HAVE_FSYNC
-
 /* Define to 1 if you have the <gelf.h> header file. */
 #undef HAVE_GELF_H
 
@@ -66,14 +57,8 @@
 /* Define to 1 if you have the `gettime' function. */
 #undef HAVE_GETTIME
 
-/* Define to 1 if you have the `inet_ntop' function. */
-#undef HAVE_INET_NTOP
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the `isascii' function. */
-#undef HAVE_ISASCII
 
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
@@ -102,28 +87,14 @@
 /* Define to 1 if the system has the type 'long long int'. */
 #undef HAVE_LONG_LONG_INT
 
-/* Define to 1 if `lstat' has the bug that it succeeds when given the
-   zero-length file name argument. */
-#undef HAVE_LSTAT_EMPTY_STRING_BUG
-
 /* Define to 1 if you have the `madvise' function. */
 #undef HAVE_MADVISE
-
-/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
-   to 0 otherwise. */
-#undef HAVE_MALLOC
-
-/* Define to 1 if you have the `memcpy' function. */
-#undef HAVE_MEMCPY
 
 /* Define to 1 if you have the `memmem' function. */
 #undef HAVE_MEMMEM
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `memset' function. */
-#undef HAVE_MEMSET
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
@@ -143,15 +114,14 @@
 /* Define to 1 if you have the `posix_madvise' function. */
 #undef HAVE_POSIX_MADVISE
 
+/* Define to 1 if you have the `prctl' function. */
+#undef HAVE_PRCTL
+
+/* Define to 1 if you have the `procctl' function. */
+#undef HAVE_PROCCTL
+
 /* Define to 1 if you have the `random' function. */
 #undef HAVE_RANDOM
-
-/* Define to 1 if your system has a GNU libc compatible `realloc' function,
-   and to 0 otherwise. */
-#undef HAVE_REALLOC
-
-/* Define to 1 if you have the `rename' function. */
-#undef HAVE_RENAME
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
@@ -162,10 +132,6 @@
 /* Define to 1 if you have the `srandom' function. */
 #undef HAVE_SRANDOM
 
-/* Define to 1 if `stat' has the bug that it succeeds when given the
-   zero-length file name argument. */
-#undef HAVE_STAT_EMPTY_STRING_BUG
-
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
@@ -175,20 +141,11 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strcasecmp' function. */
-#undef HAVE_STRCASECMP
-
-/* Define to 1 if you have the `strftime' function. */
-#undef HAVE_STRFTIME
-
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the `strncasecmp' function. */
-#undef HAVE_STRNCASECMP
 
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
 #undef HAVE_STRUCT_TM_TM_ZONE
@@ -219,6 +176,9 @@
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 #undef HAVE_SYS_PRCTL_H
 
+/* Define to 1 if you have the <sys/procctl.h> header file. */
+#undef HAVE_SYS_PROCCTL_H
+
 /* Define to 1 if you have the <sys/ptrace.h> header file. */
 #undef HAVE_SYS_PTRACE_H
 
@@ -227,9 +187,6 @@
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#undef HAVE_SYS_TIME_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
@@ -261,12 +218,6 @@
 /* Define to 1 if the system has the type 'unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
-/* Define to 1 if you have the `vfork' function. */
-#undef HAVE_VFORK
-
-/* Define to 1 if you have the <vfork.h> header file. */
-#undef HAVE_VFORK_H
-
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
@@ -275,12 +226,6 @@
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
-
-/* Define to 1 if `fork' works. */
-#undef HAVE_WORKING_FORK
-
-/* Define to 1 if `vfork' works. */
-#undef HAVE_WORKING_VFORK
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -388,14 +333,8 @@
    a type exists and the standard includes do not define it. */
 #undef int8_t
 
-/* Define to rpl_malloc if the replacement function should be used. */
-#undef malloc
-
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
-
-/* Define to rpl_realloc if the replacement function should be used. */
-#undef realloc
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
@@ -418,9 +357,6 @@
 /* Define to the type of an unsigned integer type of width exactly 8 bits if
    such a type exists and the standard includes do not define it. */
 #undef uint8_t
-
-/* Define as `fork' if `vfork' does not work. */
-#undef vfork
 
 /* Define to empty if the keyword `volatile' does not work. Warning: valid
    code using `volatile' can become incorrect without. Disable with care. */

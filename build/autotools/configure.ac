@@ -16,7 +16,7 @@ EGG_SAVE_PARAMETERS
 dnl Search for newer gcc versions before older
 #AC_REQUIRE_CPP
 AC_LANG([C++])
-AC_PROG_CXX([g++49 g++-4.9 g++48 g++-4.8 g++47 g++-4.7 clang++ g++46 g++-4.6 g++45 g++-4.5 g++-4.4 g++-4.4.1 g++-4.4.2 g++-4.4.0 g++44 g++4 eg++ g++-3.3 g++33 g++-3 g++3 g++ c++ gpp aCC CC cxx cc++ cl FCC KCC RCC xlC_r xlC])
+AC_PROG_CXX([g++6 g++5 g++49 g++-4.9 g++48 g++-4.8 g++47 g++-4.7 g++46 g++-4.6 g++ c++ CC cxx cc++])
 CC="${CXX} -x c"
 AC_SUBST(CC)
 AC_REQUIRE_CPP
@@ -32,7 +32,10 @@ EGG_CHECK_CCWALL
 EGG_CHECK_CCPIPE
 CXX_FLAG_CHECK([CXXFLAGS], [-fcolor-diagnostics], [colordiagnostics])
 #CXX_FLAG_CHECK([CXXFLAGS], [-Qunused-arguments], [unusedarguments])
-CXX_FLAG_CHECK([CXXFLAGS], [-Wno-invalid-source-encoding], [invalid_source_encoding])
+CXX_FLAG_CHECK_NO([CXXFLAGS], [-Winvalid-source-encoding], [-Wno-invalid-source-encoding], [invalid_source_encoding])
+CXX_FLAG_CHECK_NO([CXXFLAGS], [-Wnarrowing], [-Wno-narrowing], [nonarrowing])
+CXX_FLAG_CHECK_NO([CXXFLAGS], [-Wcast-function-type], [-Wno-cast-function-type], [no_cast_function_type])
+CXX_FLAG_CHECK([CXXFLAGS], [-Wimplicit-fallthrough=0], [wimplicit_fallthrough])
 CXX_FLAG_CHECK([CXXFLAGS], [-fstack-protector], [stackprotector])
 CXX_FLAG_CHECK([CXXFLAGS], [-fstack-protector-strong], [stackprotectorstrong])
 if [[ "${ax_cv_prog_cc_stackprotectorstrong}" = "yes" ]]; then
@@ -44,9 +47,23 @@ CXX_FLAG_CHECK([DEBCXXFLAGS], [-Og], [Og])
 if [[ "${ax_cv_prog_cc_Og}" = "no" ]]; then
   DEBCXXFLAGS="${DEBCXXFLAGS} -O0"
 fi
+CXX_FLAG_CHECK_LINK([DEBCXXFLAGS], [-fsanitize=address], [fsanitize_address])
+if [[ "${ax_cv_prog_cc_fsanitize_address}" = "yes" ]]; then
+  DEBLDFLAGS="${DEBLDFLAGS} -fsanitize=address"
+fi
 CXX_FLAG_CHECK([DEBCXXFLAGS], [-fstack-protector-all], [stackprotectorall])
+CXX_FLAG_CHECK([DEBCXXFLAGS], [-Wconditional-uninitialized], [w_conditional_uninitialized])
 CXX_FLAG_CHECK([LDFLAGS], [-static-libstdc++], [static_libstdcxx])
 #CXX_FLAG_CHECK([LDFLAGS], [-static-libgcc], [static_libgcc])
+if [[ "${ax_cv_prog_cc_static_libstdcxx}" = "yes" ]]; then
+  AC_MSG_CHECKING([for static libstdc++])
+  AC_TRY_LINK([], [], [AC_MSG_RESULT(OK)],
+    [
+     AC_MSG_RESULT([not found.])
+     AC_MSG_ERROR([Static libstdc++ is rquired to build.], 1)
+    ]
+  )
+fi
 
 EGG_CHECK_DEPMODE
 
@@ -78,6 +95,7 @@ EGG_CHECK_RANDOM_MAX
 # Create static binaries
 EGG_CHECK_CCSTATIC
 AC_SUBST(DEBCXXFLAGS)
+AC_SUBST(DEBLDFLAGS)
 
 #checkpoint
 AC_CACHE_SAVE 
@@ -94,20 +112,18 @@ AC_HEADER_STAT
 #checkpoint
 AC_CACHE_SAVE 
 AC_CHECK_HEADERS([stdarg.h arpa/inet.h fcntl.h limits.h locale.h netdb.h netinet/in.h])
-AC_CHECK_HEADERS([sys/file.h sys/ioctl.h sys/param.h sys/socket.h wchar.h sys/ptrace.h paths.h sys/prctl.h])
+AC_CHECK_HEADERS([sys/file.h sys/ioctl.h sys/param.h sys/socket.h wchar.h])
+AC_CHECK_HEADERS([sys/ptrace.h paths.h sys/prctl.h sys/procctl.h])
 
 #checkpoint
 AC_CACHE_SAVE
 #AC_CHECK_HEADERS(openssl/ssl.h openssl/crypto.h)
 #AC_CHECK_HEADERS(zlib.h)
-#EGG_CHECK_ZLIB
 CHECK_SSL
 
 SCRIPT_TCL
 
 AC_CACHE_SAVE
-
-#AC_SUBST(ZLIB)dnl
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_TYPE_PID_T
@@ -145,24 +161,17 @@ AC_STRUCT_TIMEZONE
 AC_STRUCT_TM
 
 # Checks for library functions
-AC_FUNC_FORK
-AC_FUNC_LSTAT
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
-AC_FUNC_MALLOC
-AC_FUNC_MKTIME
 AC_FUNC_MMAP
-AC_FUNC_REALLOC
-AC_FUNC_STAT
 EGG_FUNC_TIMESPEC
-AC_FUNC_STRFTIME
 
 #checkpoint
 AC_CACHE_SAVE
-AC_CHECK_FUNCS([clock fsync getrusage isascii getpassphrase posix_madvise madvise])
-AC_CHECK_FUNCS([memcpy memmem memset random rename snprintf srandom gettime])
+AC_CHECK_FUNCS([getrusage getpassphrase posix_madvise madvise])
+AC_CHECK_FUNCS([memmem random snprintf srandom gettime])
 #checkpoint
 AC_CACHE_SAVE
-AC_CHECK_FUNCS([strcasecmp strncasecmp vsnprintf inet_ntop])
+AC_CHECK_FUNCS([vsnprintf prctl procctl closefrom])
 
 #autoscan suggested this....
 #These are recommended by autoscan, but no code supports it currently
@@ -218,6 +227,7 @@ if test -d .git; then
 fi
 ]
 
+export CC CXX
 if [[ -f lib/bdlib/configure ]]; then
   AC_CONFIG_SUBDIRS([lib/bdlib])
 fi

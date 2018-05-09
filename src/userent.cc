@@ -62,6 +62,7 @@ void init_userent()
   add_entry_type(&USERENTRY_ADDED);
   add_entry_type(&USERENTRY_MODIFIED);
   add_entry_type(&USERENTRY_SET);
+  add_entry_type(&USERENTRY_FFLAGS);
 }
 
 void list_type_kill(struct list_type *t)
@@ -95,9 +96,8 @@ bool def_kill(struct user_entry *e)
 
 void write_userfile_protected(bd::Stream& stream, const struct userrec *u, const struct user_entry *e, int idx)
 {
-  int localhub = nextbot(u->handle);
-  /* only write if saving local, or if sending to hub, or if sending to same user as entry, or the localhub in the chain */
-  if (idx == -1 || dcc[idx].hub || dcc[idx].user == u || (localhub != -1 && idx == localhub)) {
+  /* only write if saving local, or if sending to hub, or if sending to same user as entry */
+  if (idx == -1 || dcc[idx].hub || dcc[idx].user == u) {
     stream << bd::String::printf("--%s %s\n", e->type->name, e->u.string);
   }
 }
@@ -128,7 +128,7 @@ bool def_set_real(struct userrec *u, struct user_entry *e, void *buf, bool prote
       l = 160;
 
 
-    e->u.string = (char *) my_realloc (e->u.string, l + 1);
+    e->u.string = (char *) realloc (e->u.string, l + 1);
 
     strlcpy (e->u.string, string, l + 1);
 
@@ -254,9 +254,15 @@ static bool set_set(struct userrec *u, struct user_entry *e, void *buf)
   }
   
   /* we will possibly free new below, so let's send the information to the botnet now */
-  if (!noshare && !set_noshare)
-    /* only share to pertinent bots */
-    shareout_prot(u, "c %s %s %s %s\n", e->type->name, u->handle, newxk->key, newxk->data ? newxk->data : "");
+  if (!noshare && !set_noshare) {
+    /* Always share groups to all bots. */
+    if (!strcmp(newxk->key, "groups")) {
+      shareout("c %s %s %s %s\n", e->type->name, u->handle, newxk->key, newxk->data ? newxk->data : "");
+    } else {
+      /* only share to pertinent bots */
+      shareout_prot(u, "c %s %s %s %s\n", e->type->name, u->handle, newxk->key, newxk->data ? newxk->data : "");
+    }
+  }
 
   /* unset and bail out if the new data is empty and the old doesn't exist, why'd we even get this change? */
   if (!old && (!newxk->data || !newxk->data[0])) {
@@ -300,7 +306,7 @@ static bool set_unpack(struct userrec *u, struct user_entry *e)
   char *key = NULL, *data = NULL;
 
   while (curr) {
-    t = (struct xtra_key *) my_calloc(1, sizeof(struct xtra_key));
+    t = (struct xtra_key *) calloc(1, sizeof(struct xtra_key));
     data = curr->extra;
     key = newsplit(&data);
     if (data[0]) {
@@ -322,12 +328,13 @@ static void set_display(int idx, struct user_entry *e, struct userrec *u)
     struct xtra_key *xk = (struct xtra_key *) e->u.extra;
     struct flag_record fr = {FR_GLOBAL, 0, 0, 0 };
 
+    dprintf(idx, "  BOTSET:\n");
     get_user_flagrec(dcc[idx].user, &fr, NULL);
     /* scan thru xtra field, searching for matches */
     for (; xk; xk = xk->next) {
       /* ok, it's a valid xtra field entry */
       if (glob_owner(fr))
-        dprintf(idx, "  %s: %s\n", xk->key, xk->data ? xk->data : "");
+        dprintf(idx, "    %s: %s\n", xk->key, xk->data ? xk->data : "");
     }
   }
 }
@@ -341,18 +348,11 @@ static bool set_gotshare(struct userrec *u, struct user_entry *e, char *buf, int
 
   if (!strcasecmp(u->handle, conf.bot->nick)) {
     set_noshare = 1;
+    /* This will also call set_user(). */
     var_set_by_name(conf.bot->nick, name, buf[0] ? buf : NULL);
     set_noshare = 0;
-  /* var_set_by_name() called set_user(), no need to do it again... */
-  } 
-  /* not else if as the hub might have gotten a botset for itself */
-  if (conf.bot->hub || conf.bot->localhub) {
-  /* only hubs need to bother saving this stuff, leaf bots just store it in vars[] */
-    struct xtra_key *xk = (struct xtra_key *) my_calloc(1, sizeof(struct xtra_key));
-
-    xk->key = strdup(name);
-    xk->data = (buf && buf[0]) ? strdup(buf) : NULL;
-    set_set(u, e, xk);	/* set the USERENTRY */
+  } else if (conf.bot->hub || conf.bot->localhub || !strcmp(name, "groups")) {
+    var_set_userentry(u->handle, name, buf);
   }
   return 1;
 }
@@ -363,8 +363,14 @@ static void set_write_userfile(bd::Stream& stream, const struct userrec *u, cons
   struct xtra_key *x = (struct xtra_key *) e->u.extra;
 
   for (; x; x = x->next) {
-    /* only write if saving local, or if sending to hub, or if sending to same user as entry, or the localhub in the chain, or sending 'groups' */
-    if (idx == -1 || dcc[idx].hub || dcc[idx].user == u || (localhub != -1 && idx == localhub) || !strcmp(x->key, "groups")) {
+    /*
+     * only write if saving local, or if sending to hub, or if sending to
+     * same user as entry, or they are not connected,
+     * or the localhub in the chain, or sending 'groups'.
+     * SA shareout_prot
+     */
+    if (idx == -1 || dcc[idx].hub || dcc[idx].user == u ||
+        (localhub == -1 || idx == localhub) || !strcmp(x->key, "groups")) {
       stream << bd::String::printf("--%s %s %s\n", e->type->name, x->key, x->data ? x->data : "");
     }
   }
@@ -465,6 +471,49 @@ struct user_entry_type USERENTRY_ARCH = {
  set_protected,
  botmisc_display,
  "ARCH"
+};
+
+bool fflags_unpack(struct userrec *u, struct user_entry *e)
+{
+  bool ret = def_unpack(u, e);
+  /* Cache the value in the user record. */
+  u->fflags = atoi((char *) def_get(u, e));
+  return ret;
+}
+
+bool fflags_set(struct userrec *u, struct user_entry *e, void *buf)
+{
+  bool ret;
+
+  /* No need to share since it is sent over the tandem/botlink. */
+  noshare = 1;
+  ret = def_set(u, e, buf);
+  noshare = 0;
+  /* Cache the value in the user record. */
+  u->fflags = atoi((char *) def_get(u, e));
+  return ret;
+}
+
+bool fflags_gotshare(struct userrec *u, struct user_entry *e, char *data,
+    int idx)
+{
+  /* Don't let another bot dictate our features. */
+  if (u == conf.bot->u) {
+    return false;
+  }
+  return def_gotshare(u, e, data, idx);
+}
+
+struct user_entry_type USERENTRY_FFLAGS = {
+ 0,
+ fflags_gotshare,
+ fflags_unpack,
+ def_write_userfile,
+ def_kill,
+ def_get,
+ fflags_set,
+ botmisc_display,
+ "FFLAGS"
 };
 
 void stats_add(struct userrec *u, int islogin, int op)
@@ -683,7 +732,7 @@ struct user_entry_type USERENTRY_SECPASS =
 static bool laston_unpack(struct userrec *u, struct user_entry *e)
 {
   char *par = e->u.list->extra, *arg = newsplit(&par);
-  struct laston_info *li = (struct laston_info *) my_calloc(1, sizeof(struct laston_info));
+  struct laston_info *li = (struct laston_info *) calloc(1, sizeof(struct laston_info));
 
   if (!par[0])
     par = "???";
@@ -723,10 +772,8 @@ static bool laston_set(struct userrec *u, struct user_entry *e, void *buf)
     e->u.extra = (struct laston_info *) buf;
   }
 
-  /* FIXME: laston sharing is disabled until a better solution is found
   if (!noshare)
-    shareout("c LASTON %s %s %li\n", u->handle, li->lastonplace ? li->lastonplace : "-", (long) li->laston);
-  */
+    shareout_hub("c LASTON %s %s %li\n", u->handle, li->lastonplace ? li->lastonplace : "-", (long) li->laston);
 
   return 1;
 }
@@ -764,7 +811,7 @@ struct user_entry_type USERENTRY_LASTON =
 static bool botaddr_unpack(struct userrec *u, struct user_entry *e)
 {
   char p[1024] = "", *q1 = NULL, *q2 = NULL;
-  struct bot_addr *bi = (struct bot_addr *) my_calloc(1, sizeof(struct bot_addr));
+  struct bot_addr *bi = (struct bot_addr *) calloc(1, sizeof(struct bot_addr));
 
   /* address:port/port:hublevel:uplink */
 
@@ -797,7 +844,7 @@ static bool botaddr_unpack(struct userrec *u, struct user_entry *e)
   if (!bi->relay_port)
     bi->relay_port = bi->telnet_port;
   if (!bi->uplink) {
-    bi->uplink = (char *) my_calloc(1, 1);
+    bi->uplink = (char *) calloc(1, 1);
   }
   list_type_kill(e->u.list);
   e->u.extra = bi;
@@ -869,7 +916,7 @@ static void botaddr_display(int idx, struct user_entry *e, struct userrec *u)
 
 static bool botaddr_gotshare(struct userrec *u, struct user_entry *e, char *buf, int idx)
 {
-  struct bot_addr *bi = (struct bot_addr *) my_calloc(1, sizeof(struct bot_addr));
+  struct bot_addr *bi = (struct bot_addr *) calloc(1, sizeof(struct bot_addr));
   char *arg = newsplit(&buf);
 
   bi->address = strdup(arg);
@@ -985,7 +1032,7 @@ static bool hosts_set(struct userrec *u, struct user_entry *e, void *buf)
       } else
 	t = &((*t)->next);
     }
-    *t = (struct list_type *) my_calloc(1, sizeof(struct list_type));
+    *t = (struct list_type *) calloc(1, sizeof(struct list_type));
 
     (*t)->next = NULL;
     (*t)->extra = strdup(host);
@@ -1102,7 +1149,7 @@ bool set_user(struct user_entry_type *et, struct userrec *u, void *d)
   bool r;
 
   if (!(e = find_user_entry(et, u))) {
-    e = (struct user_entry *) my_calloc(1, sizeof(struct user_entry));
+    e = (struct user_entry *) calloc(1, sizeof(struct user_entry));
 
     e->type = et;
     e->name = NULL;

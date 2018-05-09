@@ -92,7 +92,7 @@ static unsigned long pump_file_to_sock(FILE *file, long sock,
 {
   const unsigned long		 buf_len = pending_data >= PMAX_SIZE ?
 	  					PMAX_SIZE : pending_data;
-  char				*bf = (char *) my_calloc(1, buf_len);
+  char				*bf = (char *) calloc(1, buf_len);
   unsigned long	 actual_size;
 
   if (bf) {
@@ -115,7 +115,7 @@ void eof_dcc_fork_send(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && (!strcasecmp(dcc[x].nick, dcc[idx].host)) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
 	break;
       }
@@ -129,7 +129,7 @@ void eof_dcc_fork_send(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && (!strcasecmp(dcc[x].nick, dcc[idx].host)) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
 	break;
       }
@@ -169,7 +169,7 @@ static void eof_dcc_send(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++) {
-      if (dcc[x].type && (!strcasecmp(dcc[x].nick, dcc[idx].host)) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
         break;
       }
@@ -201,7 +201,7 @@ static void eof_dcc_send(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && (!strcasecmp(dcc[x].nick, dcc[idx].host)) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
         break;
       }
@@ -357,7 +357,7 @@ void dcc_get(int idx, char *buf, int len)
       int x, y = -1;
 
       for (x = 0; x < dcc_total; x++)
-	if (dcc[x].type && !strcasecmp(dcc[x].nick, dcc[idx].host) && (dcc[x].type->flags & DCT_BOT)) {
+        if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	  y = x;
           break;
         }
@@ -372,7 +372,7 @@ void dcc_get(int idx, char *buf, int len)
       int x, y = -1;
 
       for (x = 0; x < dcc_total; x++)
-	if (dcc[x].type && !strcasecmp(dcc[x].nick, dcc[idx].host) && (dcc[x].type->flags & DCT_BOT)) {
+        if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	  y = x;
           break;
         }
@@ -405,7 +405,7 @@ void eof_dcc_get(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && !strcasecmp(dcc[x].nick, dcc[idx].host) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
         break;
       }
@@ -429,7 +429,7 @@ void eof_dcc_get(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && !strcasecmp(dcc[x].nick, dcc[idx].host) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
         break;
       }
@@ -467,7 +467,7 @@ void dcc_send(int idx, char *buf, int len)
     putlog(LOG_FILES, "*", "Problem writing file");
     fclose(dcc[idx].u.xfer->f);
     siz = strlen(tempdir) + strlen(dcc[idx].u.xfer->filename) + 1;
-    b = (char *) my_calloc(1, siz);
+    b = (char *) calloc(1, siz);
     strlcpy(b, tempdir, siz);
     strlcat(b, dcc[idx].u.xfer->filename, siz);
     unlink(b);
@@ -497,7 +497,7 @@ void dcc_send(int idx, char *buf, int len)
 	   dcc[idx].u.xfer->origname, dcc[idx].nick, dcc[idx].host);
     fclose(dcc[idx].u.xfer->f);
     siz = strlen(tempdir) + strlen(dcc[idx].u.xfer->filename) + 1;
-    b = (char *) my_calloc(1, siz);
+    b = (char *) calloc(1, siz);
     strlcpy(b, tempdir, siz);
     strlcat(b, dcc[idx].u.xfer->filename, siz);
     unlink(b);
@@ -516,7 +516,7 @@ static void transfer_get_timeout(int i)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && (!strcasecmp(dcc[x].nick, dcc[i].host)) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[i].host))) {
 	y = x;
         break;
       }
@@ -546,7 +546,7 @@ static void transfer_get_timeout(int i)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && (!strcasecmp(dcc[x].nick, dcc[i].host)) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[i].host))) {
 	y = x;
         break;
       }
@@ -583,7 +583,7 @@ void tout_dcc_send(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && !strcasecmp(dcc[x].nick, dcc[idx].host) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
         break;
       }
@@ -597,7 +597,7 @@ void tout_dcc_send(int idx)
     int x, y = -1;
 
     for (x = 0; x < dcc_total; x++)
-      if (dcc[x].type && !strcasecmp(dcc[x].nick, dcc[idx].host) && (dcc[x].type->flags & DCT_BOT)) {
+      if (dcc[x].type && (dcc[x].type->flags & DCT_BOT) && (!strcasecmp(dcc[x].nick, dcc[idx].host))) {
 	y = x;
         break;
       }

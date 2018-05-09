@@ -117,7 +117,7 @@ bd::HashTable<bd::String, fish_data_t*> FishKeys;
 static bool double_warned = 0;
 
 static void empty_msgq(void);
-static void disconnect_server(int, int);
+static void disconnect_server(int);
 static void calc_penalty(char *, size_t);
 static bool fast_deq(int);
 static char *splitnicks(char **);
@@ -696,7 +696,7 @@ void queue_server(int which, char *buf, int len)
       }
     }
 
-    struct msgq *q = (struct msgq *) my_calloc(1, sizeof(struct msgq));
+    struct msgq *q = (struct msgq *) calloc(1, sizeof(struct msgq));
 
     if (h->head) {
       if (!qnext) { //Not next, add to end of queue
@@ -709,7 +709,7 @@ void queue_server(int which, char *buf, int len)
     } else
       h->head = h->last = q;
     q->len = len;
-    q->msg = (char *) my_calloc(1, len + 1);
+    q->msg = (char *) calloc(1, len + 1);
     strlcpy(q->msg, buf, len + 1);
     ++(h->tot);
     h->warned = 0;
@@ -740,7 +740,7 @@ void add_server(char *ss)
     p = strchr(ss, ',');
     if (p)
       *p++ = 0;
-    x = (struct server_list *) my_calloc(1, sizeof(struct server_list));
+    x = (struct server_list *) calloc(1, sizeof(struct server_list));
 
     x->next = 0;
     x->port = 0;
@@ -762,7 +762,7 @@ void add_server(char *ss)
       }
 #endif /* USE_IPV6 */
       *q++ = 0;
-      x->name = (char *) my_calloc(1, q - ss);
+      x->name = (char *) calloc(1, q - ss);
       strlcpy(x->name, ss, q - ss);
       ss = q;
       q = strchr(ss, ':');
@@ -822,7 +822,7 @@ void next_server(int *ptr, char *servname, in_port_t *port, char *pass)
       i++;
     }
     /* Gotta add it: */
-    x = (struct server_list *) my_calloc(1, sizeof(struct server_list));
+    x = (struct server_list *) calloc(1, sizeof(struct server_list));
 
     x->next = 0;
     x->name = strdup(servname);
@@ -1025,6 +1025,7 @@ static void server_secondly()
     } else if (!keepnick && release_time && ((now - release_time) >= RELEASE_TIME)) {
       release_time = 0;
       keepnick = 1;
+      /* The release time has expired, try to regain the jupenick. */
       nick_available(1, 0);
     }
 
@@ -1090,7 +1091,8 @@ static void server_check_lag()
     waiting_for_awake = 1;
   } else if (servidx != -1 && waiting_for_awake && ((now - lastpingtime) >= stoned_timeout)) {
     // Not checking server_online as this will handle connect timeouts as well where the connect() works, but the server gets stoned afterwards
-    disconnect_server(servidx, DO_LOST);
+    disconnect_server(servidx);
+    lostdcc(servidx);
     putlog(LOG_SERV, "*", "Server got stoned; jumping...");
   }
 }
@@ -1107,7 +1109,7 @@ static void server_minutely()
     // Ratbox sets a nick_delay (default:15min) timer when a nick splits off to prevent collisions,
     // We must check periodically to see if the local server has unjuped our wanted nicks.
     if (keepnick && (jnick_juped == 2 || nick_juped == 2)) {
-      nick_available(1, 1);
+      nick_available(jnick_juped == 2, nick_juped == 2);
     }
   }
 }

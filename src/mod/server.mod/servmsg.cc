@@ -164,6 +164,7 @@ static int check_bind_raw(char *from, char *code, char *msg)
     ++colon;
     if (colon) {
       if (!strncmp(colon, "+OK ", 4)) {
+        bool isValidCipherText;
         char *p = strchr(from, '!');
         const bool target_is_chan = strchr(CHANMETA, target[0]);
         bd::String ciphertext(colon), sharedKey, nick(from, p - from), key_target;
@@ -191,7 +192,7 @@ static int check_bind_raw(char *from, char *code, char *msg)
           // Decrypt the message before passing along to the binds
           const bd::String decrypted(egg_bf_decrypt(ciphertext, sharedKey));
           // Does the decrypted text make sense? If not, the key is probably invalid, reset it.
-          bool isValidCipherText = true;
+          isValidCipherText = true;
           for (size_t i = 0; i < decrypted.length(); ++i) {
             if (!isprint(decrypted[i])) {
               isValidCipherText = false;
@@ -207,6 +208,11 @@ static int check_bind_raw(char *from, char *code, char *msg)
             FishKeys.remove(key_target);
             delete fishData;
           }
+        } else {
+          isValidCipherText = false;
+        }
+        if (fish_auto_keyx && !isValidCipherText && !target_is_chan) {
+          keyx(nick, "Invalid/Unknown key");
         }
       }
     }
@@ -320,6 +326,7 @@ got004(char *from, char *msg)
   bool connect_burst = 0;
 
   /* cookies won't work on ircu or Unreal or snircd */
+  cookies_disabled = false;
   if (strstr(tmp, "u2.") || strstr(tmp, "Unreal") || strstr(tmp, "snircd")) {
     putlog(LOG_DEBUG, "*", "Disabling cookies as they are not supported on %s", cursrvname);
     cookies_disabled = true;
@@ -490,7 +497,8 @@ void nuke_server(const char *reason)
       dprintf(-serv, "QUIT :%s\n", reason);
 
     sleep(1);
-    disconnect_server(servidx, DO_LOST);
+    disconnect_server(servidx);
+    lostdcc(servidx);
   }
 }
 
@@ -797,7 +805,7 @@ static int gotmsg(char *from, char *msg)
         if (my_u && FishKeys.contains(nick)) {
           // FiSH paranoid mode. Invalidate the current key and re-key-exchange with the user.
           if (fish_paranoid) {
-            keyx(nick);
+            keyx(nick, "fish-paranoid is set");
           }
         }
       }
@@ -1019,17 +1027,14 @@ static int gotpong(char *from, char *msg)
   return 0;
 }
 
-static int nick_which(const char* nick, bool& is_jupe, bool& is_orig) {
-  if (jupenick[0] && !rfc_ncasecmp(nick, jupenick, nick_len)) {
-    is_jupe = 1;
-    // If some stupid reason they have the same jupenick/nick, make sure to mark it as on
-    if (!rfc_ncasecmp(nick, origbotname, nick_len))
-      is_orig = 1;
-    return 1;
-  } else if (!rfc_ncasecmp(nick, origbotname, nick_len)) {
+static void nick_which(const char* nick, bool& is_jupe, bool& is_orig) {
+  if (is_orig == 0 && !rfc_ncasecmp(nick, origbotname, nick_len)) {
     is_orig = 1;
   }
-  return 0;
+  /* It's possible jupenick==nick.  Set both flags. */
+  if (is_jupe == 0 && jupenick[0] && !rfc_ncasecmp(nick, jupenick, nick_len)) {
+    is_jupe = 1;
+  }
 }
 
 static void nick_available(bool is_jupe, bool is_orig) {
@@ -1062,8 +1067,10 @@ void nicks_available(char* buf, char delim, bool buf_contains_available) {
   char *nick = NULL;
   if (delim) {
     while ((nick = newsplit(&buf, delim))[0]) {
-      if (nick_which(nick, is_jupe, is_orig))
+      nick_which(nick, is_jupe, is_orig);
+      if (is_jupe && is_orig) {
         break;
+      }
     }
   } else {
     nick = buf;
@@ -1150,6 +1157,23 @@ static void got303(char *from, char *msg)
   fixcolon(msg);
   if (tmp[0] && match_my_nick(tmp))
     nicks_available(msg, ' ', 0);
+}
+
+/*
+ * :<server> 421 <nick> <command> :Unknown command
+ */
+static void got421(char *from, char *msg)
+{
+  char *command = NULL;
+
+  newsplit(&msg);	/* nick */
+  command = newsplit(&msg);
+
+  if (use_monitor && !strcasecmp(command, "MONITOR")) {
+    /* The command doesn't work despite 005 claiming to have it.
+     * Disable MONITOR usage to fallback on ISON. */
+    use_monitor = 0;
+  }
 }
 
 /* 432 : Bad nickname (RESV)
@@ -1397,22 +1421,20 @@ static int gotmode(char *from, char *msg)
 static void end_burstmode();
 void irc_init();
 
-static void disconnect_server(int idx, int dolost)
+static void disconnect_server(int idx)
 {
+  server_online = 0;
   if ((serv != dcc[idx].sock) && serv >= 0)
     killsock(serv);
   if (dcc[idx].sock >= 0)
     killsock(dcc[idx].sock);
-
   dcc[idx].sock = -1;
   serv = -1;
-  servidx = -1;
-  server_online = 0;
-  use_monitor = 0;
-  cookies_disabled = false;
-  floodless = 0;
   botuserhost[0] = 0;
   botuserip[0] = 0; 
+  /* Features should have a struct that can be bzero'd */
+  use_monitor = 0;
+  floodless = 0;
   use_penalties = 0;
   use_354 = 0;
   deaf_char = 0;
@@ -1425,34 +1447,16 @@ static void disconnect_server(int idx, int dolost)
   have_cnotice = 0;
   use_flood_count = 0;
   modesperline = 0;
-  if (dolost) {
-    Auth::DeleteAll();
-    trying_server = 0;
-    lostdcc(idx);
-  }
+  trying_server = 0;
   end_burstmode();
-  if (reset_chans == 2)
-    irc_init();
-  reset_chans = 0;
   keepnick = 1;
-  /* Invalidate the cmd_swhois cache callback data */
-  for (int i = 0; i < dcc_total; i++) {
-    if (dcc[i].type && dcc[i].whois[0]) {
-      dcc[i].whois[0] = 0;
-      dcc[i].whowas = 0;
-    }
-  }
-
-  if (!segfaulted) //Avoid if crashed, too many free()/malloc() in here
-    for (struct chanset_t *chan = chanset; chan; chan = chan->next)
-      clear_channel(chan, 1);
-
 }
 
 static void eof_server(int idx)
 {
   putlog(LOG_SERV, "*", "Disconnected from %s (EOF)", dcc[idx].host);
-  disconnect_server(idx, DO_LOST);
+  disconnect_server(idx);
+  lostdcc(idx);
 }
 
 static void display_server(int idx, char *buf, size_t bufsiz)
@@ -1464,7 +1468,25 @@ static void connect_server(void);
 
 static void kill_server(int idx, void *x)
 {
-  disconnect_server(idx, NO_LOST);	/* eof_server will lostdcc() it. */
+  disconnect_server(idx);
+  Auth::DeleteAll();
+  if (reset_chans == 2) {
+    irc_init();
+  }
+  reset_chans = 0;
+  /* Invalidate the cmd_swhois cache callback data */
+  for (int i = 0; i < dcc_total; i++) {
+    if (dcc[i].type && dcc[i].whois[0]) {
+      dcc[i].whois[0] = 0;
+      dcc[i].whowas = 0;
+    }
+  }
+  if (!segfaulted) { //Avoid if crashed, too many free()/malloc() in here
+    for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
+      clear_channel(chan, 1);
+    }
+  }
+  servidx = -1;
   /* A new server connection will be automatically initiated in
      about 2 seconds. */
 }
@@ -1472,7 +1494,8 @@ static void kill_server(int idx, void *x)
 static void timeout_server(int idx)
 {
   putlog(LOG_SERV, "*", "Timeout: connect to %s", dcc[idx].host);
-  disconnect_server(idx, DO_LOST);
+  disconnect_server(idx);
+  lostdcc(idx);
 }
 
 static void server_activity(int, char *, int);
@@ -1680,7 +1703,7 @@ hide_chans(const char *nick, struct userrec *u, char *_channels, bool publicOnly
   struct chanset_t *chan = NULL;
   struct flag_record fr = { FR_CHAN | FR_GLOBAL, 0, 0, 0 };
 
-  char *chans = (char *) my_calloc(1, len), *p = NULL;
+  char *chans = (char *) calloc(1, len), *p = NULL;
 
   while ((chname = newsplit(&channels))[0]) {
     /* skip any modes in front of #chan */
@@ -1960,7 +1983,7 @@ static int got718(char *from, char *msg)
         dprintf(DP_HELP, "ACCEPT %s\n", nick);
         dprintf(DP_HELP, "PRIVMSG %s :You have been accepted. Please send your message again.\n", nick);
         if (fish_auto_keyx) {
-          keyx(nick);
+          keyx(nick, "Callerid accepted");
         }
       } else {
         putlog(LOG_WALL, "*", "(CALLERID) !%s! (%s!%s) %s (User is not +o or +v)", u->handle, nick, uhost, msg);
@@ -1988,6 +2011,7 @@ static cmd_t my_raw_binds[] =
   {"005",	"",	(Function) got005,		NULL, LEAF},
   {"302",       "",     (Function) got302,		NULL, LEAF},
   {"303",	"",	(Function) got303,		NULL, LEAF},
+  {"421",	"",	(Function) got421,		NULL, LEAF},
   {"432",	"",	(Function) got432,		NULL, LEAF},
   {"433",	"",	(Function) got433,		NULL, LEAF},
   {"437",	"",	(Function) got437,		NULL, LEAF},
@@ -2085,7 +2109,7 @@ static void connect_server(void)
     dcc[newidx].sock = -1;
     dcc[newidx].u.dns->cbuf = strdup(pass);
 
-    cycle_time = 15;		/* wait 15 seconds before attempting next server connect */
+    cycle_time = server_cycle_wait;		/* wait N seconds before attempting next server connect */
 
     /* I'm resolving... don't start another server connect request */
     resolvserv = 1;

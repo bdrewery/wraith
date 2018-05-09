@@ -75,8 +75,6 @@ static cache_t *irccache = NULL;
 #define do_eI (((now - chan->channel.last_eI) > 30) ? 1 : 0)
 
 static bind_table_t *BT_pub;
-static time_t wait_split = 900;    /* Time to wait for user to return from
-                                 * net-split. */
 int max_bans;                   /* Modified by net-type 1-4 */
 int max_exempts;
 int max_invites;
@@ -214,7 +212,7 @@ void set_devoice(struct chanset_t *chan, memberlist* m) {
 const char* punish_flooder(struct chanset_t* chan, memberlist* m, const char *reason) {
   if (channel_voice(chan) && chan->voice_moderate) {
     if (!chan_sentdevoice(m)) {
-      add_mode(chan, '-', 'v', m->nick);
+      add_mode(chan, '-', 'v', m);
       m->flags |= SENTDEVOICE;
       set_devoice(chan, m);
       return "devoicing";
@@ -303,7 +301,7 @@ void notice_invite(struct chanset_t *chan, char *handle, char *nick, char *uhost
 #ifdef CACHE
 static cache_t *cache_new(char *nick)
 {
-  cache_t *cache = (cache_t *) my_calloc(1, sizeof(cache_t));
+  cache_t *cache = (cache_t *) calloc(1, sizeof(cache_t));
 
   cache->next = NULL;
   strlcpy(cache->nick, nick, sizeof(cache->nick));
@@ -319,7 +317,7 @@ static cache_t *cache_new(char *nick)
 
 static cache_chan_t *cache_chan_add(cache_t *cache, char *chname)
 {
-  cache_chan_t *cchan = (cache_chan_t *) my_calloc(1, sizeof(cache_chan_t));
+  cache_chan_t *cchan = (cache_chan_t *) calloc(1, sizeof(cache_chan_t));
   
   cchan->next = NULL;
   strlcpy(cchan->dname, chname, sizeof(cchan->dname));
@@ -786,7 +784,7 @@ getin_request(char *botnick, char *code, char *par)
       else
         chan->channel.no_op = 0;
     }
-    do_op(nick, chan, 0, 1);
+    do_op(mem, chan, 0, 1);
 
     putlog(LOG_GETIN, "*", "opreq from %s/%s on %s - Opped", botnick, nick, chan->dname);
   } else if (what[0] == 'i') {
@@ -826,7 +824,7 @@ getin_request(char *botnick, char *code, char *par)
     if (chan->channel.mode & CHANKEY) {
       char *key = chan->channel.key[0] ? chan->channel.key : chan->key_prot;
       size_t siz = strlen(chan->dname) + strlen(key ? key : 0) + 6 + 1;
-      tmp = (char *) my_calloc(1, siz);
+      tmp = (char *) calloc(1, siz);
       simple_snprintf(tmp, siz, "gi K %s %s", chan->dname, key ? key : "");
       putbot(botnick, tmp);
       putlog(LOG_GETIN, "*", "inreq from %s/%s for %s - Sent key (%s)", botnick, nick, chan->dname, key ? key : "");
@@ -1127,7 +1125,7 @@ void
 my_setkey(struct chanset_t *chan, char *k)
 {
   free(chan->channel.key);
-  chan->channel.key = k ? strdup(k) : (char *) my_calloc(1, 1);
+  chan->channel.key = k ? strdup(k) : (char *) calloc(1, 1);
 }
 
 /* Adds a ban, exempt or invite mask to the list
@@ -1140,9 +1138,9 @@ new_mask(masklist *m, char *s, char *who)
   if (m->mask[0])
     return 1;                     /* Already existent mask */
 
-  m->next = (masklist *) my_calloc(1, sizeof(masklist));
+  m->next = (masklist *) calloc(1, sizeof(masklist));
   m->next->next = NULL;
-  m->next->mask = (char *) my_calloc(1, 1);
+  m->next->mask = (char *) calloc(1, 1);
   free(m->mask);
   m->mask = strdup(s);
   m->who = strdup(who);
@@ -1172,6 +1170,9 @@ killmember(struct chanset_t *chan, char *nick, bool cacheMember)
 
   if (cacheMember) {
     x->last = now;
+    x->user = NULL;
+    x->next = NULL;
+    x->tried_getuser = 0;
     // Don't delete here, will delete when it expires from the cache.
     (*chan->channel.cached_members)[x->userhost] = x;
   } else {
@@ -1195,7 +1196,7 @@ killmember(struct chanset_t *chan, char *nick, bool cacheMember)
     putlog(LOG_MISC, "*", "(!) actually I know of %d members.", chan->channel.members);
   }
   if (unlikely(!chan->channel.member)) {
-    chan->channel.member = (memberlist *) my_calloc(1, sizeof(memberlist));
+    chan->channel.member = (memberlist *) calloc(1, sizeof(memberlist));
     chan->channel.member->nick[0] = 0;
     chan->channel.member->next = NULL;
   }
@@ -1586,26 +1587,31 @@ check_expired_chanstuff(struct chanset_t *chan)
       }
 
       if (im_opped) {
-        if (dovoice(chan) && !loading) {      /* autovoice of +v users if bot is +y */
-          if (!chan_hasop(m) && !chan_hasvoice(m) && !chan_sentvoice(m)) {
+        if ((chan->role & (ROLE_OP|ROLE_VOICE)) && !loading && !chan_hasop(m)) {      /* autovoice of +v users if bot is +y */
+          get_user_flagrec(m->user, &fr, chan->dname, chan);
+
+          /* Autoop */
+          if ((chan->role & ROLE_OP) && !chan_sentop(m) && chk_autoop(m, fr, chan)) {
+            do_op(m, chan, 0, 0);
+          }
+
+          /* +v or +voice */
+          if ((chan->role & ROLE_VOICE) && !chan_hasvoice(m) && !chan_sentvoice(m)) {
             member_getuser(m, 1);
 
             if (m->user) {
-              get_user_flagrec(m->user, &fr, chan->dname, chan);
-              if (!glob_bot(fr)) {
-                if (!(m->flags & EVOICE) &&
-                    (
-                     /* +voice: Voice all clients who are not flag:+q. If the chan is +voicebitch, only op flag:+v clients */
-                     (channel_voice(chan) && !chk_devoice(fr) && (!channel_voicebitch(chan) || (channel_voicebitch(chan) && chk_voice(fr, chan)))) ||
-                     /* Or, if the channel is -voice but they still qualify to be voiced */
-                     (!channel_voice(chan) && !privchan(fr, chan, PRIV_VOICE) && chk_voice(fr, chan))
-                    )
-                   ) {
-                  add_mode(chan, '+', 'v', m->nick);
-                }
+              if (!(m->flags & EVOICE) &&
+                  (
+                   /* +voice: Voice all clients who are not flag:+q. If the chan is +voicebitch, only op flag:+v clients */
+                   (channel_voice(chan) && !chk_devoice(fr) && (!channel_voicebitch(chan) || (channel_voicebitch(chan) && chk_voice(fr, chan)))) ||
+                   /* Or, if the channel is -voice but they still qualify to be voiced */
+                   (!channel_voice(chan) && !privchan(fr, chan, PRIV_VOICE) && chk_voice(fr, chan))
+                  )
+                 ) {
+                add_mode(chan, '+', 'v', m);
               }
             } else if (!m->user && channel_voice(chan) && !channel_voicebitch(chan) && voice_ok(m, chan)) {
-              add_mode(chan, '+', 'v', m->nick);
+              add_mode(chan, '+', 'v', m);
             }
           }
         }
@@ -1621,7 +1627,7 @@ check_expired_chanstuff(struct chanset_t *chan)
       request_op(chan);
     }
 
-    if (role == 3) {
+    if (chan->role & ROLE_CHANMODE) {
       recheck_channel_modes(chan);
     }
   }
@@ -1716,11 +1722,11 @@ flush_modes()
         m->flags &= ~FULL_DELAY;
         if (chan_sentop(m)) {
           m->flags &= ~SENTOP;
-          do_op(m->nick, chan, 0, 0);
+          do_op(m, chan, 0, 0);
         }
         if (chan_sentvoice(m)) {
           m->flags &= ~SENTVOICE;
-          add_mode(chan, '+', 'v', m->nick);
+          add_mode(chan, '+', 'v', m);
         }
       }
     }
@@ -1775,6 +1781,113 @@ static void bot_release_nick (char *botnick, char *code, char *par) {
   release_nick(par);
 }
 
+static void rebalance_roles_chan(struct chanset_t* chan)
+{
+  bd::Array<bd::String> bots;
+  int *bot_bits;
+  short role;
+  size_t botcount, mappedbot, omappedbot, botidx, roleidx, rolecount;
+  struct flag_record fr = {FR_GLOBAL | FR_CHAN, 0, 0, 0 };
+  memberlist *m;
+
+  if (chan->needs_role_rebalance == 0) {
+    return;
+  }
+
+  if (channel_pending(chan) || !channel_active(chan) ||
+      !shouldjoin(chan) || (chan->channel.mode & CHANANON)) {
+    return;
+  }
+
+  /* Gather list of all bots in the channel. */
+  /* XXX: Keep this known in chan->bots */
+  for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+    if (!member_getuser(m) || !is_bot(m->user) || m->split) {
+      continue;
+    }
+
+    get_user_flagrec(m->user, &fr, chan->dname, chan);
+
+    /* Only consider bots that can be opped to be roled. */
+    if (!chk_op(fr, chan)) {
+      continue;
+    }
+    /* Only consider bots that have the roles feature. */
+    if (!(m->user->fflags & FEATURE_ROLES)) {
+      continue;
+    }
+    bots << m->user->handle;
+  }
+  botcount = bots.length();
+  if (botcount == 0)
+    return;
+  bot_bits = (int*)calloc(botcount, sizeof(bot_bits[0]));
+
+  for (roleidx = 0; role_counts[roleidx].name; roleidx++) {
+    /* Map this role to a bot */
+    omappedbot = mappedbot = roleidx % botcount;
+    rolecount = role_counts[roleidx].count;
+    role = role_counts[roleidx].role;
+
+    /* Does the mapped bot have the bit yet? If not, check next bot,
+     * on max restart at 0 but avoid looping back to start. */
+    while (rolecount > 0) {
+      if (!(bot_bits[mappedbot] & role)) {
+        bot_bits[mappedbot] |= role;
+        --rolecount;
+      }
+
+      /* Try next bot */
+      ++mappedbot;
+
+      /* Reached the end, wrap around. */
+      if (mappedbot == botcount) {
+        mappedbot = 0;
+      }
+      /* Reached original bot, cannot satisfy the role need. */
+      if (mappedbot == omappedbot) {
+        break;
+      }
+    }
+  }
+
+  /* Reset current bits */
+  chan->bot_roles->clear();
+  chan->role_bots->clear();
+
+  /* Take bitmask of assigned roles and apply to bots. */
+  for (botidx = 0; botidx < botcount; botidx++) {
+    if (bot_bits[botidx] != 0) {
+      (*chan->bot_roles)[bots[botidx]] = bot_bits[botidx];
+    }
+  }
+
+  /* Fill role_bots */
+  for (roleidx = 0; role_counts[roleidx].name; roleidx++) {
+    role = role_counts[roleidx].role;
+    /* Find all bots with this role */
+    for (botidx = 0; botidx < botcount; botidx++) {
+      if (bot_bits[botidx] & role) {
+        (*chan->role_bots)[role] << bots[botidx];
+      }
+    }
+  }
+
+  /* Set my own roles */
+  chan->role = (*chan->bot_roles)[conf.bot->nick];
+  free(bot_bits);
+  chan->needs_role_rebalance = 0;
+}
+
+static void rebalance_roles()
+{
+  struct chanset_t* chan = NULL;
+
+  for (chan = chanset; chan; chan = chan->next) {
+    rebalance_roles_chan(chan);
+  }
+}
+
 static cmd_t irc_bot[] = {
   {"gi", "", (Function) getin_request, NULL, LEAF},
   {"mr", "", (Function) mass_request, NULL, LEAF},
@@ -1786,6 +1899,7 @@ void
 irc_init()
 {
   timer_create_secs(60, "irc_minutely", (Function) irc_minutely);
+  timer_create_secs(10, "rebalance_roles", (Function) rebalance_roles);
 
   BT_pub = bind_table_add("pub", 5, "ssUss", MATCH_FLAGS, 0);
 

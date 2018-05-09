@@ -21,8 +21,8 @@ void check_timers();
 void check_utimers();
 void rmspace(char *s);
 void set_chanlist(const char *host, struct userrec *rec);
-void clear_chanlist(void);
 void clear_chanlist_member(const char *nick);
+#define clear_chanlist() clear_chanlist_member(NULL)
 bool bot_shouldjoin(struct userrec* , struct flag_record *, const struct chanset_t *, bool = 0);
 bool shouldjoin(const struct chanset_t *);
 char *samechans(const char *, const char *);
@@ -33,8 +33,13 @@ void load_internal_users();
 void setup_HQ(int);
 void privmsg(bd::String target, bd::String msg, int idx);
 void notice(bd::String target, bd::String msg, int idx);
-void keyx(const bd::String& target);
+void keyx(const bd::String& target, const char *);
 void set_fish_key(char *, bd::String);
+struct userrec *check_chanlist(const char *);
+struct userrec *check_chanlist_hand(const char *);
+memberlist *ismember(const struct chanset_t *, const char *);
+struct chanset_t *findchan(const char *name);
+struct chanset_t *findchan_by_dname(const char *name);
 
 extern struct chanset_t		*chanset, *chanset_default;
 extern char			admin[], origbotnick[HANDLEN + 1], origbotname[NICKLEN], jupenick[NICKLEN], botname[NICKLEN], *def_chanset;

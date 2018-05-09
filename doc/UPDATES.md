@@ -1,5 +1,73 @@
 # master
   * Require C++11 compiler support (G++ 4.7+, clang32+)
+  * Wraith now automatically assigns roles to bots for channels, no longer
+    requiring manually assigning them with flags +flry for flood, limit,
+    resolve, auto-voice, auto-op. These roles are decentralized and per-chan
+    such that net-splits and botnet-splits and multiple groups in 1 chan
+    will properly assign roles out to bots to not cause overlap. Only leaf
+    bots know which bots have which roles. (#39)
+  * Add cmd_roles (leaf only) to display roles for a channel. (#39)
+
+# maint
+  * Fix various compile warnings and spam
+  * Fix ptrace detection on OpenBSD (after 1.4.6 regression for the Linux fix)
+  * Update server list, 'set -yes servers -' and 'set -yes servers6 -' to get new list.
+  * Fix command executions.
+  * Fix OpenSSL 1.1 build (API) and forward-runtime (ABI) compatibility. (#116)
+  * Properly honor exemptions when kicking matched RBL clients
+  * Fix LASTON not being shared
+
+# 1.4.8
+  * Support Debian/Ubuntu's libssl1.0.0[:i386] package.
+  * Improve hints about OpenSSL library packages to install.
+  * Fix AddressSanitizer [1] being enabled by default causing 16TB+ of VM to be
+    used.  On most systems this was harmless since the memory was not actually
+    used.  This feature is still enabled by default for debug binaries.
+    [1] http://clang.llvm.org/docs/AddressSanitizer.html
+  * Fix './wraith -C' file being immediately modified when saving on
+    FreeBSD (#94)
+  * Support FreeBSD closefrom(2)
+  * Use vfork(2) in some places
+
+# 1.4.7
+  * Update server list, 'set -yes servers -' and 'set -yes servers6 -' to get new list.
+  * Fix Linux binary compat on FreeBSD due to lack of ptrace(2).
+  * Avoid warnings from Debian's FORTIFY_SOURCE
+  * Remove an old +take limiter that was forgotten.
+  * Use Linux's prctl(PR_SET_DUMPABLE) to disable core dumps and ptrace(2).
+  * Use FreeBSD 10's procctl(PROC_TRACE_CTL) to disable core dumps and tracing.
+  * Fix binary compat issue causing ptrace permission errors on Linux 3.4+
+  * Fix ban/exempt/invite masking not working with 10-char idents.
+  * Fallback to ISON if the server falsely claims to support MONITOR.
+  * Fix bot not auto-opping after just connecting.
+  * Fix invites not being applied in -dynamicinvites channels when +i is set.
+  * Fix not handling auto-op in minutely channel rechecks.
+  * Fix auto-voice and auto-op not applying after a nick change.
+  * Don't truncate bot's join time on .reset.
+  * Fix various small memory leaks.
+  * Fix case where .[bot]set would not share to new bots until their localhub
+    was relinked.
+  * Raise netsplit timeout to 1000 seconds and allow it to be configured with
+    'set wait-split' (#60).
+  * Indent BOTNET entries some in .whois.
+  * Disallow negative 'chanset limit' (#96).
+  * Raise server cycle time from 15 to 30 seconds and add
+    'set server-cycle-wait for configuring it. (#81)
+  * Show reason when initiating FiSH Key exchange
+  * Auto initiate FiSH key exchange (with fish-auto=1) when invalid message
+    received. (Invalid or unknown key) (#74)
+  * Show more clear error on Centos 7 that static-libstdc++ is required,
+    rather than an obscure Libcrypto error.
+  * Restrict 'chanset groups' to owners.
+  * Stop building the binary as i486.  Let it use modern x86/x86_64.
+  * Stop trying to regain jupenick when it is unavailable and main nick is
+    temporarily juped (#101).
+  * Fix bots not tracking groups for other bots.  This also fixes slowjoin
+    with groups.
+  * Fix bot forgetting its nick/jupenick during restart and reverting to
+    botnick if restarting in the middle of a server connect or attempted
+    NICK change that fails.
+  * Fix some various internal caching issues.
 
 # 1.4.6
   * Disable demo TCL support by default to prevent confusion during build.

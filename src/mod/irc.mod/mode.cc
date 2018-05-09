@@ -93,22 +93,24 @@ static size_t egg_strcatn(char *dst, const char *src, size_t max)
 }
 
 static bool
-do_op(char *nick, struct chanset_t *chan, bool delay, bool force)
+do_op(memberlist *m, struct chanset_t *chan, bool delay, bool force)
 {
-  memberlist *m = ismember(chan, nick);
-
   if (!me_op(chan) || !m || (!force && (chan_hasop(m) || chan_sentop(m))))
     return 0;
 
   if (delay) {
     m->delay = now + chan->auto_delay;
     m->flags |= SENTOP;
+    return 1;
   }
 
   if (channel_fastop(chan) || channel_take(chan) || cookies_disabled) {
-    add_mode(chan, '+', 'o', nick);
+    add_mode(chan, '+', 'o', m);
   } else if (!connect_bursting) {
-    add_cookie(chan, nick);
+    add_cookie(chan, m);
+  } else {
+    /* Failed to give the mode, so requeue it. */
+    do_op(m, chan, 1, 0);
   }
   return 1;
 }
@@ -334,15 +336,14 @@ flush_mode(struct chanset_t *chan, int pri)
 /* Queue a channel mode change
  */
 void
-real_add_mode(struct chanset_t *chan, const char plus, const char mode, const char *op, bool cookie)
+real_add_mode(struct chanset_t *chan, const char plus, const char mode, const char *op, bool cookie, memberlist *mx)
 {
   if (!me_op(chan))
     return;
 
-  memberlist *mx = NULL;
-
   if (mode == 'o' || mode == 'v') {
-    mx = ismember(chan, op);
+    if (!mx)
+      mx = ismember(chan, op);
     if (!mx)
       return;
     if (plus == '-' && mode == 'o') {
@@ -441,7 +442,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
         flush_mode(chan, NORMAL);
       for (i = 0; i < (modesperline - 1); i++)
         if (!chan->ccmode[i].op) {
-          chan->ccmode[i].op = (char *) my_calloc(1, len);
+          chan->ccmode[i].op = (char *) calloc(1, len);
           chan->cbytes += len;    /* Add 1 for safety */
           strlcpy(chan->ccmode[i].op, op, len);
           break;
@@ -456,7 +457,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
       for (i = 0; i < modesperline; i++)
         if (chan->cmode[i].type == 0) {
           chan->cmode[i].type = type;
-          chan->cmode[i].op = (char *) my_calloc(1, len);
+          chan->cmode[i].op = (char *) calloc(1, len);
           chan->bytes += len;     /* Add 1 for safety */
           strlcpy(chan->cmode[i].op, op, len);
           break;
@@ -469,7 +470,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
     if (chan->key)
       free(chan->key);
     len = strlen(op) + 1;
-    chan->key = (char *) my_calloc(1, len);
+    chan->key = (char *) calloc(1, len);
     strlcpy(chan->key, op, len);
   }
   /* -k ? store removed key */
@@ -477,7 +478,7 @@ real_add_mode(struct chanset_t *chan, const char plus, const char mode, const ch
     if (chan->rmkey)
       free(chan->rmkey);
     len = strlen(op) + 1;
-    chan->rmkey = (char *) my_calloc(1, len);
+    chan->rmkey = (char *) calloc(1, len);
     strlcpy(chan->rmkey, op, len);
   }
   /* +l ? store limit */
@@ -601,7 +602,7 @@ got_op(struct chanset_t *chan, memberlist *m, memberlist *mv)
         m->flags |= SENTDEOP;
 #endif
       if (num == 5) {
-        add_mode(chan, '-', 'o', m->nick);
+        add_mode(chan, '-', 'o', m);
       } else if (bitch && num == 6) {
         len = simple_snprintf(outbuf, sizeof(outbuf), "KICK %s %s :%s\r\n", chan->name, mv->nick, response(RES_BITCHOPPED));
         mv->flags |= SENTKICK;
@@ -609,7 +610,7 @@ got_op(struct chanset_t *chan, memberlist *m, memberlist *mv)
         len = simple_snprintf(outbuf, sizeof(outbuf), "KICK %s %s :%s\r\n", chan->name, m->nick, response(RES_BITCHOP));
         m->flags |= SENTKICK;
       } else
-        add_mode(chan, '-', 'o', mv->nick);
+        add_mode(chan, '-', 'o', mv);
 
       if (len)
         dprintf_real(DP_MODE_NEXT, outbuf, len, sizeof(outbuf));
@@ -617,13 +618,13 @@ got_op(struct chanset_t *chan, memberlist *m, memberlist *mv)
 
 
   } else if (reversing && !me_opped)
-    add_mode(chan, '-', 'o', mv->nick);
+    add_mode(chan, '-', 'o', mv);
 
   /* server op */
   if (!m && meop && !me_opped) {
     if (chk_deop(victim, chan) || (chan_bitch(chan) && !chk_op(victim, chan))) {
       mv->flags |= FAKEOP;
-      add_mode(chan, '-', 'o', mv->nick);
+      add_mode(chan, '-', 'o', mv);
     } 
   }
   mv->flags |= WASOP;
@@ -634,7 +635,7 @@ got_op(struct chanset_t *chan, memberlist *m, memberlist *mv)
     char *buf = NULL;
     size_t siz = strlen(chan->dname) + 3 + 1;
 
-    buf = my_calloc(1, siz);
+    buf = calloc(1, siz);
     simple_snprintf(buf, siz, "jn %s", chan->dname);
     putallbots(buf);
     free(buf);
@@ -678,11 +679,11 @@ got_deop(struct chanset_t *chan, memberlist *m, memberlist *mv, char *isserver)
            */
           (reversing && (!chan_bitch(chan) || chk_op(victim, chan))) ||
           /* Reop bots to avoid them needing to ask */
-          (role == 3 && mv->user && mv->user->bot && chk_op(victim, chan))
+          ((chan->role & ROLE_PROTECT) && mv->user && mv->user->bot && chk_op(victim, chan))
         )
        ) {
       /* Then we'll bless the victim */
-      do_op(mv->nick, chan, 0, 0);
+      do_op(mv, chan, 0, 0);
     }
   }
 
@@ -716,7 +717,7 @@ got_deop(struct chanset_t *chan, memberlist *m, memberlist *mv, char *isserver)
   } else {
     // Revenge kick clients that deop our bots
     if (chan->revenge && m && m != mv && mv->user && mv->user->bot && !(m->user && m->user->bot)) {
-      if (role < 5 && !chan_sentkick(m) && me_op(chan)) {
+      if ((chan->role & ROLE_REVENGE) && !chan_sentkick(m) && me_op(chan)) {
         m->flags |= SENTKICK;
         dprintf(DP_MODE_NEXT, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_REVENGE));
       } else {
@@ -763,7 +764,7 @@ got_ban(struct chanset_t *chan, memberlist *m, char *mask, char *isserver)
 
   // Revenge kick clients that ban our bots
   if (chan->revenge && m && matched_bot && !(m->user && m->user->bot)) {
-    if (role < 5 && !chan_sentkick(m)) {
+    if ((chan->role & ROLE_REVENGE) && !chan_sentkick(m)) {
       m->flags |= SENTKICK;
       dprintf(DP_MODE_NEXT, "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_REVENGE));
     } else {
@@ -1071,7 +1072,7 @@ gotmode(char *from, char *msg)
 
       int i = 0, modecnt = 0, ops = 0, deops = 0, bans = 0, unbans = 0;
       bool me_opped = 0;
-      char **modes = (char **) my_calloc(1, sizeof(char *));
+      char **modes = (char **) calloc(1, sizeof(char *));
       char s[UHOSTLEN] = "";
       memberlist *mv = NULL;
 
@@ -1098,11 +1099,11 @@ gotmode(char *from, char *msg)
             }
 
             /* Just want o's and b's */
-            modes = (char **) my_realloc(modes, (modecnt * sizeof(char *)) + sizeof(char *));
-            //      char **modes = (char **) my_calloc(modesperline + 1, sizeof(char *));
+            modes = (char **) realloc(modes, (modecnt * sizeof(char *)) + sizeof(char *));
+            //      char **modes = (char **) calloc(modesperline + 1, sizeof(char *));
 
             size_t siz = (mp ? strlen(mp) : 0) + 3 + 1;
-            modes[modecnt] = (char *) my_calloc(1, siz);
+            modes[modecnt] = (char *) calloc(1, siz);
             simple_snprintf(modes[modecnt], siz, "%c%c %s", sign, chg[0], mp ? mp : "");
 
             ++modecnt;
@@ -1137,10 +1138,10 @@ gotmode(char *from, char *msg)
       if (me_op(chan)) {
         char tmp[1024] = "";
 
-        if (!isserver[0] && role && (!u || (u && !u->bot))) {
+        if (!isserver[0] && chan->role && (!u || (u && !u->bot))) {
           if (m && deops >= 3) {
             if (chan->mdop) {
-              if (role < 5 && !chan_sentkick(m)) {
+              if ((chan->role & ROLE_PROTECT) && !chan_sentkick(m)) {
                 m->flags |= SENTKICK;
                 const size_t len = simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MASSDEOP));
                 dprintf_real(DP_MODE_NEXT, tmp, len, sizeof(tmp));
@@ -1160,7 +1161,7 @@ gotmode(char *from, char *msg)
           if (ops >= 3) {
             if (chan->mop) {
               if (m && !chan_sentkick(m)) {
-                if (role < 5) {
+                if ((chan->role & ROLE_PROTECT)) {
                   m->flags |= SENTKICK;
                   const size_t len = simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
                   dprintf_real(DP_MODE_NEXT, tmp, len, sizeof(tmp));
@@ -1182,7 +1183,6 @@ gotmode(char *from, char *msg)
           }
         }
         if (ops) {
-          int n = 0;
           /* Check cookies */
           if (u && m && u->bot && !channel_fastop(chan) && !channel_take(chan) && !cookies_disabled) {
             int isbadop = 0;
@@ -1259,48 +1259,32 @@ gotmode(char *from, char *msg)
           }
 
           /* manop */
-          if (chan->manop && u && !u->bot) {
-            i = 0;
+	  if (chan->manop && u && !u->bot) {
 
-            switch (role) {
-              case 0:
-                break;
-              case 1:
-                if (m) {
-                  /* Kick opper */
-                  if (!chan_sentkick(m)) {
-                    const size_t len = simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
-                    dprintf_real(DP_MODE_NEXT, tmp, len, sizeof(tmp));
-                    m->flags |= SENTKICK;
-                  }
-                  simple_snprintf(tmp, sizeof(tmp), "%s MODE %s %s", m->from, chan->dname, modes[modecnt - 1]);
-                  deflag_user(u, DEFLAG_EVENT_MANUALOP, tmp, chan);
-                }
-                break;
-              default:
-                /* KICK the opped */
-                n = role - 1;
-                i = 0;
-                while ((i < modecnt) && (n > 0)) {
-                  if (modes[i] && !strncmp(modes[i], "+o", 2))
-                    n--;
-                  if (n)
-                    i++;
-                }
-                if (!n) {
-                  for (i = 0; i < modecnt; i++) {
-                    if (msign == '+' && mmode == 'o' && !match_my_nick(mparam)) {
-                      mv = ismember(chan, mparam);
-                      if (!mv || !chan_sentkick(mv)) {
-                        if (mv)
-                          mv->flags |= SENTKICK;
-                        const size_t len = simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, mparam, kickprefix, response(RES_MANUALOPPED));
-                        dprintf_real(DP_MODE_NEXT, tmp, len, sizeof(tmp));
-                      }
-                    }
-                  }
-                }
-            }
+	    if (m && (chan->role & ROLE_PROTECT)) {
+	      /* Kick opper */
+	      if (!chan_sentkick(m)) {
+		const size_t len = simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, m->nick, kickprefix, response(RES_MANUALOP));
+		dprintf_real(DP_MODE_NEXT, tmp, len, sizeof(tmp));
+		m->flags |= SENTKICK;
+	      }
+	      simple_snprintf(tmp, sizeof(tmp), "%s MODE %s %s", m->from, chan->dname, modes[modecnt - 1]);
+	      deflag_user(u, DEFLAG_EVENT_MANUALOP, tmp, chan);
+	    }
+
+	    if (chan->role & ROLE_KICK) {
+	      for (i = 0; i < modecnt; i++) {
+		if (msign == '+' && mmode == 'o' && !match_my_nick(mparam)) {
+		  mv = ismember(chan, mparam);
+		  if (!mv || !chan_sentkick(mv)) {
+		    if (mv)
+		      mv->flags |= SENTKICK;
+		    const size_t len = simple_snprintf(tmp, sizeof(tmp), "KICK %s %s :%s%s\r\n", chan->name, mparam, kickprefix, response(RES_MANUALOPPED));
+		    dprintf_real(DP_MODE_NEXT, tmp, len, sizeof(tmp));
+		  }
+		}
+	      }
+	    }
           }
         }
       }
@@ -1315,7 +1299,7 @@ gotmode(char *from, char *msg)
         } else if (!chan_hasop(m) && !channel_nodesynch(chan)) {
           if (u && u->bot && chk_op(user, chan)) {
             putlog(LOG_MODES, ch, "Mode change by friendly non-chanop on %s!  Opping...", ch);
-            do_op(m->nick, chan, 0, 0);
+            do_op(m, chan, 0, 0);
           } else {
             putlog(LOG_MODES, ch, "Mode change by non-chanop on %s!  Reversing...", ch);
             dprintf(DP_MODE, "KICK %s %s :%sAbusing desync\n", ch, m->nick, kickprefix);
@@ -1489,9 +1473,9 @@ gotmode(char *from, char *msg)
                 mv->flags |= CHANVOICE;
                 if (channel_active(chan) && dovoice(chan)) {
                   if (dv || chk_devoice(victim) || (channel_voicebitch(chan) && !chk_voice(victim, chan))) {
-                    add_mode(chan, '-', 'v', mparam);
+                    add_mode(chan, '-', 'v', mv);
                   } else if (reversing) {
-                    add_mode(chan, '-', 'v', mparam);
+                    add_mode(chan, '-', 'v', mv);
                   }
                 }
               } else if (msign == '-') {
@@ -1500,9 +1484,9 @@ gotmode(char *from, char *msg)
                 if (channel_active(chan) && dovoice(chan) && !chan_hasop(mv)) {
                   /* revoice +v users */
                   if (chk_voice(victim, chan)) {
-                    add_mode(chan, '+', 'v', mparam);
+                    add_mode(chan, '+', 'v', mv);
                   } else if (reversing) {
-                    add_mode(chan, '+', 'v', mparam);
+                    add_mode(chan, '+', 'v', mv);
                     /* if they arent +v|v and VOICER is m+ then EVOICE them */
                   } else {
                     if (!match_my_nick(nick) && channel_voice(chan) &&
