@@ -120,7 +120,7 @@ bd::String script_bind(const bd::String type, const bd::String flags,
     bind_entry_t *old_entry = bind_entry_lookup(table, -1, mask.c_str(),
         name.c_str(), (Function) script_bind_callback);
     /* There's an old entry that needs to have its callback_data freed first. */
-    if (old_entry->client_data)
+    if (old_entry && old_entry->client_data)
       _bind_callback_datas.remove(
           static_cast<struct script_callback*>(old_entry->client_data));
   }
