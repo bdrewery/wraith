@@ -176,7 +176,7 @@ struct chan_t {
   bd::HashTable<bd::String, bd::HashTable<flood_t, int> >         *floodnum; //  floodnum[uhost][FLOOD_PRIVMSG] = 1;
 
   // Member caching to cache cyclers
-  bd::HashTable<bd::String, memberlist*> *cached_members;
+  bd::HashTable<bd::String, memberlist*> cached_members;
 
   bd::HashTable<RfcString, memberlist*> hashed_members;
 };

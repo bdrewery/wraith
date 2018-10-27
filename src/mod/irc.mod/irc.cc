@@ -1180,9 +1180,9 @@ killmember(struct chanset_t *chan, char *nick, bool cacheMember)
     x->next = NULL;
     x->tried_getuser = 0;
     // Don't delete here, will delete when it expires from the cache.
-    (*chan->channel.cached_members)[x->userhost] = x;
+    chan->channel.cached_members[x->userhost] = x;
   } else {
-    chan->channel.cached_members->remove(x->userhost);
+    chan->channel.cached_members.remove(x->userhost);
     delete_member(x);
   }
 
@@ -1215,8 +1215,8 @@ killmember(struct chanset_t *chan, char *nick, bool cacheMember)
 static void member_update_from_cache(struct chanset_t* chan, memberlist *m) {
   // Are they in the cache?
   const bd::String userhost(m->userhost);
-  if (chan->channel.cached_members->contains(userhost)) {
-    memberlist *cached_member = (*chan->channel.cached_members)[userhost];
+  if (chan->channel.cached_members.contains(userhost)) {
+    memberlist *cached_member = chan->channel.cached_members[userhost];
 
     // Update important flood tracking information
     swap(m->floodtime, cached_member->floodtime);
@@ -1229,7 +1229,7 @@ static void member_update_from_cache(struct chanset_t* chan, memberlist *m) {
 
     // No longer need the cached member
     delete_member(cached_member);
-    chan->channel.cached_members->remove(userhost);
+    chan->channel.cached_members.remove(userhost);
   }
 }
 
@@ -1638,17 +1638,17 @@ check_expired_chanstuff(struct chanset_t *chan)
     }
   }
   // Clear out expired cached members
-  if (chan->channel.cached_members && chan->channel.cached_members->size()) {
-    bd::Array<bd::String> member_uhosts(chan->channel.cached_members->keys());
+  if (chan->channel.cached_members.size()) {
+    bd::Array<bd::String> member_uhosts(chan->channel.cached_members.keys());
     for (size_t i = 0; i < member_uhosts.length(); ++i) {
       const bd::String uhost(member_uhosts[i]);
 
-      m = (*chan->channel.cached_members)[uhost];
+      m = chan->channel.cached_members[uhost];
 
       // Delete the expired member
       if (now - m->last > wait_split) {
         delete_member(m);
-        chan->channel.cached_members->remove(uhost);
+        chan->channel.cached_members.remove(uhost);
       }
     }
   }
