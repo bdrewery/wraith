@@ -178,7 +178,7 @@ struct chan_t {
   // Member caching to cache cyclers
   bd::HashTable<bd::String, memberlist*> *cached_members;
 
-  bd::HashTable<RfcString, memberlist*> *hashed_members;
+  bd::HashTable<RfcString, memberlist*> hashed_members;
 };
 
 #define CHANINV    BIT0		/* +i					*/

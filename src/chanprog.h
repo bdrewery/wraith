@@ -47,7 +47,7 @@ static inline memberlist *
 ismember(const struct chanset_t *chan, const RfcString nick) {
   if (!chan || !nick || !nick[0])
     return NULL;
-  return (*chan->channel.hashed_members)[nick];
+  return chan->channel.hashed_members[nick];
 }
 static inline memberlist *
 ismember(const struct chanset_t *chan, const char *nick) {
