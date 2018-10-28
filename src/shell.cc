@@ -775,7 +775,7 @@ void werr(int errnum)
   exit(1); // This is never reached, done for gcc() warnings
 }
 
-char *homedir(bool useconf)
+const char *homedir(bool useconf)
 {
   static char homedir_buf[PATH_MAX] = "";
 
@@ -791,7 +791,7 @@ char *homedir(bool useconf)
   return homedir_buf[0] ? homedir_buf : NULL;
 }
 
-char *my_username()
+const char *my_username()
 {
   static char username[DIRMAX] = "";
 
