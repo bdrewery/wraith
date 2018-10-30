@@ -99,7 +99,7 @@ Auth *Auth::Find(const char *_host) noexcept
   return NULL;
 }
 
-static void auth_clear_users_block(const bd::String key, Auth* auth, void *param)
+static void auth_clear_users_block(const bd::String& key, Auth* auth)
 {
   if (auth->user) {
     sdprintf(STR("Clearing USER for auth: (%s!%s) [%s]"), auth->nick,
@@ -111,16 +111,16 @@ static void auth_clear_users_block(const bd::String key, Auth* auth, void *param
 void Auth::NullUsers(const char *nick) noexcept
 {
   if (nick == NULL) {
-    ht_host.each(auth_clear_users_block);
-  } else {
-    if (ht_nick.contains(nick)) {
-      Auth *auth = ht_nick[nick];
-      auth_clear_users_block(nick, auth, NULL);
+    for (auto& kv : ht_host) {
+      auth_clear_users_block(kv.first, kv.second);
     }
+  } else if (ht_nick.contains(nick)) {
+    Auth* auth = ht_nick[nick];
+    auth_clear_users_block(nick, auth);
   }
 }
 
-static void auth_fill_users_block(const bd::String key, Auth* auth, void* param)
+static void auth_fill_users_block(const bd::String& key, Auth* auth)
 {
   char from[NICKLEN + UHOSTLEN];
 
@@ -133,48 +133,48 @@ static void auth_fill_users_block(const bd::String key, Auth* auth, void* param)
 void Auth::FillUsers(const char *nick) noexcept
 {
   if (nick == NULL) {
-    ht_host.each(auth_fill_users_block);
-  } else {
-    if (ht_nick.contains(nick)) {
-      Auth *auth = ht_nick[nick];
-      auth_fill_users_block(nick, auth, NULL);
+    for (auto& kv : ht_host) {
+      auth_fill_users_block(kv.first, kv.second);
     }
+  } else if (ht_nick.contains(nick)) {
+    Auth *auth = ht_nick[nick];
+    auth_fill_users_block(nick, auth);
   }
 }
 
-
-static void auth_expire_block(const bd::String key, Auth* auth, void* param)
-{
-  if (auth->Authed() && ((now - auth->atime) >= (60 * 60))) {
-    Auth::ht_host.remove(key);
-    Auth::ht_nick.remove(auth->nick);
-    delete auth;
-  }
-}
 
 void Auth::ExpireAuths() noexcept
 {
-  if (!ischanhub())
+  if (!ischanhub() || ht_host.size() == 0)
     return;
+  std::vector<bd::String> expired_hosts;
+  expired_hosts.reserve(ht_host.size());
 
-  ht_host.each(auth_expire_block);
-}
-
-static void auth_delete_all_block(const bd::String, Auth* auth, void* param)
-{
-  putlog(LOG_DEBUG, "*", STR("Removing (%s!%s) [%s], from auth list."),
-      auth->nick, auth->host, auth->user ? auth->user->handle : "*");
-  delete auth;
+  for (const auto& kv : ht_host) {
+    const bd::String& host = kv.first;
+    const Auth* auth = kv.second;
+    if (auth->Authed() && ((now - auth->atime) >= (60 * 60))) {
+      expired_hosts.push_back(host);
+      Auth::ht_nick.remove(auth->nick);
+    }
+  }
+  for (const auto& host : expired_hosts) {
+    Auth::ht_host.remove(host);
+  }
 }
 
 void Auth::DeleteAll() noexcept
 {
-  if (ischanhub()) {
-    putlog(LOG_DEBUG, "*", STR("Removing auth entries."));
-    ht_host.each(auth_delete_all_block);
-    ht_host.clear();
-    ht_nick.clear();
+  if (!ischanhub())
+    return;
+  putlog(LOG_DEBUG, "*", STR("Removing auth entries."));
+  for (const auto& kv : ht_host) {
+    const Auth* auth = kv.second;
+    putlog(LOG_DEBUG, "*", STR("Removing (%s!%s) [%s], from auth list."),
+        auth->nick, auth->host, auth->user ? auth->user->handle : "*");
   }
+  ht_host.clear();
+  ht_nick.clear();
 }
 
 void Auth::InitTimer() noexcept
@@ -243,19 +243,15 @@ sdprintf(STR("GETIDX: auth: %s, idx: %d"), nick, idx);
   return 0;
 }
 
-static void auth_tell_block(const bd::String key, Auth* auth, void* param)
-{
-  long lparam = (long) param;
-  int idx = (int) lparam;
-
-  dprintf(idx, "(%s!%s) [%s] authtime: %li, atime: %li, Status: %d\n", auth->nick, 
-        auth->host, auth->user ? auth->user->handle : "*",
-        (long)auth->authtime, (long)auth->atime, auth->Status());
-}
-
 void Auth::TellAuthed(int idx) noexcept
 {
-  ht_host.each(auth_tell_block, (void *) (long) idx);
+  for (const auto& kv : ht_host) {
+    const Auth* auth = kv.second;
+    dprintf(idx, "(%s!%s) [%s] authtime: %li, atime: %li, Status: %d\n",
+        auth->nick,
+        auth->host, auth->user ? auth->user->handle : "*",
+        (long)auth->authtime, (long)auth->atime, auth->Status());
+  }
 }
 
 void makehash(struct userrec *u, const char *randstring, char *out, size_t out_size)
