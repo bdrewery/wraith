@@ -38,31 +38,55 @@
 
 #include "stat.h"
 
-bd::HashTable<bd::String, Auth*> Auth::ht_host(10);
-bd::HashTable<bd::String, Auth*> Auth::ht_nick(10);
+bd::HashTable<bd::String, AuthSharedPtr> Auth::ht_host(10);
+bd::HashTable<bd::String, AuthSharedPtr> Auth::ht_nick(10);
 
 Auth::Auth(const char *_nick, const char *_host, struct userrec *u)
 {
   Status(AUTHING);
-  strlcpy(nick, _nick, NICKLEN);
-  strlcpy(host, _host, UHOSTLEN);
+  strlcpy(nick, _nick, sizeof(nick));
+  strlcpy(host, _host, sizeof(host));
   user = u;
-
-  ht_host[host] = this;
-  ht_nick[_nick] = this;
-
-  sdprintf(STR("New auth created! (%s!%s) [%s]"), nick, host,
-      u ? u->handle : "*");
   authtime = atime = now;
   idx = -1;
 }
 
+Auth::Auth(const Auth* auth)
+{
+  Status(auth->status);
+  strlcpy(nick, auth->nick, sizeof(nick));
+  strlcpy(host, auth->host, sizeof(host));
+  user = auth->user;
+  authtime = auth->authtime;
+  idx = auth->idx;
+}
+
+AuthSharedPtr
+Auth::Create(const char* nick, const char* host, struct userrec* u)
+{
+  auto auth = std::make_shared<Auth>(nick, host, u);
+
+  ht_host[host] = auth;
+  ht_nick[nick] = auth;
+
+  sdprintf(STR("New auth created! (%s!%s) [%s]"), nick, host,
+      u ? u->handle : "*");
+  return auth;
+}
+
+void
+Auth::Delete(AuthSharedPtr auth)
+{
+  sdprintf(STR("Removing auth: (%s!%s) [%s]"), auth->nick, auth->host,
+      auth->user ? auth->user->handle : "*");
+  ht_host.remove(auth->host);
+  ht_nick.remove(auth->nick);
+}
+
 Auth::~Auth()
 {
-  sdprintf(STR("Removing auth: (%s!%s) [%s]"), nick, host,
+  sdprintf(STR("Deleting auth: (%s!%s) [%s]"), nick, host,
       user ? user->handle : "*");
-  ht_host.remove(host);
-  ht_nick.remove(nick);
 }
 
 void Auth::MakeHash() noexcept
@@ -83,23 +107,24 @@ void Auth::NewNick(const char *newnick) noexcept
   if (ht_nick.contains(nick)) {
     Auth::ht_nick.remove(nick);
   }
-  strlcpy(nick, newnick, NICKLEN);
-  ht_nick[newnick] = this;
+  sdprintf(STR("Renaming auth: %s -> (%s!%s) [%s]"), nick, newnick, host,
+      user ? user->handle : "*");
+  strlcpy(nick, newnick, sizeof(nick));
+  ht_nick[newnick] = std::make_shared<Auth>(this);
 }
 
-Auth *Auth::Find(const char *_host) noexcept
+AuthSharedPtr Auth::Find(const char *_host) noexcept
 {
 
-  if (ht_host.contains(_host)) {
-    Auth *auth = ht_host[_host];
-    sdprintf(STR("Found auth: (%s!%s) [%s]"), auth->nick, auth->host,
-        auth->user ? auth->user->handle : "*");
-    return auth;
-  }
-  return NULL;
+  if (!ht_host.contains(_host))
+    return NULL;
+  auto auth = ht_host[_host];
+  sdprintf(STR("Found auth: (%s!%s) [%s]"), auth->nick, auth->host,
+      auth->user ? auth->user->handle : "*");
+  return auth;
 }
 
-static void auth_clear_users_block(const bd::String& key, Auth* auth)
+static void auth_clear_users_block(const bd::String& key, AuthSharedPtr auth)
 {
   if (auth->user) {
     sdprintf(STR("Clearing USER for auth: (%s!%s) [%s]"), auth->nick,
@@ -115,12 +140,12 @@ void Auth::NullUsers(const char *nick) noexcept
       auth_clear_users_block(kv.first, kv.second);
     }
   } else if (ht_nick.contains(nick)) {
-    Auth* auth = ht_nick[nick];
+    auto auth = ht_nick[nick];
     auth_clear_users_block(nick, auth);
   }
 }
 
-static void auth_fill_users_block(const bd::String& key, Auth* auth)
+static void auth_fill_users_block(const bd::String& key, AuthSharedPtr auth)
 {
   char from[NICKLEN + UHOSTLEN];
 
@@ -137,7 +162,7 @@ void Auth::FillUsers(const char *nick) noexcept
       auth_fill_users_block(kv.first, kv.second);
     }
   } else if (ht_nick.contains(nick)) {
-    Auth *auth = ht_nick[nick];
+    auto auth = ht_nick[nick];
     auth_fill_users_block(nick, auth);
   }
 }
@@ -152,8 +177,10 @@ void Auth::ExpireAuths() noexcept
 
   for (const auto& kv : ht_host) {
     const bd::String& host = kv.first;
-    const Auth* auth = kv.second;
+    const auto auth = kv.second;
     if (auth->Authed() && ((now - auth->atime) >= (60 * 60))) {
+      putlog(LOG_DEBUG, "*", STR("Auth (%s!%s) [%s] expired."),
+          auth->nick, auth->host, auth->user ? auth->user->handle : "*");
       expired_hosts.push_back(host);
       Auth::ht_nick.remove(auth->nick);
     }
@@ -169,7 +196,7 @@ void Auth::DeleteAll() noexcept
     return;
   putlog(LOG_DEBUG, "*", STR("Removing auth entries."));
   for (const auto& kv : ht_host) {
-    const Auth* auth = kv.second;
+    const auto auth = kv.second;
     putlog(LOG_DEBUG, "*", STR("Removing (%s!%s) [%s], from auth list."),
         auth->nick, auth->host, auth->user ? auth->user->handle : "*");
   }
@@ -246,7 +273,7 @@ sdprintf(STR("GETIDX: auth: %s, idx: %d"), nick, idx);
 void Auth::TellAuthed(int idx) noexcept
 {
   for (const auto& kv : ht_host) {
-    const Auth* auth = kv.second;
+    const auto auth = kv.second;
     dprintf(idx, "(%s!%s) [%s] authtime: %li, atime: %li, Status: %d\n",
         auth->nick,
         auth->host, auth->user ? auth->user->handle : "*",
@@ -270,7 +297,7 @@ void makehash(struct userrec *u, const char *randstring, char *out, size_t out_s
   OPENSSL_cleanse(hash, sizeof(hash));
 }
 
-int check_auth_dcc(Auth *auth, const char *cmd, const char *par)
+int check_auth_dcc(AuthSharedPtr auth, const char *cmd, const char *par)
 {
   return real_check_bind_dcc(cmd, auth->idx, par, auth);
 }

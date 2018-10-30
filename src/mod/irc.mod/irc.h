@@ -118,7 +118,7 @@ void my_setkey(struct chanset_t *, char *);
 void force_join_chan(struct chanset_t* chan, int idx = DP_MODE);
 void join_chan(struct chanset_t* chan, int idx = DP_MODE);
 
-int check_bind_authc(char *, Auth *, char *, char *);
+int check_bind_authc(char *, AuthSharedPtr, char *, char *);
 void notice_invite(struct chanset_t *, char *, char *, char *, bool);
 void real_add_mode(struct chanset_t *, const char, const char, const char *, bool, memberlist *);
 inline void add_mode(struct chanset_t *chan, const char plus, const char mode,

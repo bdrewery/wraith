@@ -168,7 +168,8 @@ int check_bind_dcc(const char *cmd, int idx, const char *text)
   return real_check_bind_dcc(cmd, idx, text, NULL);
 }
 
-int real_check_bind_dcc(const char *cmd, int idx, const char *text, Auth *auth)
+int real_check_bind_dcc(const char *cmd, int idx, const char *text,
+    const AuthSharedPtr auth)
 {
   struct flag_record fr = {FR_GLOBAL | FR_CHAN | FR_ANYCH, 0, 0, 0 };
   bind_entry_t *entry = NULL;

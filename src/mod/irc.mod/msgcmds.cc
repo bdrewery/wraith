@@ -291,7 +291,7 @@ static int msg_invite(char *nick, char *host, struct userrec *u, char *par)
   return BIND_RET_BREAK;
 }
 
-static void logc(const char *cmd, Auth *a, char *chname, char *par)
+static void logc(const char *cmd, AuthSharedPtr a, char *chname, char *par)
 {
   if (chname && chname[0])
     putlog(LOG_CMDS, "*", "(%s!%s) !%s! %s %c%s %s", a->nick, a->host,
@@ -318,7 +318,7 @@ static int msg_authstart(char *nick, char *host, struct userrec *u, char *par)
 
   putlog(LOG_CMDS, "*", STR("(%s!%s) !%s! AUTH?"), nick, host, u->handle);
 
-  Auth *auth = Auth::Find(host);
+  auto auth = Auth::Find(host);
 
   if (auth) {
     if (auth->Authed()) {
@@ -326,7 +326,7 @@ static int msg_authstart(char *nick, char *host, struct userrec *u, char *par)
       return 0;
     }
   } else
-    auth = new Auth(nick, host, u);
+    auth = Auth::Create(nick, host, u);
 
   /* Send "auth." if they are recognized, otherwise "auth!" */
   auth->Status(AUTH_PASS);
@@ -338,7 +338,7 @@ static int msg_authstart(char *nick, char *host, struct userrec *u, char *par)
 }
 
 static void
-AuthFinish(Auth *auth)
+AuthFinish(AuthSharedPtr auth)
 {
   putlog(LOG_CMDS, "*", STR("(%s!%s) !%s! +AUTH"), auth->nick, auth->host, auth->user ? auth->user->handle : "*");
   auth->Done();
@@ -356,7 +356,7 @@ static int msg_auth(char *nick, char *host, struct userrec *u, char *par)
   if (u && u->bot)
     return BIND_RET_BREAK;
 
-  Auth *auth = Auth::Find(host);
+  auto auth = Auth::Find(host);
 
   if (!auth || auth->Status() != AUTH_PASS || !u)
     return BIND_RET_BREAK;
@@ -378,7 +378,7 @@ static int msg_auth(char *nick, char *host, struct userrec *u, char *par)
     }
   } else {
     putlog(LOG_CMDS, "*", STR("(%s!%s) !%s! failed AUTH"), nick, host, u->handle);
-    delete auth;
+    Auth::Delete(auth);
   }
   return BIND_RET_BREAK;
 
@@ -392,7 +392,7 @@ static int msg_pls_auth(char *nick, char *host, struct userrec *u, char *par)
     if (u && u->bot)
       return BIND_RET_BREAK;
 
-    Auth *auth = Auth::Find(host);
+    auto auth = Auth::Find(host);
 
     if (!auth || auth->Status() != AUTH_HASH)
       return BIND_RET_BREAK;
@@ -406,7 +406,7 @@ static int msg_pls_auth(char *nick, char *host, struct userrec *u, char *par)
       notice(nick, STR("Invalid hash."), DP_HELP);
       simple_snprintf(s, sizeof(s), "*!%s", host);
       addignore(s, origbotname, STR("Invalid auth hash."), now + (60 * ignore_time));
-      delete auth;
+      Auth::Delete(auth);
     } 
     return BIND_RET_BREAK;
   }
@@ -420,12 +420,12 @@ static int msg_unauth(char *nick, char *host, struct userrec *u, char *par)
   if (u && u->bot)
     return BIND_RET_BREAK;
 
-  Auth *auth = Auth::Find(host);
+  auto auth = Auth::Find(host);
 
   if (!auth)
     return BIND_RET_BREAK;
 
-  delete auth;
+  Auth::Delete(auth);
   notice(nick, STR("You are now unauthorized."), DP_HELP);
   putlog(LOG_CMDS, "*", STR("(%s!%s) !%s! UNAUTH"), nick, host, u->handle);
 

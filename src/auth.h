@@ -4,6 +4,7 @@
 #  include "crypt.h"
 #include <bdlib/src/String.h>
 #include <bdlib/src/HashTable.h>
+#include <memory>
 
 #define AUTHED	    1
 #define AUTHING     2
@@ -12,9 +13,14 @@
 #define AUTH_HASH   4
 #define AUTH_BDHASH 5
 
-class Auth {
+class Auth;
+typedef std::shared_ptr<Auth> AuthSharedPtr;
+class Auth :
+  public std::enable_shared_from_this<Auth>
+{
   public:
   Auth(const char *, const char *, struct userrec * = NULL);
+  Auth(const Auth*);
   ~Auth();
 
   inline int Status(void) const noexcept __attribute__((pure)) {
@@ -32,7 +38,9 @@ class Auth {
   void Done() noexcept;
   void NewNick(const char *nick) noexcept;
 
-  static Auth *Find(const char * host) noexcept __attribute__((pure));
+  static AuthSharedPtr Create(const char *, const char *, struct userrec * = NULL);
+  static void Delete(AuthSharedPtr);
+  static AuthSharedPtr Find(const char * host) noexcept __attribute__((pure));
   static void NullUsers(const char *nick = NULL) noexcept;
   static void FillUsers(const char *nick = NULL) noexcept;
   static void ExpireAuths() noexcept;
@@ -49,8 +57,8 @@ class Auth {
   char nick[NICKLEN];
   char host[UHOSTLEN];
 
-  static bd::HashTable<bd::String, Auth*> ht_host;
-  static bd::HashTable<bd::String, Auth*> ht_nick;
+  static bd::HashTable<bd::String, AuthSharedPtr> ht_host;
+  static bd::HashTable<bd::String, AuthSharedPtr> ht_nick;
 
   private:
   int status;
@@ -58,6 +66,6 @@ class Auth {
 
 void makehash(struct userrec *u, const char *randstring, char *out, size_t out_size);
 
-int check_auth_dcc(Auth *, const char *, const char *);
+int check_auth_dcc(AuthSharedPtr , const char *, const char *);
 
 #endif /* !_AUTH_H */

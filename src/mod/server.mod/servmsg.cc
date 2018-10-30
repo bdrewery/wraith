@@ -755,7 +755,7 @@ static int gotmsg(char *from, char *msg)
       }
     } else {
       char *my_code = NULL;
-      Auth *auth = NULL;
+      AuthSharedPtr auth = NULL;
      
       if (auth_prefix[0])
         auth = Auth::Find(uhost);

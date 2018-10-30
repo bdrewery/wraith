@@ -1667,7 +1667,7 @@ irc_minutely()
 }
 
 
-int check_bind_authc(char *cmd, Auth *a, char *chname, char *par)
+int check_bind_authc(char *cmd, AuthSharedPtr a, char *chname, char *par)
 {
   struct flag_record fr = { FR_GLOBAL | FR_CHAN, 0, 0, 0 };
   int x = 0;

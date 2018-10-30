@@ -3074,7 +3074,7 @@ static int gotnick(char *from, char *msg)
   irc_log(NULL, "[%s] Nick change: %s -> %s", samechans(nick, ","), nick, msg);
   clear_chanlist_member(nick);	/* Cache for nick 'nick' is meaningless now. */
 
-  Auth *auth = Auth::Find(uhost);
+  auto auth = Auth::Find(uhost);
   if (auth)
     auth->NewNick(msg);
 
@@ -3395,7 +3395,7 @@ static int gotmsg(char *from, char *msg)
         fword = newsplit(&my_msg);	/* now this will be the command */
       /* is it a cmd? */
       if (auth_prefix[0] && fword && fword[0] && fword[1] && ((botmatch && fword[0] != auth_prefix[0]) || (fword[0] == auth_prefix[0]))) {
-        Auth *auth = Auth::Find(uhost);
+        auto auth = Auth::Find(uhost);
         if (auth && auth->Authed()) {
           if (fword[0] == auth_prefix[0])
             fword++;
