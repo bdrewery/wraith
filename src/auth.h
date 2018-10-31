@@ -2,6 +2,7 @@
 #  define _AUTH_H
 
 #  include "crypt.h"
+#include "RfcString.h"
 #include <bdlib/src/String.h>
 #include <bdlib/src/HashTable.h>
 #include <memory>
@@ -36,11 +37,12 @@ class Auth :
   }
   bool GetIdx(const char *) noexcept;
   void Done() noexcept;
-  void NewNick(const char *nick) noexcept;
+  void NewNick(const RfcString& nick) noexcept;
 
   static AuthSharedPtr Create(const char *, const char *, struct userrec * = NULL);
   static void Delete(AuthSharedPtr);
-  static AuthSharedPtr Find(const char * host) noexcept __attribute__((pure));
+  static AuthSharedPtr Find(const char*) noexcept __attribute__((pure));
+  static AuthSharedPtr Find(const RfcString&) noexcept __attribute__((pure));
   static void NullUsers(const char *nick = NULL) noexcept;
   static void FillUsers(const char *nick = NULL) noexcept;
   static void ExpireAuths() noexcept;
@@ -58,7 +60,7 @@ class Auth :
   char host[UHOSTLEN];
 
   static bd::HashTable<bd::String, AuthSharedPtr> ht_host;
-  static bd::HashTable<bd::String, AuthSharedPtr> ht_nick;
+  static bd::HashTable<RfcString, AuthSharedPtr> ht_nick;
 
   private:
   int status;

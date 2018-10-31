@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include "chan.h"
 #include "tandem.h"
+#include "RfcString.h"
 #include "src/mod/server.mod/server.h"
 #include <bdlib/src/String.h>
 #include <bdlib/src/HashTable.h>
@@ -39,7 +40,7 @@
 #include "stat.h"
 
 bd::HashTable<bd::String, AuthSharedPtr> Auth::ht_host(10);
-bd::HashTable<bd::String, AuthSharedPtr> Auth::ht_nick(10);
+bd::HashTable<RfcString, AuthSharedPtr> Auth::ht_nick(10);
 
 Auth::Auth(const char *_nick, const char *_host, struct userrec *u)
 {
@@ -87,6 +88,7 @@ Auth::~Auth()
 {
   sdprintf(STR("Deleting auth: (%s!%s) [%s]"), nick, host,
       user ? user->handle : "*");
+  Auth::Delete(std::make_shared<Auth>(this));
 }
 
 void Auth::MakeHash() noexcept
@@ -102,15 +104,18 @@ void Auth::Done() noexcept
   Status(AUTHED);
 }
 
-void Auth::NewNick(const char *newnick) noexcept
+void Auth::NewNick(const RfcString& newnick) noexcept
 {
-  if (ht_nick.contains(nick)) {
-    Auth::ht_nick.remove(nick);
-  }
-  sdprintf(STR("Renaming auth: %s -> (%s!%s) [%s]"), nick, newnick, host,
-      user ? user->handle : "*");
-  strlcpy(nick, newnick, sizeof(nick));
-  ht_nick[newnick] = std::make_shared<Auth>(this);
+  if (!ht_nick.contains(nick))
+    return;
+  auto auth = ht_nick[nick];
+  assert(auth.get() == this);
+  ht_nick.remove(nick);
+  sdprintf(STR("Renaming auth: %s -> (%s!%s) [%s]"), nick, newnick.c_str(),
+      host, user ? user->handle : "*");
+  strlcpy(nick, newnick.c_str(), sizeof(nick));
+  /* XXX: This seems bogus no? */
+  ht_nick[newnick] = auth;
 }
 
 AuthSharedPtr Auth::Find(const char *_host) noexcept
@@ -119,6 +124,17 @@ AuthSharedPtr Auth::Find(const char *_host) noexcept
   if (!ht_host.contains(_host))
     return NULL;
   auto auth = ht_host[_host];
+  sdprintf(STR("Found auth: (%s!%s) [%s]"), auth->nick, auth->host,
+      auth->user ? auth->user->handle : "*");
+  return auth;
+}
+
+AuthSharedPtr Auth::Find(const RfcString& _nick) noexcept
+{
+
+  if (!ht_nick.contains(_nick))
+    return NULL;
+  auto auth = ht_nick[_nick];
   sdprintf(STR("Found auth: (%s!%s) [%s]"), auth->nick, auth->host,
       auth->user ? auth->user->handle : "*");
   return auth;
