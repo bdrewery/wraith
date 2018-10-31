@@ -81,7 +81,7 @@ void Auth::Done() noexcept
 void Auth::NewNick(const char *newnick) noexcept
 {
   if (ht_nick.contains(nick)) {
-    Auth::ht_nick.remove(nick);
+    ht_nick.remove(nick);
   }
   strlcpy(nick, newnick, NICKLEN);
   ht_nick[newnick] = this;
@@ -149,20 +149,30 @@ void Auth::ExpireAuths() noexcept
     return;
   std::vector<bd::String> expired_hosts;
   expired_hosts.reserve(ht_host.size());
+  //std::vector<const Auth*> delete_auths;
+  //delete_auths.reserve(ht_host.size());
 
-  for (const auto& kv : ht_host) {
+  for (auto& kv : ht_host) {
     const bd::String& host = kv.first;
-    const Auth* auth = kv.second;
-    if (auth->Authed() && ((now - auth->atime) >= (60 * 60))) {
+    auto& auth = kv.second;
+    if (auth->Authed() && ((now - auth->atime) >= (60 * 1))) {
       putlog(LOG_DEBUG, "*", STR("Auth (%s!%s) [%s] expired."),
           auth->nick, auth->host, auth->user ? auth->user->handle : "*");
       expired_hosts.push_back(host);
-      Auth::ht_nick.remove(auth->nick);
+      ht_nick.remove(auth->nick);
+      //delete_auths.push_back(auth);
+      delete auth;
+      auth = NULL;
     }
   }
   for (const auto& host : expired_hosts) {
-    Auth::ht_host.remove(host);
+    ht_host.remove(host);
   }
+#if 0
+  for (const auto& auth : delete_auths) {
+    delete auth;
+  }
+#endif
 }
 
 void Auth::DeleteAll() noexcept
@@ -170,10 +180,12 @@ void Auth::DeleteAll() noexcept
   if (!ischanhub())
     return;
   putlog(LOG_DEBUG, "*", STR("Removing auth entries."));
-  for (const auto& kv : ht_host) {
-    const Auth* auth = kv.second;
+  for (auto& kv : ht_host) {
+    auto& auth = kv.second;
     putlog(LOG_DEBUG, "*", STR("Removing (%s!%s) [%s], from auth list."),
         auth->nick, auth->host, auth->user ? auth->user->handle : "*");
+    delete auth;
+    auth = NULL;
   }
   ht_host.clear();
   ht_nick.clear();

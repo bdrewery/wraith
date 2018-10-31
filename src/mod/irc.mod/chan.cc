@@ -3089,6 +3089,7 @@ static int gotnick(char *from, char *msg)
 
   for (struct chanset_t *chan = chanset; chan; chan = chan->next) {
     m = ismember(chan, rfc_nick);
+    //assert(m != NULL);
 
     if (m) {
       m->user = u;
@@ -3281,6 +3282,7 @@ static int gotmsg(char *from, char *msg)
   nick = splitnick(&uhost);
 
   memberlist *m = ismember(chan, nick);
+  assert(m != NULL);
 
   /* Only check if flood-ctcp is active */
   if (m && flood_ctcp.count && detect_avalanche(msg)) {

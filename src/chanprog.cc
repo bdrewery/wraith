@@ -139,6 +139,7 @@ struct userrec *check_chanlist_hand(const char *hand)
 
   for (chan = chanset; chan; chan = chan->next)
     for (m = chan->channel.member; m && m->nick[0]; m = m->next)
+  /* XXX: hashed_users ? */
       if (m->user && !strcasecmp(m->user->handle, hand))
 	return m->user;
   return NULL;
@@ -156,6 +157,7 @@ void clear_chanlist_member(const char *nick)
 
   for (chan = chanset; chan; chan = chan->next) {
     for (m = chan->channel.member; m && m->nick[0]; m = m->next) {
+  /* XXX: ismember? */
       if (nick == NULL || !rfc_casecmp(m->nick, nick)) {
 	m->user = NULL;
         m->tried_getuser = 0;
