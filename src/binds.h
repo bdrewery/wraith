@@ -71,8 +71,8 @@ void kill_binds(void);
 int check_bind(bind_table_t *table, const char *match, struct flag_record *flags, ...);
 int check_bind_hits(bind_table_t *table, const char *match, struct flag_record *flags, int *hits, ...);
 
-bd::Array<bd::String> bind_tables();
-bd::Array<bd::String> bind_entries(const bind_table_t* table, const bd::String mask);
+bd::Array<bd::String> bind_tables() __attribute__((pure));
+bd::Array<bd::String> bind_entries(const bind_table_t* table, const bd::String mask) __attribute__((pure));
 bind_table_t *bind_table_add(const char *name, int nargs, const char *syntax, int match_type, int flags);
 void bind_table_del(bind_table_t *table);
 bind_table_t *bind_table_lookup(const char *name) __attribute__((pure));
