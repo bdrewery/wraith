@@ -29,7 +29,6 @@
 #include "main.h"
 #include "libtcl.h"
 #include <bdlib/src/String.h>
-#include <bdlib/src/Array.h>
 #include <bdlib/src/HashTable.h>
 #include <bdlib/src/ScriptInterpTCL.h>
 
@@ -55,9 +54,9 @@ int init_script() {
 }
 
 int unload_script() {
-  bd::Array< bd::String > keys(ScriptInterps.keys());
-  for (size_t i = 0; i < keys.length(); ++i) {
-    delete ScriptInterps[keys[i]];
+  for (const auto& kv : ScriptInterps) {
+    auto& si = kv.second;
+    delete si;
   }
   ScriptInterps.clear();
   return 1;
@@ -74,14 +73,14 @@ template void script_link_var(const bd::String& name, bd::String& data, bd::Scri
 
 template <typename T>
 void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook_t var_hook_func) {
-  bd::Array<bd::String> interps(ScriptInterps.keys());
-
-  for (auto key : interps) {
-    switch (ScriptInterps[key]->type()) {
+  for (const auto& kv : ScriptInterps) {
+    auto& si = kv.second;
+    switch (si->type()) {
       // This type hacking is done due to not being able to have templated virtual functions
       case bd::ScriptInterp::SCRIPT_TYPE_TCL:
         ContextNote("TCL", name.c_str());
-        (static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]))->linkVar(name, data, var_hook_func);
+        static_cast<bd::ScriptInterpTCL*>(si)->linkVar(name, data,
+            var_hook_func);
         break;
     }
   }

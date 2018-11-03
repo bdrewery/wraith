@@ -30,13 +30,13 @@ int unload_script();
 
 template<typename ReturnType, typename... Params>
 void script_add_command(const bd::String& cmdName, ReturnType(*callback)(Params...), const char* usage = nullptr, size_t minParams = sizeof...(Params)) {
-  bd::Array<bd::String> interps(ScriptInterps.keys());
-
-  for (auto key : interps) {
-    switch (ScriptInterps[key]->type()) {
+  for (const auto& kv : ScriptInterps) {
+    auto& si = kv.second;
+    switch (si->type()) {
       // This type hacking is done due to not being able to have templated virtual functions
       case bd::ScriptInterp::SCRIPT_TYPE_TCL:
-        bd::ScriptInterp::createCommand(*static_cast<bd::ScriptInterpTCL*>(ScriptInterps[key]), cmdName, callback, usage, minParams);
+        bd::ScriptInterp::createCommand(*static_cast<bd::ScriptInterpTCL*>(si),
+            cmdName, callback, usage, minParams);
         break;
     }
   }
