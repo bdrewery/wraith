@@ -30,10 +30,14 @@
 
 void logidx(int, const char *, ...) __attribute__((format(printf, 2, 3)));
 void putlog (int, const char *, const char *, ...) __attribute__((format(printf, 3, 4)));
-int logmodes(const char *);
+int logmodes(const char *) __attribute__((pure));
 char *masktype(int);
 char *maskname(int);
+#if 0
 void irc_log(struct chanset_t *, const char *, ...) __attribute__((format(printf, 2, 3)));
+#else
+#define irc_log(...) do {} while (0)
+#endif
 void logfile(int type, const char *msg);
 
 extern int		conmask;

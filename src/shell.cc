@@ -740,6 +740,8 @@ const char *werr_tostr(int errnum)
     return STR("Too many bots defined. 5 max. Too many will lead to klines.\nSpread out into multiple accounts/shells/ip ranges.");
   case ERR_LIBS:
     return STR("Failed to load required libraries.\nEnsure that 32bit glibc, OpenSSL and libgcc are installed.\nhttps://github.com/wraith/wraith/wiki/Binary-Compatibiliy");
+  case ERR_ALREADYINIT:
+    return STR("Binary settings already written.");
   default:
     return STR("Unforseen error");
   }
@@ -775,7 +777,7 @@ void werr(int errnum)
   exit(1); // This is never reached, done for gcc() warnings
 }
 
-char *homedir(bool useconf)
+const char *homedir(bool useconf)
 {
   static char homedir_buf[PATH_MAX] = "";
 
@@ -791,7 +793,7 @@ char *homedir(bool useconf)
   return homedir_buf[0] ? homedir_buf : NULL;
 }
 
-char *my_username()
+const char *my_username()
 {
   static char username[DIRMAX] = "";
 

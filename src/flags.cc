@@ -307,7 +307,7 @@ build_flags(char *string, struct flag_record *plus, struct flag_record *minus)
 
 /* Returns 1 if flags match, 0 if they don't. */
 int
-flagrec_ok(struct flag_record *req, struct flag_record *have)
+flagrec_ok(const struct flag_record *req, const struct flag_record *have)
 {
   if (req->match & FR_AND) {
     return flagrec_eq(req, have);
@@ -328,7 +328,7 @@ flagrec_ok(struct flag_record *req, struct flag_record *have)
 
 /* Returns 1 if flags match, 0 if they don't. */
 int
-flagrec_eq(struct flag_record *req, struct flag_record *have)
+flagrec_eq(const struct flag_record *req, const struct flag_record *have)
 {
   if (req->match & FR_AND) {
     if (req->match & FR_GLOBAL) {
@@ -485,15 +485,49 @@ real_chk_op(const struct flag_record fr, const struct chanset_t *chan, bool botb
   return 0;
 }
 
-int
-chk_autoop(memberlist *m, const struct flag_record fr, const struct chanset_t *chan)
+static int
+chk_homechan_user_op(const memberlist *m, const struct chanset_t *chan)
 {
-  if (glob_bot(fr) || !chan || !m->user || u_pass_match(m->user, "-"))
+  struct chanset_t *homechan_chan = NULL;
+  memberlist *homechan_m = NULL;
+
+  if (!homechan[0] || channel_take(chan))
     return 0;
-  if (!channel_take(chan) && !privchan(fr, chan, PRIV_OP) && chk_op(fr, chan) && !chk_deop(fr, chan)) {
+  if (!(homechan_chan = findchan_by_dname(homechan)))
+    return 0;
+  if (homechan_chan == chan)
+    return 0;
+  if (!(homechan_m = ismember(homechan_chan, *m->rfc_nick)))
+    return 0;
+  if (chan_hasop(homechan_m))
+    return 1;
+  return 0;
+}
+
+
+int
+chk_autoop(const memberlist *m, const struct flag_record fr, const struct chanset_t *chan)
+{
+  if (glob_bot(fr) || !chan || (m->user && u_pass_match(m->user, "-")) ||
+      channel_take(chan) || privchan(fr, chan, PRIV_OP) || chk_deop(fr, chan))
+    return 0;
+  if (chk_op(fr, chan) || (chan->homechan_user == HOMECHAN_USER_OP &&
+        chk_homechan_user_op(m, chan))) {
     if (channel_autoop(chan) || chan_autoop(fr) || glob_autoop(fr))
       return 1;
   }
+  return 0;
+}
+
+int
+chk_voice(const memberlist *m, const struct flag_record fr, const struct chanset_t *chan)
+{
+  if (!chan || privchan(fr, chan, PRIV_VOICE) || chk_devoice(fr))
+    return 0;
+  if (chan_voice(fr) || (glob_voice(fr) && !chan_quiet(fr)) ||
+      (chan->homechan_user == HOMECHAN_USER_VOICE &&
+       chk_homechan_user_op(m, chan)))
+    return 1;
   return 0;
 }
 
@@ -604,6 +638,20 @@ whois_access(struct userrec *user, struct userrec *whois_user)
      )
     return 0;
   return 1;
+}
+
+homechan_user_t homechan_user_translate(const char *buf)
+{
+  if (str_isdigit(buf))
+    return (static_cast<homechan_user_t>(atoi(buf)));
+
+  if (!strcasecmp(buf, "none"))
+    return HOMECHAN_USER_NONE;
+  else if (!strcasecmp(buf, "voice"))
+    return HOMECHAN_USER_VOICE;
+  else if (!strcasecmp(buf, "op"))
+    return HOMECHAN_USER_OP;
+  return HOMECHAN_USER_NONE;
 }
 
 deflag_t deflag_translate(const char *buf)

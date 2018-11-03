@@ -102,7 +102,7 @@ static variable_t vars[] = {
  VAR("flood-msg",	&flood_msg,		VAR_RATE|VAR_NOLHUB,				0, 0, "5:60"),
  VAR("groups",		groups,			VAR_STRING|VAR_LIST|VAR_NOLHUB,			0, 0, "main"),
  VAR("hijack",		&hijack,		VAR_INT|VAR_DETECTED|VAR_PERM,			0, 4, "die"),
- VAR("homechan",	homechan,		VAR_WORD|VAR_NOLOC|VAR_HIDE,			0, 0, NULL),
+ VAR("homechan",	homechan,		VAR_WORD|VAR_NOLOC,				0, 0, NULL),
  VAR("ident-botnick",   &ident_botnick,		VAR_INT|VAR_BOOL|VAR_NOLHUB,			0, 1, "0"),
  VAR("in-bots",		&in_bots,		VAR_INT|VAR_NOLOC,				1, MAX_BOTS, "2"),
  VAR("irc-autoaway",	&irc_autoaway,		VAR_INT|VAR_NOLHUB|VAR_BOOL,			0, 1, "1"),
@@ -143,7 +143,7 @@ static variable_t vars[] = {
 };
 
 
-static inline variable_t *var_get_var_by_name(const char *name);
+static inline variable_t *var_get_var_by_name(const char *name) __attribute__((pure));
 
 static const char* get_server_type()
 {
@@ -383,8 +383,7 @@ sdprintf("var (mem): %s -> %s", var->name, datain ? datain : "(NULL)");
       if (server_online && should_reset_monitor)
         rehash_monitor_list();
     }
-    if (olddata)
-      free(olddata);
+    free(olddata);
   } else if (var->flags & VAR_RATE) {
     char *p = NULL;
     
@@ -416,7 +415,7 @@ sdprintf("var (mem): %s -> %s", var->name, datain ? datain : "(NULL)");
     // Need to reload the server settings since we may want a different list now
     sdprintf("server-use-ssl changed, reprocessing server list");
     variable_t *servers = var_get_var_by_name(get_server_type());
-    var_set_mem(servers, servers->ldata ? servers->ldata : servers->gdata ? servers->gdata : NULL);
+    var_set_mem(servers, servers->ldata ? servers->ldata : servers->gdata);
   }
 
   // Check if should part/join channels based on groups changing
@@ -428,8 +427,7 @@ sdprintf("var (mem): %s -> %s", var->name, datain ? datain : "(NULL)");
     }
   }
 
-  if (datap)
-    free(datap);
+  free(datap);
 
 //  if (var->changed)
 //    var->changed(var);
@@ -527,14 +525,16 @@ static int comp_variable_t(const void *m1, const void *m2) {
   return strcasecmp(mi1->name, mi2->name);
 }
 
-static inline variable_t *var_get_var_by_name(const char *name)
+static inline variable_t *
+var_get_var_by_name(const char *name)
 {
   variable_t key;
   key.name = name;
   return (variable_t*) bsearch(&key, &vars, lengthof(vars) - 1, sizeof(variable_t), comp_variable_t);
 }
 
-const char *var_get_gdata(const char *name) {
+const char *
+var_get_gdata(const char *name) {
   variable_t* var = var_get_var_by_name(name);
   return var && var->gdata ? var->gdata : NULL;
 }
@@ -594,8 +594,8 @@ void var_set(variable_t *var, const char *target, const char *datain)
   if (target) {
     if (!strcasecmp(conf.bot->nick, target)) {
       domem = 1;				/* always set the mem if it's local */
-      if (var->ldata)
-        free(var->ldata);
+      free(var->ldata);
+      var->ldata = NULL;
 
 #ifdef DEBUG
 sdprintf("var: %s (local): %s", var->name, data ? data : "(NULL)");
@@ -606,13 +606,13 @@ sdprintf("var: %s (local): %s", var->name, data ? data : "(NULL)");
         var->ldata = NULL;
       /* if ldata is blank, see about setting the memory to the global setting... */
       if (domem && var->mem)
-        var_set_mem(var, var->ldata ? var->ldata : var->gdata ? var->gdata : NULL);
+        var_set_mem(var, var->ldata ? var->ldata : var->gdata);
     } 
   } else if (target == NULL) {
     if (var->ldata)
       domem = 0;
-    if (var->gdata)
-      free(var->gdata);
+    free(var->gdata);
+    var->gdata = NULL;
 #ifdef DEBUG
 sdprintf("var: %s (global): %s", var->name, data ? data : "(NULL)");
 #endif
@@ -630,8 +630,7 @@ sdprintf("var: %s (global): %s", var->name, data ? data : "(NULL)");
   }
 //  if (freedata)
 //    free(data);
-  if (sdata)
-    free(sdata);
+  free(sdata);
 }
 
 void var_set_by_name(const char *target, const char *name, const char *data)
@@ -674,7 +673,9 @@ const char *var_get_str_by_name(const char *name)
   return NULL;
 }
 
-void *var_get_by_name(const char *name)
+#if 0
+void *
+var_get_by_name(const char *name)
 {
   variable_t *var = NULL;
 
@@ -683,6 +684,7 @@ void *var_get_by_name(const char *name)
 
   return NULL;
 }
+#endif
 
 void init_vars()
 {
@@ -795,9 +797,9 @@ static bool var_find_list(const char *botnick, variable_t *var, const char *elem
 
   if (botnick) {                          //fetch data from bot's USERENTRY_SET
     char *botdata = (char *) var_get_bot_data(get_user_by_handle(userlist, (char *) botnick), var->name);
-    olddata = botdata ? botdata : NULL;
+    olddata = botdata;
   } else                                  //use global, no bot specified
-    olddata = var->gdata ? var->gdata : NULL;
+    olddata = var->gdata;
 
   if (!olddata)
     return false;
@@ -832,9 +834,9 @@ static int var_add_list(const char *botnick, variable_t *var, const char *elemen
 
   if (botnick) {                          //fetch data from bot's USERENTRY_SET
     botdata = (char *) var_get_bot_data(get_user_by_handle(userlist, (char *) botnick), var->name, true);
-    olddata = botdata ? botdata : NULL;
+    olddata = botdata;
   } else                                  //use global, no bot specified
-    olddata = var->gdata ? var->gdata : NULL;
+    olddata = var->gdata;
 
   /* Append to the olddata if there...*/
   size_t osiz = olddata ? strlen(olddata) : 0;
@@ -865,9 +867,9 @@ static char *var_rem_list(const char *botnick, variable_t *var, const char *elem
 
   if (botnick) {                          //fetch data from bot's USERENTRY_SET
     botdata = (char *) var_get_bot_data(get_user_by_handle(userlist, (char *) botnick), var->name);
-    olddatacp = botdata ? botdata : NULL;
+    olddatacp = botdata;
   } else                                  //use global, no bot specified
-    olddatacp = var->gdata ? var->gdata : NULL;
+    olddatacp = var->gdata;
 
   if (!olddatacp)
     return 0;
@@ -948,9 +950,9 @@ static void display_set_value(int idx, const variable_t *var, const char *botnic
   if (botnick) {				//fetch data from bot's USERENTRY_SET
     struct userrec *botu = get_user_by_handle(userlist, (char *) botnick);
     const char *botdata = var_get_bot_data(botu, var->name);
-    data = botdata ? botdata : NULL;
+    data = botdata;
   } else {					//use global, no bot specified
-    data = var->gdata ? var->gdata : NULL;
+    data = var->gdata;
   }
 
   if (format) {
@@ -1080,9 +1082,9 @@ int cmd_set_real(const char *botnick, int idx, char *par)
          ) {		//Just display the data
         if (botnick) {				//fetch data from bot's USERENTRY_SET
           botdata = var_get_bot_data(botu, var->name);
-          data = botdata ? botdata : NULL;
+          data = botdata;
         } else 					//use global, no bot specified
-          data = var->gdata ? var->gdata : NULL;
+          data = var->gdata;
        
         if (list && data)
           var_print_list(idx, var->name, data);
@@ -1196,8 +1198,7 @@ int cmd_set_real(const char *botnick, int idx, char *par)
 
       display_set_value(idx, var, botnick);
 
-      if (sdata)
-        free(sdata);
+      free(sdata);
     }
     return 1;
   }

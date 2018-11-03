@@ -7,8 +7,21 @@
     will properly assign roles out to bots to not cause overlap. Only leaf
     bots know which bots have which roles. (#39)
   * Add cmd_roles (leaf only) to display roles for a channel. (#39)
+  * Add 'chanset homechan-user [nothing/voice/op]' to auto-voice or auto-op
+    clients who are opped in 'set homechan'.
+  * Some small performance improvements.
+  * CPRIVMSG/CNOTICE/TIME/TOPIC/OPER should end connection bursting on ratbox.
+  * Fix server connect bursting for joining channels with help from other bots.
+  * Tweak server connect burst to progress quicker.
 
 # maint
+  * Clear FiSH keys when a client quits.
+  * Fix crash when clearing last botset entry for a bot.
+  * Bots now share channel key to other bots even if not opped.
+  * Fix rare issue with writing binary config.
+  * Make ./wraith -q and -Q clearly exit when already written.
+
+# 1.4.9
   * Fix various compile warnings and spam
   * Fix ptrace detection on OpenBSD (after 1.4.6 regression for the Linux fix)
   * Update server list, 'set -yes servers -' and 'set -yes servers6 -' to get new list.
@@ -16,6 +29,8 @@
   * Fix OpenSSL 1.1 build (API) and forward-runtime (ABI) compatibility. (#116)
   * Properly honor exemptions when kicking matched RBL clients
   * Fix LASTON not being shared
+  * Fix OpenBSD eg++ detection
+  * Add LibreSSL support
 
 # 1.4.8
   * Support Debian/Ubuntu's libssl1.0.0[:i386] package.

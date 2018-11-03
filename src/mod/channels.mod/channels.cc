@@ -577,7 +577,8 @@ static void get_mode_protect(struct chanset_t *chan, char *s, size_t ssiz)
 
 /* Returns true if this is one of the channel masks
  */
-bool ismodeline(masklist *m, const char *username)
+bool
+ismodeline(const masklist *m, const char *username)
 {
   for (; m && m->mask[0]; m = m->next)  
     if (!rfc_casecmp(m->mask, username))
@@ -587,29 +588,12 @@ bool ismodeline(masklist *m, const char *username)
 
 /* Returns true if user matches one of the masklist -- drummer
  */
-bool ismasked(masklist *m, const char *username)
+bool
+ismasked(const masklist *m, const char *username)
 {
   for (; m && m->mask[0]; m = m->next)
     if (wild_match(m->mask, (char *) username))
       return 1;
-  return 0;
-}
-
-/* Unlink chanset element from chanset list.
- */
-static inline bool chanset_unlink(struct chanset_t *chan)
-{
-  struct chanset_t *c_old = NULL;
-
-  for (struct chanset_t *c = chanset; c; c_old = c, c = c->next) {
-    if (c == chan) {
-      if (c_old)
-	c_old->next = c->next;
-      else
-	chanset = c->next;
-      return 1;
-    }
-  }
   return 0;
 }
 
@@ -624,7 +608,8 @@ void remove_channel(struct chanset_t *chan)
      irc_log(chan, "Parting");
      /* Remove the channel from the list, so that noone can pull it
         away from under our feet during the check_part() call. */
-     chanset_unlink(chan);
+     list_delete((struct list_type **) &chanset, (struct list_type *) chan);
+     chanset_by_dname.remove(chan->dname);
 
     /* Using chan->name is important here, especially for !chans <cybah> */
     if (!conf.bot->hub && shouldjoin(chan) && chan->name[0])

@@ -16,7 +16,7 @@ EGG_SAVE_PARAMETERS
 dnl Search for newer gcc versions before older
 #AC_REQUIRE_CPP
 AC_LANG([C++])
-AC_PROG_CXX([g++6 g++5 g++49 g++-4.9 g++48 g++-4.8 g++47 g++-4.7 g++46 g++-4.6 g++ c++ CC cxx cc++])
+AC_PROG_CXX([g++8 g++7 g++6 g++5 g++49 g++-4.9 g++48 g++-4.8 g++47 g++-4.7 g++46 g++-4.6 eg++ g++ c++ CC cxx cc++])
 CC="${CXX} -x c"
 AC_SUBST(CC)
 AC_REQUIRE_CPP
@@ -50,8 +50,10 @@ fi
 CXX_FLAG_CHECK_LINK([DEBCXXFLAGS], [-fsanitize=address], [fsanitize_address])
 if [[ "${ax_cv_prog_cc_fsanitize_address}" = "yes" ]]; then
   DEBLDFLAGS="${DEBLDFLAGS} -fsanitize=address"
+  DEBCXXFLAGS="${DEBCXXFLAGS} -D__SANITIZE_ADDRESS__"
 fi
 CXX_FLAG_CHECK([DEBCXXFLAGS], [-fstack-protector-all], [stackprotectorall])
+CXX_FLAG_CHECK([DEBCXXFLAGS], [-Wsuggest-attribute=pure -Wsuggest-attribute=const], [wsuggest_attribute])
 CXX_FLAG_CHECK([DEBCXXFLAGS], [-Wconditional-uninitialized], [w_conditional_uninitialized])
 CXX_FLAG_CHECK([LDFLAGS], [-static-libstdc++], [static_libstdcxx])
 #CXX_FLAG_CHECK([LDFLAGS], [-static-libgcc], [static_libgcc])

@@ -5,6 +5,8 @@
 #include <bdlib/src/String.h>
 #include <bdlib/src/HashTable.h>
 
+class RfcString;
+
 #define AUTHED	    1
 #define AUTHING     2
 /* These are what we are expecting back from the user */
@@ -14,23 +16,32 @@
 
 class Auth {
   public:
-  Auth(const char *, const char *, struct userrec * = NULL);
+  Auth(const RfcString&, const char *, struct userrec * = NULL);
   ~Auth();
 
-  int Status(int newstat = -1) { if (newstat >= 0) { status = newstat; } return status; }
-  void MakeHash();
-  bool Authed() { return (status == AUTHED); }
-  bool GetIdx(const char *);
-  void Done();
-  void NewNick(const char *nick);
+  inline int Status(void) const noexcept __attribute__((pure)) {
+    return status;
+  }
+  int Status(int newstat) noexcept {
+    status = newstat;
+    return Status();
+  }
+  void MakeHash() noexcept;
+  bool Authed() const noexcept __attribute__((pure)) {
+    return (status == AUTHED);
+  }
+  bool GetIdx(const char *) noexcept;
+  void Done() noexcept;
+  void NewNick(const RfcString&) noexcept;
 
-  static Auth *Find(const char * host);
-  static void NullUsers(const char *nick = NULL);
-  static void FillUsers(const char *nick = NULL);
-  static void ExpireAuths();
-  static void InitTimer();
-  static void DeleteAll();
-  static void TellAuthed(int);
+  static Auth *Find(const char * host) noexcept __attribute__((pure));
+  static void NullUsers(const RfcString&) noexcept;
+  static void NullUsers(void) noexcept;
+  static void FillUsers(void) noexcept;
+  static void ExpireAuths() noexcept;
+  static void InitTimer() noexcept;
+  static void DeleteAll() noexcept;
+  static void TellAuthed(int) noexcept;
 
   struct userrec *user;
   time_t authtime;              /* what time they authed at */
@@ -38,11 +49,11 @@ class Auth {
   int idx;			/* do they have an associated idx? */
   char hash[MD5_HASH_LENGTH + 1];       /* used for dcc authing */
   char rand[51];
-  char nick[NICKLEN];
+  RfcString nick;
   char host[UHOSTLEN];
 
   static bd::HashTable<bd::String, Auth*> ht_host;
-  static bd::HashTable<bd::String, Auth*> ht_nick;
+  static bd::HashTable<RfcString, Auth*> ht_nick;
 
   private:
   int status;

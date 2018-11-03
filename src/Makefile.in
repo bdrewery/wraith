@@ -56,6 +56,7 @@ OBJS = auth.So \
 	adns.So \
 	response.So \
 	rfc1459.So \
+	RfcString.o \
 	script.So \
 	script_misc.So \
 	script_user.So \

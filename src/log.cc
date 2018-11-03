@@ -85,7 +85,7 @@ static logmode_mapping_t logmode_mappings[] = {
 
 int logmodes(const char *s)
 {
-	logmode_mapping_t *mapping = NULL;
+	const logmode_mapping_t *mapping = NULL;
 	int modes = 0;
 
 	while (*s) {
@@ -119,7 +119,7 @@ char *masktype(int x)
 char *maskname(int x)
 {
 	static char s[1024] = "";
-	logmode_mapping_t *mapping = NULL;
+	const logmode_mapping_t *mapping = NULL;
 	int len;
 
 	*s = 0;
@@ -335,6 +335,7 @@ void putlog(int type, const char *chname, const char *format, ...)
   }
 }
 
+#if 0
 void
 irc_log(struct chanset_t *chan, const char *format, ...)
 {
@@ -362,4 +363,5 @@ irc_log(struct chanset_t *chan, const char *format, ...)
 */
 #endif 
 }
+#endif
 /* vim: set sts=2 sw=2 ts=8 et: */

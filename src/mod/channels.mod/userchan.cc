@@ -152,7 +152,9 @@ void set_handle_laston(char *chan, struct userrec *u, time_t n)
 
 /* Is this mask sticky?
  */
-int u_sticky_mask(maskrec *u, char *uhost)
+int
+__attribute__((pure))
+u_sticky_mask(const maskrec *u, const char *uhost)
 {
   for (; u; u = u->next)
     if (!rfc_casecmp(u->mask, uhost))
@@ -205,7 +207,9 @@ int u_setsticky_mask(struct chanset_t *chan, maskrec *u, char *uhost, int sticky
  *   1       temporary ban
  *   2       perm ban
  */
-int u_equals_mask(maskrec *u, char *mask)
+int
+__attribute__((pure))
+u_equals_mask(const maskrec *u, const char *mask)
 {
   for (; u; u = u->next)
     if (!rfc_casecmp(u->mask, mask)) {
@@ -217,7 +221,9 @@ int u_equals_mask(maskrec *u, char *mask)
   return 0;
 }
 
-bool u_match_mask(maskrec *rec, const char *mask)
+bool
+__attribute__((pure))
+u_match_mask(const maskrec *rec, const char *mask)
 {
   for (; rec; rec = rec->next)
     if (wild_match(rec->mask, mask) || match_cidr(rec->mask, mask))
@@ -225,7 +231,9 @@ bool u_match_mask(maskrec *rec, const char *mask)
   return 0;
 }
 
-static int count_mask(maskrec *rec)
+static int
+__attribute__((pure))
+count_mask(maskrec *rec)
 {
   int ret = 0;
 
@@ -710,6 +718,7 @@ bd::String channel_to_string(struct chanset_t* chan, bool force_inactive) {
   get_mode_protect(chan, w, sizeof(w));
   return bd::String::printf("\
 chanmode { %s } groups { %s } bad-cookie %d manop %d mdop %d mop %d limit %d revenge %d ban-type %d \
+homechan-user %d \
 flood-chan %d:%d flood-bytes %d:%d flood-ctcp %d:%d flood-join %d:%d \
 flood-kick %d:%d flood-deop %d:%d flood-nick %d:%d flood-mjoin %d:%d \
 flood-mpub %d:%d flood-mbytes %d:%d flood-mctcp %d:%d \
@@ -733,6 +742,7 @@ flood-exempt %d flood-lock-time %d knock %d fish-key { %s } \
         chan->limitraise,
 	chan->revenge,
         chan->ban_type,
+	chan->homechan_user,
 	chan->flood_pub_thr, chan->flood_pub_time,
 	chan->flood_bytes_thr, chan->flood_bytes_time,
         chan->flood_ctcp_thr, chan->flood_ctcp_time,

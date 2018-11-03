@@ -107,7 +107,9 @@ void def_write_userfile(bd::Stream& stream, const struct userrec *u, const struc
   stream << bd::String::printf("--%s %s\n", e->type->name, e->u.string);
 }
 
-void *def_get(struct userrec *u, struct user_entry *e)
+void *
+__attribute__((pure))
+def_get(struct userrec *u, struct user_entry *e)
 {
   return e->u.string;
 }
@@ -242,7 +244,7 @@ struct user_entry_type USERENTRY_ADDED = {
 
 static bool set_set(struct userrec *u, struct user_entry *e, void *buf)
 {
-  struct xtra_key *curr = (struct xtra_key *) e->u.extra, 
+  struct xtra_key *curr = e->u.xk,
                   *newxk = (struct xtra_key *) buf, *old = NULL;
 
   /* find the curr key if it exists */
@@ -252,6 +254,10 @@ static bool set_set(struct userrec *u, struct user_entry *e, void *buf)
       break;
     }
   }
+
+  /* Nothing to do if the old and new entry match. Can this even happen? */
+  if (old == newxk)
+    return 1;
   
   /* we will possibly free new below, so let's send the information to the botnet now */
   if (!noshare && !set_noshare) {
@@ -264,33 +270,23 @@ static bool set_set(struct userrec *u, struct user_entry *e, void *buf)
     }
   }
 
-  /* unset and bail out if the new data is empty and the old doesn't exist, why'd we even get this change? */
-  if (!old && (!newxk->data || !newxk->data[0])) {
-    /* or simply ... delete non-existant entry */
-    free(newxk->key);
-    free(newxk->data);
-    free(newxk);
-    return 1;
-  }
-
   /* if we have a new entry and an old entry.. or our new entry is empty -> clear out the old entry */
-  if ((old && old != newxk) || !newxk->data || !newxk->data[0]) {
+  if (old) {
     list_delete((struct list_type **) (&e->u.extra), (struct list_type *) old);
 
     free(old->key);
     free(old->data);
     free(old);
+    old = NULL;
   }
 
   /* add the new entry if it's not empty */
-  if (old != newxk && newxk->data) {
-    if (newxk->data[0]) {
-      list_insert((struct xtra_key **) (&e->u.extra), newxk);
-    } else {
-      free(newxk->data);
-      free(newxk->key);
-      free(newxk);
-    }
+  if (newxk->data && newxk->data[0]) {
+    list_insert((&e->u.xk), newxk);
+  } else {
+    free(newxk->data);
+    free(newxk->key);
+    free(newxk);
   }
   return 1;
 }
@@ -306,15 +302,14 @@ static bool set_unpack(struct userrec *u, struct user_entry *e)
   char *key = NULL, *data = NULL;
 
   while (curr) {
-    t = (struct xtra_key *) calloc(1, sizeof(struct xtra_key));
     data = curr->extra;
     key = newsplit(&data);
     if (data[0]) {
+      t = (struct xtra_key *) calloc(1, sizeof(struct xtra_key));
       t->key = strdup(key);
       t->data = strdup(data);
-      list_insert((struct xtra_key **) (&e->u.extra), t);
-    } else
-      free(t);
+      list_insert((&e->u.xk), t);
+    }
     curr = curr->next;
   }
 
@@ -325,7 +320,7 @@ static bool set_unpack(struct userrec *u, struct user_entry *e)
 static void set_display(int idx, struct user_entry *e, struct userrec *u)
 {
   if (conf.bot->hub) {
-    struct xtra_key *xk = (struct xtra_key *) e->u.extra;
+    struct xtra_key *xk = e->u.xk;
     struct flag_record fr = {FR_GLOBAL, 0, 0, 0 };
 
     dprintf(idx, "  BOTSET:\n");
@@ -342,6 +337,8 @@ static void set_display(int idx, struct user_entry *e, struct userrec *u)
 static bool set_gotshare(struct userrec *u, struct user_entry *e, char *buf, int idx)
 {
   char *name = newsplit(&buf);
+
+  ASSERT(e == NULL, "set_gotshare should not be passed a user_entry");
 
   if (!name || !name[0])
     return 1;
@@ -360,7 +357,7 @@ static bool set_gotshare(struct userrec *u, struct user_entry *e, char *buf, int
 static void set_write_userfile(bd::Stream& stream, const struct userrec *u, const struct user_entry *e, int idx)
 {
   int localhub = nextbot(u->handle);
-  struct xtra_key *x = (struct xtra_key *) e->u.extra;
+  struct xtra_key *x = e->u.xk;
 
   for (; x; x = x->next) {
     /*
@@ -378,7 +375,7 @@ static void set_write_userfile(bd::Stream& stream, const struct userrec *u, cons
 
 static bool set_kill(struct user_entry *e)
 {
-  struct xtra_key *x = (struct xtra_key *) e->u.extra, *y = NULL;
+  struct xtra_key *x = e->u.xk, *y = NULL;
 
   for (; x; x = y) {
     y = x->next;
@@ -1059,33 +1056,6 @@ struct user_entry_type USERENTRY_HOSTS =
   "HOSTS"
 };
 
-bool list_append(struct list_type **h, struct list_type *i)
-{
-  for (; *h; h = &((*h)->next))
-    ;
-  *h = i;
-  return 1;
-}
-
-bool list_delete(struct list_type **h, struct list_type *i)
-{
-  for (; *h; h = &((*h)->next))
-    if (*h == i) {
-      *h = i->next;
-      return 1;
-    }
-  return 0;
-}
-
-bool list_contains(struct list_type *h, struct list_type *i)
-{
-  for (; h; h = h->next)
-    if (h == i) {
-      return 1;
-    }
-  return 0;
-}
-
 bool add_entry_type(struct user_entry_type *type)
 {
   struct userrec *u = NULL;
@@ -1104,7 +1074,7 @@ bool add_entry_type(struct user_entry_type *type)
   return 1;
 }
 
-struct user_entry_type *find_entry_type(char *name)
+struct user_entry_type *find_entry_type(const char *name)
 {
   struct user_entry_type *p = NULL;
 

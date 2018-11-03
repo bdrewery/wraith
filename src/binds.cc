@@ -78,6 +78,8 @@ bd::Array<bd::String> bind_entries(const bind_table_t* table, const bd::String m
 	return entries;
 }
 
+static const char *maze = ".===============================================================.\n|  ,-----------------,                                          |\n| /| HELP THE BUNNY  |==========.===.   .===.   .===========.   |\n|| |    FIND HIS     |          |   |   |   |   |      .-.  | E |\n|| |  EASTER EGGS!   |  |===|   |   |   |   |   |..==./xxx\\ | N |\n|| |_________________|          |   |       |   /<<<<<\\    || D |\n||/_________________/   .======='   |   .   |   \\>>>>>/xxxx/--. |\n|   |   |           |   |           |   |   |   |`'==''---; * *`\\\n|   |   '==========='   |   |======='   |   |   |   ,===. \\* * */\n|   |                   |               |   |   |   |   |  '--'`|\n|   '===============|   '===.   |===.   |   |   |==='   '=======|\n|                           |       |   |   |   |               |\n|   |===============.   .   '===|   |   |===|   |   .=======.   |\n|                   |   |           |   |   |   |   |       |   |\n|   .===========.   |   |   |===.   |   |   |   |   |   |   |   |\n|   |           |   |   |       |   |   |   |   |   |   |   |   |\n|   |   .===.   |   |   |===.   '===|   |   '==='   |   |   |   |\n|   |   |   |   |   |   |   |       |   |           |   |   |   |\n|   '==='   /`\\ '==='   |   '===.   |   '===========|   |   |   |\n|          / : |                |   |               |   |   |   |\n| _.._=====| '/ '===|   .======='   '===========.   |   |   |   |\n  .-._ '-\"` (=======.   |   .===============.   |   |   '===.   |\n_/  |/   e  e\\==.   |   |   |               |   |   |       |   |\n| S ||  >   @ )<|   |   |   |   .=======.   |   |   |===.   |   |\n| T | \\  '--`/  |   |   |   |   |       |   |   |   |   |   |   |\n| A | / '--<`   |   |   |   |   |   |   |   |   '==='   |   '   |\n| R || ,    \\\\  |           |   |   |   |   |           |       |\n| T |; ;     \\\\__'======.   |   |   '==='   |   .===.   |   |   |\n|   / /      |.__)==,   |   |   |           |   |   |   |   |   |\n|  (_/,--.   ; //\"\"\"\\\\  |   |   '==========='   |   '==='   |   |\n|  { `|   \\_/  ||___||  |   |                   |           |   |\n|   ;-\\   / |  |(___)|  |   '===========.   |   '=======.   |   |\n|   |  | /  |  |XXXXX|  |               |   |           |   |   |\n|   | /  \\  '-,\\XXXXX/  |   .==========='   '=======.   |   |   |\n|   | \\__|----' `\"\"\"`   |   |                       |   |   |   |\n|   '==================='   '======================='   '==='   |\n|                                                               |\n'==============================================================='";
+
 static int internal_bind_cleanup()
 {
 	bind_table_t *table = NULL, *next_table = NULL;
@@ -178,7 +180,8 @@ static void bind_table_really_del(bind_table_t *table)
 	free(table);
 }
 
-bind_table_t *bind_table_lookup(const char *name)
+bind_table_t *
+bind_table_lookup(const char *name)
 {
 	bind_table_t *table = NULL;
 
@@ -199,7 +202,10 @@ bind_table_t *bind_table_lookup_or_fake(const char *name)
 
 
 /* Look up a bind entry based on either function name or id. */
-bind_entry_t *bind_entry_lookup(bind_table_t *table, int id, const char *mask, const char *function_name, Function callback)
+bind_entry_t *
+bind_entry_lookup(bind_table_t *table,
+		int id, const char *mask, const char *function_name,
+		Function callback)
 {
 	bind_entry_t *entry = NULL;
 	int hit;
