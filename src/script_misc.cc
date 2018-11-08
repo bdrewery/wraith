@@ -134,7 +134,7 @@ bd::String script_utimer(int seconds, bd::ScriptCallbackerPtr cmd, int count) {
   return _script_timer(seconds, cmd, count, TIMER_SCRIPT_SECONDLY);
 }
 
-static void _script_killtimer(const bd::String timerID) {
+static void _script_killtimer(const bd::String& timerID) {
   if (timerID(0, 5) != "timer")
     throw bd::String("argument is not a timerID");
 
