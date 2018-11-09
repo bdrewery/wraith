@@ -36,7 +36,7 @@
 #include "script_misc.h"
 #include "script_user.h"
 
-bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
+bd::HashTable< bd::String, std::unique_ptr<bd::ScriptInterp> > ScriptInterps;
 
 int init_script() {
 
@@ -45,7 +45,7 @@ int init_script() {
     load_libtcl();
 
     // create interp
-    ScriptInterps["tcl"] = new bd::ScriptInterpTCL;
+    ScriptInterps["tcl"] = std::make_unique<bd::ScriptInterpTCL>();
   }
 #endif
   init_script_misc();
@@ -54,10 +54,6 @@ int init_script() {
 }
 
 int unload_script() {
-  for (const auto& kv : ScriptInterps) {
-    auto& si = kv.second;
-    delete si;
-  }
   ScriptInterps.clear();
   return 1;
 }
@@ -79,8 +75,8 @@ void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var
       // This type hacking is done due to not being able to have templated virtual functions
       case bd::ScriptInterp::SCRIPT_TYPE_TCL:
         ContextNote("TCL", name.c_str());
-        static_cast<bd::ScriptInterpTCL*>(si)->linkVar(name, data,
-            var_hook_func);
+        static_cast<bd::ScriptInterpTCL*>(si.get())->linkVar(
+            name, data, var_hook_func);
         break;
     }
   }

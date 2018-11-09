@@ -8,7 +8,7 @@
 #include <bdlib/src/ScriptInterp.h>
 #include <bdlib/src/ScriptInterpTCL.h>
 
-extern bd::HashTable< bd::String, bd::ScriptInterp* > ScriptInterps;
+extern bd::HashTable< bd::String, std::unique_ptr<bd::ScriptInterp> > ScriptInterps;
 bd::String script_eval(const bd::String& interp, const bd::String& script);
 
 struct script_callback {
@@ -35,7 +35,8 @@ void script_add_command(const bd::String& cmdName, ReturnType(*callback)(Params.
     switch (si->type()) {
       // This type hacking is done due to not being able to have templated virtual functions
       case bd::ScriptInterp::SCRIPT_TYPE_TCL:
-        bd::ScriptInterp::createCommand(*static_cast<bd::ScriptInterpTCL*>(si),
+        bd::ScriptInterp::createCommand(
+            *static_cast<bd::ScriptInterpTCL*>(si.get()),
             cmdName, callback, usage, minParams);
         break;
     }
