@@ -397,6 +397,7 @@ static int bind_vcheck_hits (bind_table_t *table, const char *match, struct flag
 	/* Check if we're searching for a partial match. */
 	if (table->match_type & MATCH_PARTIAL) matchlen = strlen(match);
 
+	// FIXME: reload causes an endless loop here, execs pub_reload, then adds new entry, then executes it!
 	for (entry = table->entries; entry; entry = next) {
 		next = entry->next;
 		if (entry->flags & BIND_DELETED) continue;

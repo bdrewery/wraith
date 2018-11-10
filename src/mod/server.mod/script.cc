@@ -46,11 +46,14 @@ void script_putquick(bd::String text, bd::String options) {
 void script_puthelp(bd::String text, bd::String options) {
   script_put(DP_HELP, DP_HELP_NEXT, text, options);
 }
+void script_putnow(bd::String text, bd::String options) {
+}
 
 static void server_script_init() {
   script_add_command("putserv", script_putserv, "text ?options?", 1);
   script_add_command("putquick", script_putquick, "text ?options?", 1);
   script_add_command("puthelp", script_puthelp, "text ?options?", 1);
+  script_add_command("putnow", script_putnow, "text ?options?", 1);
 }
 
 /* vim: set sts=2 sw=2 ts=8 et: */

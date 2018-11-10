@@ -68,15 +68,18 @@ void script_bind_callback(struct script_callback* callback_data, ...) {
    * of the command that triggered the bind will be available to the proc.
    * This feature is used by scripts such as userinfo.tcl
    */
+  /* XXX: THIS IS WRONG, need to be script agnostic. */
   script_eval("tcl", bd::String::printf("set lastbind %s", callback_data->mask.c_str()));
 
   // Forward to the Script callback
   ContextNote("bind callback", callback_data->callback_command->cmd.c_str());
+  /* XXX: THIS IS WRONG, need to be script agnostic. */
   script_eval("tcl", "set errorInfo {}");
 
   callback_data->callback_command->call(args);
 
   /* XXX: This sucks, should detect error from above. */
+  /* XXX: THIS IS WRONG, need to be script agnostic. */
   bd::String result(script_eval("tcl", "set errorInfo"));
   if (result) {
     putlog(LOG_MISC, "*", "Tcl error [%s]: %s",
@@ -88,9 +91,11 @@ void script_bind_callback(struct script_callback* callback_data, ...) {
 static bd::HashTable<struct script_callback*,
   std::shared_ptr<struct script_callback>> _bind_callback_datas;
 
+//FIXME: Technically this should return a bd::Array<bd::String>
 bd::String script_bind(const bd::String type, const bd::String flags,
     const bd::String mask, bd::ScriptCallbackerPtr callback_command)
 {
+  //FIXME: If cmd is NULL, need to return list of binds if stackable
   bind_table_t* table = bind_table_lookup(type.c_str());
 
   if (!table) {
@@ -135,6 +140,9 @@ bd::String script_bind(const bd::String type, const bd::String flags,
   return mask;
 }
 
+bd::Array<bd::Array<bd::String>> script_binds(const bd::String mask) {
+}
+
 bd::String script_unbind(const bd::String type, const bd::String flags,
     const bd::String mask, bd::ScriptCallbackerPtr callback_command)
 {
@@ -165,6 +173,7 @@ bd::String script_unbind(const bd::String type, const bd::String flags,
 
 void binds_script_init() {
   script_add_command("bind",	script_bind,	"type flags cmd/mask ?procname?",		3);
+  script_add_command("binds",	script_binds,	"?type/mask?",					0);
   script_add_command("unbind",	script_unbind,	"type flags cmd/mask procname");
 }
 

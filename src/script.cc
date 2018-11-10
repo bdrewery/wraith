@@ -65,8 +65,7 @@ bd::String script_eval(const bd::String& interp, const bd::String& script) {
   return ScriptInterps[interp]->eval(script);
 }
 
-template void script_link_var(const bd::String& name, bd::String& data, bd::ScriptInterp::link_var_hook_t var_hook_func);
-
+#if 0
 template <typename T>
 void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook_t var_hook_func) {
   for (const auto& kv : ScriptInterps) {
@@ -81,5 +80,12 @@ void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var
     }
   }
 }
+
+template<bd::String&>
+void script_link_var<bd::String&>(const bd::String& name, bd::String& data, bd::ScriptInterp::link_var_hook_t var_hook_func);
+
+template<const char*>
+void script_link_var<const char*>(const bd::String& name, const char* data, bd::ScriptInterp::link_var_hook_t var_hook_func);
+#endif
 
 /* vim: set sts=2 sw=2 ts=8 et: */

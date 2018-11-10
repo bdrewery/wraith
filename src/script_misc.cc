@@ -110,6 +110,7 @@ static bd::String _script_timer(int seconds, bd::ScriptCallbackerPtr cmd, int co
   howlong.sec = seconds;
   howlong.usec = 0;
 
+  // FIXME: Add in the script interp name
   timer_name = bd::String("script:") + cmd->cmd;
 
   if (count)

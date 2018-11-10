@@ -1311,6 +1311,7 @@ void tell_dnsdebug(int idx)
 	}
 }
 
+//FIXME: This slows down the timer queue
 static void expire_queries()
 {
 	dns_query_t *q = NULL, *next = NULL;

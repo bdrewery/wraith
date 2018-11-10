@@ -41,6 +41,7 @@
 #include "src/net.h"
 #include "src/auth.h"
 #include "src/adns.h"
+#include "src/script.h"
 #include "src/socket.h"
 #include "src/egg_timer.h"
 #include "src/mod/channels.mod/channels.h"
@@ -1204,6 +1205,19 @@ static cmd_t my_ctcps[] =
   {NULL,	NULL,	NULL,			NULL, 0}
 };
 
+#if 0
+void nick_changed(const bd::String* oldnick, const bd::String* newnick) {
+  strlcpy(origbotname, newnick->c_str(), sizeof(origbotname));
+#endif
+void nick_changed(const char *oldnick, const char *newnick) {
+  /* This conflicts with jupenick big time. */
+  strlcpy(origbotname, newnick, sizeof(origbotname));
+  altnick_char = rolls = 0;
+  tried_nick = now;
+  dprintf(DP_SERVER, "NICK %s\n", origbotname);
+  rehash_monitor_list();
+}
+
 void server_init()
 {
   strlcpy(botrealname, "A deranged product of evil coders", sizeof(botrealname));
@@ -1217,6 +1231,12 @@ void server_init()
   BT_raw = bind_table_add("raw", 2, "ss", 0, BIND_STACKABLE);
   BT_ctcr = bind_table_add("ctcr", 6, "ssUsss", 0, BIND_STACKABLE);
   BT_ctcp = bind_table_add("ctcp", 6, "ssUsss", 0, BIND_STACKABLE);
+
+  script_link_var("botname", botname, sizeof(botname),
+      reinterpret_cast<bd::ScriptInterp::link_var_hook_t>(nick_changed));
+  script_link_var("default-port", default_port);
+  script_link_var("botnick", botname, sizeof(botname));
+  script_link_var("constbotnick", static_cast<const char*>(botname));
 
   add_builtins("raw", my_raw_binds);
   add_builtins("dcc", C_dcc_serv);

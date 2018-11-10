@@ -22,8 +22,55 @@ struct script_callback {
           callback_command(_callback_command), mask(_mask), cdata(_cdata) {};
 };
 
+#if 0
 template <typename T>
 void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook_t = nullptr);
+#else
+template <typename T>
+void script_link_var(const bd::String& name, T& data, bd::ScriptInterp::link_var_hook_t var_hook_func = nullptr) {
+  for (const auto& kv : ScriptInterps) {
+    auto& si = kv.second;
+    switch (si->type()) {
+      // This type hacking is done due to not being able to have templated virtual functions
+      case bd::ScriptInterp::SCRIPT_TYPE_TCL:
+        ContextNote("TCL", name.c_str());
+        static_cast<bd::ScriptInterpTCL*>(si.get())->linkVar(
+            name, data, var_hook_func);
+        break;
+    }
+  }
+}
+
+template <typename T>
+void script_link_var(const bd::String& name, const T* data, bd::ScriptInterp::link_var_hook_t var_hook_func = nullptr) {
+  for (const auto& kv : ScriptInterps) {
+    auto& si = kv.second;
+    switch (si->type()) {
+      // This type hacking is done due to not being able to have templated virtual functions
+      case bd::ScriptInterp::SCRIPT_TYPE_TCL:
+        ContextNote("TCL", name.c_str());
+        static_cast<bd::ScriptInterpTCL*>(si.get())->linkVar(
+            name, data, var_hook_func);
+        break;
+    }
+  }
+}
+
+template <typename T>
+void script_link_var(const bd::String& name, T* data, size_t size, bd::ScriptInterp::link_var_hook_t var_hook_func = nullptr) {
+  for (const auto& kv : ScriptInterps) {
+    auto& si = kv.second;
+    switch (si->type()) {
+      // This type hacking is done due to not being able to have templated virtual functions
+      case bd::ScriptInterp::SCRIPT_TYPE_TCL:
+        ContextNote("TCL", name.c_str());
+        static_cast<bd::ScriptInterpTCL*>(si.get())->linkVar(
+            name, data, size, var_hook_func);
+        break;
+    }
+  }
+}
+#endif
 
 int init_script();
 int unload_script();

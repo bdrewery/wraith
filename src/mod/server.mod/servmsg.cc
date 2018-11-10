@@ -1046,6 +1046,7 @@ static void nick_available(bool is_jupe, bool is_orig) {
       dprintf(DP_MODE_NEXT, "NICK %s\n", jupenick);
       if (!jnick_juped)
         putlog(LOG_MISC, "*", "Switching back to jupenick '%s'", jupenick);
+      /* XXX: 'set botname blah' (with nick_changed) breaks this and makes botname be blah but nick is jupenick. Probably due to touching origbotname in nick_changed */
     }
     // Don't switch to the nick if already on jupenick
   } else if (is_orig && !match_my_nick(origbotname) && (!jupenick[0] || !match_my_nick(jupenick))) {

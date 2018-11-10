@@ -911,6 +911,7 @@ int main(int argc, char **argv)
     timer_update_now(&egg_timeval_now);
     now = egg_timeval_now.sec;
     random();			/* jumble things up o_O */
+    // FIXME: This runs at crazy resolution, 5 seconds turns into 20?
     timer_run();
 
     if (socket_run() == 1) {

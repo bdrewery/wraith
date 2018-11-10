@@ -339,6 +339,7 @@ int timer_info(int id, char **name, egg_timeval_t *initial_len, egg_timeval_t *t
 {
         egg_timer_t *timer = NULL;
 
+	// FIXME: hash table or queue(3)
         for (timer = timer_repeat_head; timer; timer = timer->next) {
                 if (timer->id == id) break;
         }
