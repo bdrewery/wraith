@@ -31,11 +31,21 @@
 
 #include <stdarg.h>
 
+typedef struct {
+  int oseed;                            /* botlink out seed */
+  int iseed;                            /* botlink in seed */
+  char okey[ENC_KEY_LEN + 1];           /* botlink enckey: out */
+  char ikey[ENC_KEY_LEN + 1];           /* botlink enckey: in  */
+} ghost_link_priv;
+
 static void ghost_link_case(int idx, direction_t direction)
 {
   int snum = findanysnum(dcc[idx].sock);
 
   if (likely(snum >= 0)) {
+    ghost_link_priv *enclink_priv = (ghost_link_priv*)calloc(sizeof(ghost_link_priv), 1);
+    socklist[snum].enclink_priv = (void*)enclink_priv;
+
     char initkey[33] = "", *tmp2 = NULL;
     char *keyp = NULL, *nick1 = NULL, *nick2 = NULL;
     in_port_t port = 0;
@@ -43,7 +53,7 @@ static void ghost_link_case(int idx, direction_t direction)
     const char salt2[] = SALT2;
 
     if (direction == TO) {
-      keyp = socklist[snum].ikey;
+      keyp = enclink_priv->ikey;
       nick1 = strdup(dcc[idx].nick);
       for (int j = 0; j < dcc_total; j++) {
        if (dcc[j].type && dcc[j].sock == dcc[idx].u.relay->sock && dcc[j].type == &DCC_RELAYING) {
@@ -55,7 +65,7 @@ static void ghost_link_case(int idx, direction_t direction)
         nick2 = strdup(conf.bot->nick);
       port = htons(dcc[idx].port);
     } else if (direction == FROM) {
-      keyp = socklist[snum].okey;
+      keyp = enclink_priv->okey;
       nick1 = strdup(conf.bot->nick);
       nick2 = strdup(dcc[idx].nick);
 
@@ -86,22 +96,20 @@ static void ghost_link_case(int idx, direction_t direction)
 
     if (direction == FROM) {
       make_rand_str(initkey, 32);       /* set the initial out/in link key to random chars. */
-      socklist[snum].oseed = random();
-      socklist[snum].iseed = socklist[snum].oseed;
+      enclink_priv->oseed = random();
+      enclink_priv->iseed = enclink_priv->oseed;
       tmp2 = encrypt_string(salt2, initkey);
       putlog(LOG_BOTS, "*", STR("Sending encrypted link handshake to %s..."), dcc[idx].nick);
 
       socklist[snum].encstatus = 1;
-      socklist[snum].gz = 1;
 
-      link_send(idx, STR("elink %s %d\n"), tmp2, socklist[snum].oseed);
+      link_send(idx, STR("elink %s %d\n"), tmp2, enclink_priv->oseed);
       free(tmp2);
-      strlcpy(socklist[snum].okey, initkey, ENC_KEY_LEN + 1);
-      strlcpy(socklist[snum].ikey, initkey, ENC_KEY_LEN + 1);
+      strlcpy(enclink_priv->okey, initkey, ENC_KEY_LEN + 1);
+      strlcpy(enclink_priv->ikey, initkey, ENC_KEY_LEN + 1);
       OPENSSL_cleanse(initkey, sizeof(initkey));
     } else {
       socklist[snum].encstatus = 1;
-      socklist[snum].gz = 1;
     }
   } else {
     putlog(LOG_MISC, "*", STR("Couldn't find socket for %s connection?? Shouldn't happen :/"), dcc[idx].nick);
@@ -111,7 +119,7 @@ static void ghost_link_case(int idx, direction_t direction)
 }
 
 static int
-prand(int *seed, int range)
+ghost_prand(int *seed, int range)
 {
   long long i1 = *seed;
 
@@ -121,13 +129,13 @@ prand(int *seed, int range)
 }
 
 static void
-rotate_key(char* key, int& seed)
+ghost_rotate_key(char* key, int& seed)
 {
   if (seed) {
-    *(uint32_t *) & key[0] = prand(&seed, 0xFFFFFFFF);
-    *(uint32_t *) & key[4] = prand(&seed, 0xFFFFFFFF);
-    *(uint32_t *) & key[8] = prand(&seed, 0xFFFFFFFF);
-    *(uint32_t *) & key[12] = prand(&seed, 0xFFFFFFFF);
+    *(uint32_t *) & key[0] = ghost_prand(&seed, 0xFFFFFFFF);
+    *(uint32_t *) & key[4] = ghost_prand(&seed, 0xFFFFFFFF);
+    *(uint32_t *) & key[8] = ghost_prand(&seed, 0xFFFFFFFF);
+    *(uint32_t *) & key[12] = ghost_prand(&seed, 0xFFFFFFFF);
 
     if (!seed)
       seed++;
@@ -136,12 +144,13 @@ rotate_key(char* key, int& seed)
 
 static int ghost_read(int snum, char *src)
 {
-  char *line = decrypt_string(socklist[snum].ikey, src);
+  ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
+  char *line = decrypt_string(enclink_priv->ikey, src);
 
   strcpy(src, line);
   OPENSSL_cleanse(line, strlen(line) + 1);
   free(line);
-  rotate_key(socklist[snum].ikey, socklist[snum].iseed);
+  ghost_rotate_key(enclink_priv->ikey, enclink_priv->iseed);
   return OK;
 }
 
@@ -149,6 +158,7 @@ static const char *ghost_write(int snum, const char *src, size_t *len)
 {
   static char buf[SGRAB + 14] = "";
   char *srcbuf = NULL, *line = NULL, *eol = NULL, *eline = NULL;
+  ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
 
   const size_t bufsiz = *len + 9 + 1;
   srcbuf = (char *) calloc(1, bufsiz);
@@ -159,8 +169,8 @@ static const char *ghost_write(int snum, const char *src, size_t *len)
   eol = strchr(line, '\n');
   while (eol) {
     *eol++ = 0;
-    eline = encrypt_string(socklist[snum].okey, line);
-    rotate_key(socklist[snum].okey, socklist[snum].oseed);
+    eline = encrypt_string(enclink_priv->okey, line);
+    ghost_rotate_key(enclink_priv->okey, enclink_priv->oseed);
     strlcat(buf, eline, sizeof(buf));
     free(eline);
     *len = strlcat(buf, "\n", sizeof(buf));
@@ -168,8 +178,8 @@ static const char *ghost_write(int snum, const char *src, size_t *len)
     eol = strchr(line, '\n');
   }
   if (line[0]) {
-    eline = encrypt_string(socklist[snum].okey, line);
-    rotate_key(socklist[snum].okey, socklist[snum].oseed);
+    eline = encrypt_string(enclink_priv->okey, line);
+    ghost_rotate_key(enclink_priv->okey, enclink_priv->oseed);
     strlcat(buf, eline, sizeof(buf));
     free(eline);
     *len = strlcat(buf, "\n", sizeof(buf));
@@ -180,8 +190,9 @@ static const char *ghost_write(int snum, const char *src, size_t *len)
   return buf;
 }
 
-void ghost_parse(int idx, int snum, char *buf)
+static void ghost_parse(int idx, int snum, char *buf)
 {
+  ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
   /* putlog(LOG_DEBUG, "*", "Got elink: %s %s", code, buf); */
   /* Set the socket key and we're linked */
 
@@ -191,17 +202,23 @@ void ghost_parse(int idx, int snum, char *buf)
     const char salt2[] = SALT2;
     char *tmp = decrypt_string(salt2, newsplit(&buf));
 
-    strlcpy(socklist[snum].okey, tmp, ENC_KEY_LEN + 1);
+    strlcpy(enclink_priv->okey, tmp, ENC_KEY_LEN + 1);
     OPENSSL_cleanse(tmp, strlen(tmp));
     free(tmp);
 
-    strlcpy(socklist[snum].ikey, socklist[snum].okey, ENC_KEY_LEN + 1);
+    strlcpy(enclink_priv->ikey, enclink_priv->okey, ENC_KEY_LEN + 1);
 
-    socklist[snum].iseed = atoi(buf);
-    socklist[snum].oseed = atoi(buf);
+    enclink_priv->iseed = atoi(buf);
+    enclink_priv->oseed = atoi(buf);
     putlog(LOG_BOTS, "*", STR("Handshake with %s succeeded, we're linked."), dcc[idx].nick);
     link_done(idx);
   }
+}
+
+static void ghost_kill(int snum)
+{
+  ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
+  free(enclink_priv);
 }
 
 void link_send(int idx, const char *format, ...)
@@ -329,6 +346,17 @@ void link_parse(int idx, char *buf)
   return;
 }
 
+void link_kill(int snum)
+{
+  int i = socklist[snum].enclink;
+
+  if (i >= 0 && enclink[i].kill)
+    (enclink[i].kill) (snum);
+  socklist[snum].enclink_priv = NULL;
+
+  return;
+}
+
 void link_get_method(int idx)
 {
   if (!dcc[idx].type)
@@ -344,8 +372,8 @@ void link_get_method(int idx)
 
 /* the order of entries here determines which will be picked */
 struct enc_link enclink[] = {
-  { "ghost+case3", LINK_GHOSTCASE3, ghost_link_case, ghost_write, ghost_read, ghost_parse },
-  { "cleartext", LINK_CLEARTEXT, NULL, NULL, NULL, NULL },
-  { NULL, 0, NULL, NULL, NULL, NULL }
+  { "ghost+case3", LINK_GHOSTCASE3, ghost_link_case, ghost_write, ghost_read, ghost_parse, ghost_kill },
+  { "cleartext", LINK_CLEARTEXT, NULL, NULL, NULL, NULL, NULL },
+  { NULL, 0, NULL, NULL, NULL, NULL, NULL }
 };
 /* vim: set sts=2 sw=2 ts=8 et: */

@@ -329,15 +329,11 @@ int allocsock(int sock, int options)
   for (int i = 0; i < MAXSOCKS; i++) {
     if (socklist[i].flags & SOCK_UNUSED) {
       /* yay!  there is table space */
-      socklist[i].inbuf = NULL;
-      socklist[i].outbuf = NULL;
       socklist[i].flags = options;
       socklist[i].sock = sock;
       socklist[i].encstatus = 0;
       socklist[i].enclink = -1;
-      socklist[i].gz = 0;
-      bzero(&(socklist[i].okey), ENC_KEY_LEN + 1);
-      bzero(&(socklist[i].ikey), ENC_KEY_LEN + 1);
+      socklist[i].enclink_priv = NULL;
       socks_total++;
       sdprintf("allocsock(%d) = %d", i, sock);
       return i;
@@ -422,6 +418,8 @@ void real_killsock(int sock, const char *file, int line)
     }
     if (socklist[i].host)
       free(socklist[i].host);
+    if (socklist[i].enclink)
+      link_kill(i);
     bzero(&socklist[i], sizeof(socklist[i]));
     socklist[i].flags = SOCK_UNUSED;
     socks_total--;

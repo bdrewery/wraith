@@ -30,6 +30,7 @@ struct enc_link {
   const char *(*write) (int, const char *, size_t *);
   int (*read) (int, char *);
   void (*parse) (int, int, char *);
+  void (*kill) (int);
 };
 
 struct enc_link_dcc {
@@ -51,5 +52,6 @@ extern void link_done(int);
 extern void link_parse(int, char *);
 extern void link_get_method(int);
 extern void link_challenge_to(int idx, char *buf);
+extern void link_kill(int);
 
 #endif /* !_ENCLINK_H */
