@@ -271,6 +271,9 @@ int link_read(int snum, char *buf)
 {
   int i = socklist[snum].enclink;
 
+  if (!buf || !buf[0] || socklist[snum].encstatus == 0)
+    return -1;
+
   if (i != -1 && enclink[i].read)
     return (enclink[i].read) (snum, buf);
 
@@ -280,6 +283,9 @@ int link_read(int snum, char *buf)
 const char *link_write(int snum, const char *buf, size_t *len)
 {
   int i = socklist[snum].enclink;
+
+  if (!*len || socklist[snum].encstatus == 0)
+    return buf;
 
   if (i != -1 && enclink[i].write)
     return ((enclink[i].write) (snum, buf, len));

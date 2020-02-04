@@ -1176,9 +1176,7 @@ int sockgets(char *s, int *len)
           if (was_crlf)
            *(socklist[i].inbuf) += static_cast<size_t>(1);
 
-          if (s[0] && socklist[i].encstatus)
-            link_read(i, s);
-            
+          link_read(i, s);
           *len = strlen(s);
 
 	  return socklist[i].sock;
@@ -1283,9 +1281,8 @@ int sockgets(char *s, int *len)
       data = 1;
     }
   }
-  if (s[0] && socklist[ret].encstatus)
-    link_read(ret, s);
 
+  link_read(ret, s);
   *len = strlen(s);
 
   /* Anything left that needs to be saved? */
@@ -1344,8 +1341,7 @@ void tputs(int z, const char *s, size_t len)
         traffic.out_today.unknown += len;
     }
 
-    if (len && socklist[i].encstatus)
-      s = link_write(i, s, &len);
+    s = link_write(i, s, &len);
 
     if (socklist[i].outbuf != NULL) {
       /* Already queueing: just add it */
@@ -1389,8 +1385,6 @@ void tputs(int z, const char *s, size_t len)
       /* Socket is full, queue it */
       socklist[i].outbuf = new bd::String(&s[x], len - x);
     }
-    //      if (socklist[i].encstatus && s)
-    //        free(s);
     return;
   }
 
@@ -1409,10 +1403,6 @@ void tputs(int z, const char *s, size_t len)
 
     inhere = 0;
   }
-
-/*  if (socklist[i].encstatus > 0)
-    free(s); 
-*/
 }
 
 int findanysnum(int sock)
