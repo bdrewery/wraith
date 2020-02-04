@@ -32,6 +32,7 @@
 #include <stdarg.h>
 
 typedef struct {
+  int encstatus;
   int oseed;                            /* botlink out seed */
   int iseed;                            /* botlink in seed */
   char okey[ENC_KEY_LEN + 1];           /* botlink enckey: out */
@@ -101,7 +102,7 @@ static void ghost_link_case(int idx, direction_t direction)
       tmp2 = encrypt_string(salt2, initkey);
       putlog(LOG_BOTS, "*", STR("Sending encrypted link handshake to %s..."), dcc[idx].nick);
 
-      socklist[snum].encstatus = 1;
+      enclink_priv->encstatus = 1;
 
       link_send(idx, STR("elink %s %d\n"), tmp2, enclink_priv->oseed);
       free(tmp2);
@@ -109,7 +110,7 @@ static void ghost_link_case(int idx, direction_t direction)
       strlcpy(enclink_priv->ikey, initkey, ENC_KEY_LEN + 1);
       OPENSSL_cleanse(initkey, sizeof(initkey));
     } else {
-      socklist[snum].encstatus = 1;
+      enclink_priv->encstatus = 1;
     }
   } else {
     putlog(LOG_MISC, "*", STR("Couldn't find socket for %s connection?? Shouldn't happen :/"), dcc[idx].nick);
@@ -145,6 +146,8 @@ ghost_rotate_key(char* key, int& seed)
 static int ghost_read(int snum, char *src)
 {
   ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
+  if (!src || !src[0] || !enclink_priv || enclink_priv->encstatus == 0)
+    return -1;
   char *line = decrypt_string(enclink_priv->ikey, src);
 
   strcpy(src, line);
@@ -156,9 +159,12 @@ static int ghost_read(int snum, char *src)
 
 static const char *ghost_write(int snum, const char *src, size_t *len)
 {
+  ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
+  if (*len == 0 || !src || !enclink_priv || enclink_priv->encstatus == 0)
+    return src;
+
   static char buf[SGRAB + 14] = "";
   char *srcbuf = NULL, *line = NULL, *eol = NULL, *eline = NULL;
-  ghost_link_priv *enclink_priv = (ghost_link_priv*)socklist[snum].enclink_priv;
 
   const size_t bufsiz = *len + 9 + 1;
   srcbuf = (char *) calloc(1, bufsiz);
@@ -271,9 +277,6 @@ int link_read(int snum, char *buf)
 {
   int i = socklist[snum].enclink;
 
-  if (!buf || !buf[0] || socklist[snum].encstatus == 0)
-    return -1;
-
   if (i != -1 && enclink[i].read)
     return (enclink[i].read) (snum, buf);
 
@@ -283,9 +286,6 @@ int link_read(int snum, char *buf)
 const char *link_write(int snum, const char *buf, size_t *len)
 {
   int i = socklist[snum].enclink;
-
-  if (!*len || socklist[snum].encstatus == 0)
-    return buf;
 
   if (i != -1 && enclink[i].write)
     return ((enclink[i].write) (snum, buf, len));

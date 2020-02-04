@@ -331,7 +331,6 @@ int allocsock(int sock, int options)
       /* yay!  there is table space */
       socklist[i].flags = options;
       socklist[i].sock = sock;
-      socklist[i].encstatus = 0;
       socklist[i].enclink = -1;
       socklist[i].enclink_priv = NULL;
       socks_total++;

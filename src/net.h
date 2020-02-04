@@ -81,7 +81,6 @@ typedef struct {
   unsigned int af;
 #endif /* USE_IPV6 */
   int sock;
-  int encstatus;                        /* encrypted botlink */
   int enclink;				/* new encrypted botlink */
   void *enclink_priv;
 #ifdef EGG_SSL_EXT
