@@ -80,8 +80,8 @@ sanity_check(flag_t atr, int bot)
   if (bot && (atr & (USER_PARTY | USER_MASTER | USER_OWNER | USER_ADMIN | USER_HUBA | USER_CHUBA)))
     atr &= ~(USER_PARTY | USER_MASTER | USER_OWNER | USER_ADMIN | USER_HUBA | USER_CHUBA);
 /* only bots should be there: */
-  if (!bot && (atr & (BOT_DOLIMIT | BOT_DOVOICE | BOT_UPDATEHUB | BOT_CHANHUB | BOT_FLOODBOT )))
-    atr &= ~(BOT_DOLIMIT | BOT_DOVOICE | BOT_UPDATEHUB | BOT_CHANHUB | BOT_FLOODBOT );
+  if (!bot && (atr & (  BOT_UPDATEHUB | BOT_CHANHUB )))
+    atr &= ~( BOT_UPDATEHUB | BOT_CHANHUB );
   if (atr & USER_AUTOOP)
     atr |= USER_OP;
   if ((atr & USER_OP) && (atr & USER_DEOP))
@@ -118,8 +118,8 @@ chan_sanity_check(flag_t chatr, int bot)
   if (chatr & (USER_PARTY | USER_ADMIN | USER_HUBA | USER_CHUBA | BOT_UPDATEHUB))
     chatr &= ~(USER_PARTY | USER_ADMIN | USER_HUBA | USER_CHUBA | BOT_UPDATEHUB);
   /* these should only be set on bots */
-  if (!bot && (chatr & (BOT_DOLIMIT | BOT_DOVOICE | BOT_CHANHUB | BOT_FLOODBOT )))
-    chatr &= ~(BOT_DOLIMIT | BOT_DOVOICE | BOT_CHANHUB | BOT_FLOODBOT );
+  if (!bot && (chatr & ( BOT_CHANHUB )))
+    chatr &= ~( BOT_CHANHUB );
 
   if ((chatr & USER_OP) && (chatr & USER_DEOP))
     chatr &= ~(USER_OP | USER_DEOP);
@@ -531,76 +531,6 @@ real_chk_deop(const struct flag_record fr, const struct chanset_t *chan, bool bo
     return 1;
   else
     return 0;
-}
-
-int
-doresolv(const struct chanset_t *chan)
-{
-  if (!chan)
-    return 0;
-
-  if (chan->role & ROLE_RESOLV)
-    return 1;
-
-  struct flag_record fr = { FR_GLOBAL | FR_CHAN | FR_BOT, 0, 0, 0 };
-
-  get_user_flagrec(conf.bot->u, &fr, chan->dname);
-  if (glob_doresolv(fr) || chan_doresolv(fr))
-    return 1;
-  return 0;
-}
-
-int
-dovoice(const struct chanset_t *chan)
-{
-  if (!chan)
-    return 0;
-
-  if (chan->role & ROLE_VOICE)
-    return 1;
-
-  struct flag_record fr = { FR_GLOBAL | FR_CHAN | FR_BOT, 0, 0, 0 };
-
-  get_user_flagrec(conf.bot->u, &fr, chan->dname);
-  if (glob_dovoice(fr) || chan_dovoice(fr))
-    return 1;
-  return 0;
-}
-
-int
-doflood(const struct chanset_t *chan)
-{
-  if (!chan)
-    return 0;
-
-  if (chan->role & ROLE_FLOOD)
-    return 1;
-
-  struct flag_record fr = { FR_GLOBAL | FR_CHAN | FR_BOT, 0, 0, 0 };
-  if (!chan)
-    fr.match |= FR_ANYWH;
-
-  get_user_flagrec(conf.bot->u, &fr, chan ? chan->dname : NULL);
-  if (glob_doflood(fr) || chan_doflood(fr))
-    return 1;
-  return 0;
-}
-
-int
-dolimit(const struct chanset_t *chan)
-{
-  if (!chan)
-    return 0;
-
-  if (chan->role & ROLE_LIMIT)
-    return 1;
-
-  struct flag_record fr = { FR_GLOBAL | FR_CHAN | FR_BOT, 0, 0, 0 };
-
-  get_user_flagrec(conf.bot->u, &fr, chan->dname);
-  if (glob_dolimit(fr) || chan_dolimit(fr))
-    return 1;
-  return 0;
 }
 
 int

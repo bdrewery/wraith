@@ -876,10 +876,6 @@ static void cmd_userlist(int idx, char *par)
   PRINT_USERS(1, BOT_BACKUP, 0, "Backup Bots");
   bt = tt;			/* we don't want to add these duplicates into the total */
   PRINT_USERS(1, BOT_CHANHUB, 0, "Chatbots");
-  PRINT_USERS(1, BOT_DOVOICE, 0, "Voicebots");
-  PRINT_USERS(1, BOT_DOLIMIT, 0, "Limitbots");
-  PRINT_USERS(1, BOT_DORESOLV, 0, "Resolvbots");
-  PRINT_USERS(1, BOT_FLOODBOT, 0, "Floodbots");
   tt = 0;
   PRINT_USERS(0, USER_ADMIN, 0, "Admins");
   PRINT_USERS(0, USER_OWNER, USER_ADMIN, "Owners");

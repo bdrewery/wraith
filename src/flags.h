@@ -6,6 +6,7 @@
 #ifndef _EGG_FLAGS_H
 #define _EGG_FLAGS_H
 
+#include "common.h"
 #include "chan.h"
 
 /* For privchan() checking */
@@ -106,13 +107,9 @@ extern struct rolecount role_counts[];
 
 #define BOT_BACKUP	FLAG[(int) 'B']
 #define BOT_CHANHUB	FLAG[(int) 'c']
-#define BOT_FLOODBOT	FLAG[(int) 'f'] 
 #define BOT_UPDATEHUB	FLAG[(int) 'u']
-#define BOT_DORESOLV	FLAG[(int) 'r']
-#define BOT_DOLIMIT	FLAG[(int) 'l']
-#define BOT_DOVOICE	FLAG[(int) 'y']
 
-#define BOT_CHAN_VALID (flag_t) CHAN_VALID|BOT_CHANHUB|BOT_DOLIMIT|BOT_DOVOICE|BOT_DORESOLV|BOT_BACKUP|BOT_FLOODBOT
+#define BOT_CHAN_VALID (flag_t) CHAN_VALID|BOT_CHANHUB|BOT_BACKUP
 #define BOT_VALID  (flag_t) BOT_CHAN_VALID|BOT_UPDATEHUB
 
 
@@ -150,17 +147,9 @@ extern struct rolecount role_counts[];
 #define glob_noflood(x)                        ((x).global & USER_NOFLOOD)
 #define chan_noflood(x)                        ((x).chan & USER_NOFLOOD)
 
-#define glob_dolimit(x)                        ((x).global & BOT_DOLIMIT)
-#define chan_dolimit(x)                        ((x).chan & BOT_DOLIMIT)
-#define glob_dovoice(x)                        ((x).global & BOT_DOVOICE)
-#define chan_dovoice(x)                        ((x).chan & BOT_DOVOICE)
 #define glob_chanhub(x)                        ((x).global & BOT_CHANHUB)
-#define glob_doresolv(x)                        ((x).global & BOT_DORESOLV)
-#define chan_doresolv(x)                        ((x).chan & BOT_DORESOLV)
 #define glob_backup(x)				((x).global & BOT_BACKUP)
 #define chan_backup(x)				((x).chan & BOT_BACKUP)
-#define glob_doflood(x)				((x).global & BOT_FLOODBOT)
-#define chan_doflood(x)				((x).chan & BOT_FLOODBOT)
 
 void init_flags(void);
 void get_user_flagrec(const struct userrec *, struct flag_record *, const char *, const struct chanset_t* = NULL);
@@ -185,14 +174,56 @@ int chk_voice(const memberlist *, const struct flag_record, const struct chanset
 #define chk_devoice(fr) ((chan_quiet(fr) || (glob_quiet(fr) && !chan_voice(fr))) ? 1 : 0)
 #define isupdatehub() ((conf.bot->hub && conf.bot->u && (conf.bot->u->flags & BOT_UPDATEHUB)) ? 1 : 0)
 #define ischanhub() ((!conf.bot->hub && conf.bot->u && (conf.bot->u->flags & BOT_CHANHUB)) ? 1 : 0)
-int doresolv(const struct chanset_t *);
-int dovoice(const struct chanset_t *);
-int doflood(const struct chanset_t *);
-int dolimit(const struct chanset_t *);
 int whois_access(struct userrec *, struct userrec *);
 homechan_user_t homechan_user_translate(const char *) __attribute__((pure));
 void deflag_user(struct userrec *, deflag_event_t, const char *, const struct chanset_t *);
 deflag_t deflag_translate(const char *) __attribute__((pure));
 
+inline int
+doresolv(const struct chanset_t *chan)
+{
+  if (!chan)
+    return 0;
 
+  if (chan->role & ROLE_RESOLV)
+    return 1;
+
+  return 0;
+}
+
+inline int
+dovoice(const struct chanset_t *chan)
+{
+  if (!chan)
+    return 0;
+
+  if (chan->role & ROLE_VOICE)
+    return 1;
+
+  return 0;
+}
+
+inline int
+doflood(const struct chanset_t *chan)
+{
+  if (!chan)
+    return 0;
+
+  if (chan->role & ROLE_FLOOD)
+    return 1;
+
+  return 0;
+}
+
+inline int
+dolimit(const struct chanset_t *chan)
+{
+  if (!chan)
+    return 0;
+
+  if (chan->role & ROLE_LIMIT)
+    return 1;
+
+  return 0;
+}
 #endif				/* _EGG_FLAGS_H */

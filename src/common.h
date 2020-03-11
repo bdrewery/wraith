@@ -12,30 +12,6 @@
 #  include "config.h"
 #endif
 
-#include "garble.h"
-#include "sprintf.h"
-#include "conf.h"
-#include "debug.h"
-#include "eggdrop.h"
-#include "flags.h"
-#include "log.h"
-#include "dccutil.h"
-#include "chan.h"
-#include "compat/compat.h"
-
-#include <sys/param.h>
-#include <libgen.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <string.h>
-#include <errno.h>
-#ifdef HAVE_STRINGS_H
-#  include <strings.h>
-#endif
-
-
 #define BIT0    (uint32_t) 0x000000001
 #define BIT1    (uint32_t) 0x000000002
 #define BIT2    (uint32_t) 0x000000004
@@ -68,6 +44,29 @@
 #define BIT29   (uint32_t) 0x020000000
 #define BIT30   (uint32_t) 0x040000000
 #define BIT31   (uint32_t) 0x080000000
+
+#include "garble.h"
+#include "sprintf.h"
+#include "conf.h"
+#include "debug.h"
+#include "eggdrop.h"
+#include "flags.h"
+#include "log.h"
+#include "dccutil.h"
+#include "chan.h"
+#include "compat/compat.h"
+
+#include <sys/param.h>
+#include <libgen.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <string.h>
+#include <errno.h>
+#ifdef HAVE_STRINGS_H
+#  include <strings.h>
+#endif
 
 /* Thanks libratbox */
 #ifdef __GNUC__

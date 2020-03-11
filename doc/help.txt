@@ -357,7 +357,7 @@ See also: link%{+a}, newhub%{-}
         $bauto-delay$b        Amount of seconds to wait before auto opping,
                           or auto voicing a client based on flags or
                           +voice
-        $blimit$b             If this is set, the +l bot will raise the limit 
+        $blimit$b             Auto raise the limit
                           to the users in the channel + this amount. Set to
                           0 to disable.
         $bclosed-ban$b        Set this to 1 to ban users who join +closed 
@@ -369,10 +369,10 @@ See also: link%{+a}, newhub%{-}
                           enforce +p as well. The point is to notice the chan
                           and bots when an /invite is done. This is useful in 
                           seeing when a shell is hijacked ;)
-        $bcaps-limit$b        If this is set, any +f bots will kick a client for using
+        $bcaps-limit$b        Kick any client for using
                           too many caps. This is a percentage (0-100) of how much of
                           their message can be caps before being kicked.
-        $bcolor-limit$b       If this is set, any +f bot will kick the client for
+        $bcolor-limit$b       Kick the client for
                           excess color codes. The setting is how many color/bold
                           character codes the message may contain before being kicked.
         $bban-time$b          Set here how long temporary bans will last (in
@@ -402,7 +402,7 @@ See also: link%{+a}, newhub%{-}
                           Once the ban is removed, then the exempt will be
                           removed the next time the bot checks. Please note
                           that this is an IRCnet feature.
-        $bknock$b             Allow auto-inviting on /KNOCK? +y bots will invite.
+        $bknock$b             Allow auto-inviting on /KNOCK?
                               None/0         Don't invite on /KNOCK
                               Op/1           Ops (+o) are invited on /KNOCK
                               Voice/2        Voices (+v) are invited on /KNOCK
@@ -462,8 +462,8 @@ See also: link%{+a}, newhub%{-}
                               op/2           Op clients who are in homechan.
  
    The following can be set + or - (e.g. '%dchanset #channel -enforcebans')
-        $bautoop$b         Bots that are +y will auto-op all users with 
-                       op access to the channel.
+        $bautoop$b         Auto-op all users with op access to the channel.
+                       who also have passwords set.
         $bbackup$b         Make backup-bots (+B) join when set.
         $bbitch$b          Only let users with the +o flag have op on the
                        channel?
@@ -506,14 +506,14 @@ See also: link%{+a}, newhub%{-}
                        attempts to takeover. The channel is also set +backup
                        if protect-backup is set.
         $brbl$b            Do RBL lookups on clients and ban on matches.
-                       Uses 'rbl-servers'. See also '%dhelp set'. Only the
-                       +r bot will do lookups. On positive match, the bot
+                       Uses 'rbl-servers'. See also '%dhelp set'. Only a
+                       select few bots will do lookups. On positive match, the bot
                        will add a ban to the botnet and all bots will enforce
                        the ban.
         $btake$b           Once a bot is opped, it will mass op all other bots
                        in the channel. After that, they will all attempt to 
                        mass deop in hopes 'taking' the channel. :)
-        $bvoice$b          With this set, the +y bot will voice ALL clients
+        $bvoice$b          Auto-voice ALL clients
                        that join the channel, whether they are a user or not.
                        It will still keep +q|q users devoiced. Any client
                        devoiced by a user op (+o) will remain devoiced even
@@ -2088,7 +2088,7 @@ See also: whom
       $bk$b = autokick (user is kicked and banned automatically)
       $bo$b = op (user has op access; this is not auto-op)
       $bq$b = quiet (user cannot be voiced)
-      $bv$b = voice (user gets +v automatically from +y bots)
+      $bv$b = voice (user gets +v automatically)
  
    Valid user-only flags:
       $ba$b - admin (user has absolute control over botnet minus a few perm-owner only cmds)
@@ -2104,11 +2104,7 @@ See also: whom
    Valid bot-only flags:
       $bB$b = backup-bot (bot will only join chans marked +backup, see '%dhelp chaninfo')
       $bc$b - chat-bot (bot accepts DCC chat on irc)
-      $bf$b = flood-bot (bot reacts to floods based on [cpu intensive] flood settings)
-      $bl$b = limit-bot (bot sets limit in all channels, see '%dhelp chaninfo') [$bCPU INTENSIVE$b]
-      $br$b = resolve (bot resolves clients in to match against userlist) [$bCPU INTENSIVE+$b]
       $bu$b - update-bot (see doc/UPGRADING)
-      $by$b = voice-bot (bot gives out voices/auto-ops in chans) [$bCPU INTENSIVE$b]
  
    $bFlags followed by a '=' may also be used for a specific channel record.$b
  
