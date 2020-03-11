@@ -53,7 +53,6 @@
 #include "flags.h"
 #include "log.h"
 #include "dccutil.h"
-#include "chan.h"
 #include "compat/compat.h"
 
 #include <sys/param.h>
